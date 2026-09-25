@@ -1505,3 +1505,10 @@ body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8r
 .rig-panel .live-rig-slots button span { grid-area: name; }
 .rig-panel .live-rig-slots button small { grid-area: rig; color: var(--muted); font-size: 0.78rem; font-weight: 700; overflow-wrap: anywhere; }
 .rig-panel .live-rig-slots button small:empty { display: none; }
+
+/* v1.33 · ½ SPEED sempre visibile */
+.looper-half { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -4px 0 14px; }
+.looper-half > span { color: var(--muted); font-size: 0.85rem; font-weight: 900; letter-spacing: 0.08em; }
+.looper-half[data-active="true"] > span { color: var(--amber); }
+.looper-half small { flex-basis: 100%; color: var(--amber); font-size: 0.78rem; }
+.looper-half small:empty { display: none; }

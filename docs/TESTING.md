@@ -1,4 +1,14 @@
-# Verifiche hardware, test locali e problemi aperti — v1.32
+# Verifiche hardware, test locali e problemi aperti — v1.33
+
+## Problema noto del Player (non dell'app): Freeze REV + Fixed FX
+
+Verificato dall'utente il 25/09/2026 anche **senza app** (pulsanti del Player e Rig Manager): con REV Freeze attivo, la prima attivazione di un Fixed FX mai attivato prima interrompe il suono congelato. Riattivando Freeze, quel Fixed FX non causa più l'interruzione; un Fixed FX non ancora attivato sì. Attivando prima i Fixed FX e poi Freeze il problema non si presenta. La diagnostica dell'app mostra un solo comando per ogni azione, confermato dal Player. Da segnalare a Kemper; nessun aggiramento nell'app per scelta dell'utente.
+
+## ½ SPEED (prove 25/09/2026)
+
+Doppio tocco dopo la registrazione: primo tocco al doppio, secondo normale. Toccato una volta prima di registrare: loop normale; ritoccato: metà velocità, un'ottava sotto. Conclusione: lo stato ½ SPEED del Player era rimasto ON da prove precedenti e **non si azzera con la cancellazione del loop**. Comportamento coerente con il manuale; v1.33 mostra lo stato e permette di correggerlo.
+
+# Verifiche v1.32
 
 ## Da provare con la v1.32
 

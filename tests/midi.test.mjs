@@ -52,7 +52,8 @@ function looperContext(sent, channel = 2) {
   const session = { lastState: { channel }, transmitted: [], looperLastCommands: [] };
   const node = () => ({ textContent: '', hidden: false, dataset: {} });
   const ui = { looperStatus: node(), copy: { disabled: true }, looperState: node(), looperStateLabel: node(),
-    looperStateTime: node(), looperStateFlags: node(), stageLooper: node() };
+    looperStateTime: node(), looperStateFlags: node(), stageLooper: node(),
+    looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node() };
   const source = functionSnippet('const LOOPER_SWITCHES = {', 'function releaseAllLooperSwitches()');
   const context = { session, ui, profilerOutputs: () => [output], describePort: () => 'Profiler · Kemper',
     bytesToHex: midi.bytesToHex, Date, Set, performance: { now: () => 1000 },
@@ -91,6 +92,12 @@ test('Looper estimated state follows the Kemper Rec/Play/Dub and Stop logic', ()
   assert.equal(context.ui.stageLooper.hidden, true);
   press('record'); press('erase');
   assert.equal(context.looper.state, 'empty');
+  // ½ SPEED resta attivo sul Player anche dopo la cancellazione (prova reale 25/09/2026)
+  press('half'); press('erase');
+  assert.equal(context.looper.half, true);
+  assert.equal(context.ui.looperHalfLabel.textContent, '½ SPEED: ON');
+  press('half');
+  assert.equal(context.looper.half, false);
 });
 
 test('Morph slider sends the requested CC11 value and waits for a reply', () => {

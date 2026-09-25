@@ -1,6 +1,12 @@
-# Kemper Stage View v1.32
+# Kemper Stage View v1.33
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+
+## Novità v1.33
+
+- **½ SPEED sempre visibile** nella scheda LOOPER (ON/OFF) con avviso: se è ON la registrazione avviene a metà velocità e spegnendolo il loop suona al doppio. Prova sul Player del 25/09/2026: ½ SPEED **resta attivo anche dopo la cancellazione del loop**, quindi l'app non lo azzera più; il valore è ricordato sul telefono e si corregge con "NON CORRISPONDE? INVERTI".
+- **Leggi parametri Looper** (ALTRO): invia solo letture di 125/88…94 e 127/52–53 per verificare se il Player comunica lo stato del Looper.
+- Nomi completi dei tipi di effetto dalla documentazione Kemper (es. 19 = Soft Shaper, 132 = Analog Octaver).
 
 ## Novità v1.32
 

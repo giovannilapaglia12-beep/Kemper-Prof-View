@@ -10,6 +10,7 @@ import {
   buildTempoChangeRequest,
   buildTempoRequest,
   buildTunerModeRequest,
+  buildParameterRequest,
   buildTunerStreamRequests,
   buildProfilerPollRequests,
   buildProfilerStateRequests,
@@ -20,7 +21,7 @@ import {
   bytesToHex,
 } from "./kemper-midi.js";
 
-const APP_VERSION = "1.32";
+const APP_VERSION = "1.33";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -72,6 +73,11 @@ const ui = {
   looperStateTime: $("#looper-state-time"),
   looperStateFlags: $("#looper-state-flags"),
   looperStateReset: $("#looper-state-reset"),
+  looperHalf: $("#looper-half"),
+  looperHalfLabel: $("#looper-half-label"),
+  looperHalfNote: $("#looper-half-note"),
+  looperHalfFix: $("#looper-half-fix"),
+  looperProbe: $("#looper-probe-button"),
   saveDiagnostics: $("#save-diagnostics-button"),
   tunerOverlay: $("#tuner-overlay"),
   tunerOverlayNote: $("#tuner-overlay-note"),
@@ -869,6 +875,7 @@ function paintPorts() {
   ui.outputCount.textContent = outputs.length;
   ui.identity.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.auto.disabled = profilerOutputs().length === 0 || !session.sysex;
+  ui.looperProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.morphProbe.disabled = profilerOutputs().length === 0 || session.morphPendingLevel !== null;
   refreshLiveMorphControls();
   refreshLooperControls();
@@ -2212,12 +2219,20 @@ const LOOPER_LABELS = {
   overdub: "OVERDUB",
   stopped: "FERMO",
 };
+const LOOPER_HALF_KEY = "kemper-stage-view-looper-half";
 const looper = { state: "empty", since: 0, loopLength: null, stopPresses: 0, reverse: false, half: false, timer: null };
+try { looper.half = localStorage.getItem(LOOPER_HALF_KEY) === "1"; } catch { /* facoltativo */ }
+function setLooperHalf(value) {
+  looper.half = value;
+  try { localStorage.setItem(LOOPER_HALF_KEY, value ? "1" : "0"); } catch { /* facoltativo */ }
+  paintLooperState();
+}
 
 function setLooperState(next) {
   const now = performance.now();
   if (looper.state === "recording" && next !== "recording") looper.loopLength = (now - looper.since) / 1000;
-  if (next === "empty") { looper.loopLength = null; looper.reverse = false; looper.half = false; }
+  // ½ SPEED resta attivo sul Player anche dopo la cancellazione (prova del 25/09/2026)
+  if (next === "empty") { looper.loopLength = null; looper.reverse = false; }
   if (next !== looper.state) looper.since = now;
   looper.state = next;
   window.clearInterval(looper.timer);
@@ -2231,7 +2246,14 @@ function paintLooperState() {
     ? (performance.now() - looper.since) / 1000
     : looper.loopLength;
   const time = seconds === null ? "" : `${state === "recording" ? "" : "LOOP "}${seconds.toFixed(1)} s`;
-  const flags = [looper.reverse ? "REVERSE" : "", looper.half ? "½ SPEED" : ""].filter(Boolean).join(" · ");
+  const flags = [looper.reverse ? "REVERSE" : "", looper.half && state !== "empty" ? "½ SPEED" : ""].filter(Boolean).join(" · ");
+  ui.looperHalf.dataset.active = String(looper.half);
+  ui.looperHalfLabel.textContent = `½ SPEED: ${looper.half ? "ON" : "OFF"}`;
+  ui.looperHalfNote.textContent = looper.half
+    ? state === "empty" || state === "recording"
+      ? "La registrazione avviene a metà velocità: spegnendo ½ SPEED il loop suonerà al doppio."
+      : "Toccando ½ SPEED il loop torna alla velocità di registrazione."
+    : "";
   ui.looperState.dataset.state = state;
   ui.looperStateLabel.textContent = LOOPER_LABELS[state];
   ui.looperStateTime.textContent = time;
@@ -2262,8 +2284,7 @@ function trackLooperPress(key) {
       if (looper.state !== "empty") { looper.reverse = !looper.reverse; paintLooperState(); }
       break;
     case "half":
-      looper.half = !looper.half;
-      paintLooperState();
+      setLooperHalf(!looper.half);
       break;
     case "erase":
       setLooperState("empty");
@@ -2550,6 +2571,7 @@ function buildDiagnostics() {
       lastCommands: session.looperLastCommands,
       estimatedState: looper.state,
       estimatedLoopSeconds: looper.loopLength,
+      estimatedHalfSpeed: looper.half,
       statusFeedback: "stimato dall'app, non letto dal Player",
     },
     effectControl: {
@@ -2696,6 +2718,14 @@ ui.liveMorphApply.addEventListener("click", () => {
 });
 for (const button of ui.looperButtons) bindLooperSwitch(button);
 ui.looperStateReset.addEventListener("click", () => { looper.stopPresses = 0; setLooperState("empty"); });
+ui.looperHalfFix.addEventListener("click", () => setLooperHalf(!looper.half));
+ui.looperProbe.addEventListener("click", () => {
+  // Sola lettura: verifica se il Player comunica lo stato del Looper.
+  const reads = [88, 89, 90, 91, 92, 93, 94].map((parameter) => buildParameterRequest(0x7d, parameter, `Looper probe 125/${parameter}`));
+  reads.push(buildParameterRequest(0x7f, 52, "Looper Volume 127/52"), buildParameterRequest(0x7f, 53, "Looper Location 127/53"));
+  sendProfilerRequests(reads);
+  toast("Lettura parametri Looper inviata · poi salva la diagnostica");
+});
 ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();
 window.addEventListener("blur", releaseAllLooperSwitches);

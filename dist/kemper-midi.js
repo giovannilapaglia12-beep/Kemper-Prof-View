@@ -34,7 +34,12 @@ export const EFFECT_MODULES = [
 ];
 
 const EFFECT_NAMES = new Map([
-  [0, "Empty"], [1, "Wah Wah"], [32, "Kemper Drive"], [33, "Green Scream"],
+  [0, "Empty"], [1, "Wah Wah"], [2, "Wah Low Pass"], [3, "Wah High Pass"], [4, "Wah Vowel Filter"],
+  [6, "Wah Phaser"], [7, "Wah Flanger"], [8, "Wah Rate Reducer"], [9, "Wah Ring Modulator"],
+  [10, "Wah Freq Shifter"], [11, "Pedal Pitch"], [12, "Wah Formant Shifter"], [13, "Pedal Vinyl Stop"],
+  [17, "Bit Shaper"], [18, "Octa Shaper"], [19, "Soft Shaper"], [20, "Hard Shaper"], [21, "Wave Shaper"],
+  [34, "Plus DS"], [35, "One DS"], [116, "Wah Pedal Booster"], [132, "Analog Octaver"], [140, "Dual Loop Pitch"],
+  [32, "Kemper Drive"], [33, "Green Scream"],
   [36, "Muffin"], [37, "Mouse"], [38, "Kemper Fuzz"], [39, "Metal DS"],
   [42, "Full OC"], [49, "Compressor"], [50, "Auto Swell"], [57, "Noise Gate 2:1"],
   [58, "Noise Gate 4:1"], [64, "Space"], [65, "Vintage Chorus"], [66, "Hyper Chorus"],

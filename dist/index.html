@@ -13,7 +13,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.32</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.33</p>
         <h1>Kemper Stage View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -133,6 +133,11 @@
           <span class="looper-state-flags" id="looper-state-flags"></span>
         </div>
         <p class="looper-info">Stato stimato dall’app in base ai comandi inviati: il Player non lo comunica. Se usi anche i pulsanti del Player e lo stato non corrisponde, tocca <button class="looper-state-reset" id="looper-state-reset" type="button">SEGNA COME VUOTO</button></p>
+        <div class="looper-half" id="looper-half" data-active="false">
+          <span id="looper-half-label">½ SPEED: OFF</span>
+          <button class="looper-state-reset" id="looper-half-fix" type="button">NON CORRISPONDE? INVERTI</button>
+          <small id="looper-half-note"></small>
+        </div>
         <div class="looper-main-controls">
           <button class="looper-button looper-record" data-looper-switch="record" type="button" disabled><strong>●</strong> REC / PLAY / OVERDUB</button>
           <button class="looper-button looper-stop" data-looper-switch="stop" type="button" disabled><strong>■</strong> STOP</button>
@@ -330,6 +335,7 @@
           <button class="secondary-button auto-button" id="auto-button" type="button" aria-pressed="true" disabled>
             Auto sync: ON
           </button>
+          <button class="secondary-button" id="looper-probe-button" type="button" disabled>Leggi parametri Looper</button>
           <button class="secondary-button" id="clear-button" type="button">
             Pulisci log
           </button>
