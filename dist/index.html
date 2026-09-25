@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07110d" />
+    <meta name="description" content="Schermata da palco e controlli Web MIDI per Kemper Profiler Player." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Kemper Stage View</title>
+  </head>
+  <body data-view="live">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">KEMPER DIRECT · v1.30</p>
+        <h1>Kemper Stage View</h1>
+      </div>
+      <div class="status-pill" id="connection-pill" data-status="idle">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="connection-label">Non collegato</span>
+      </div>
+    </header>
+
+    <nav class="view-switcher" aria-label="Modalità dell’app">
+      <button type="button" data-view-button="live" aria-pressed="true">PALCO</button>
+      <button type="button" data-view-button="rig" aria-pressed="false">RIG</button>
+      <button type="button" data-view-button="looper" aria-pressed="false">LOOPER</button>
+      <button type="button" data-view-button="full" aria-pressed="false">ALTRO</button>
+    </nav>
+
+    <main>
+      <section class="live-panel stage" aria-label="Schermata palco">
+        <div class="stage-rig">
+          <div class="stage-rig-meta">
+            <span class="live-connection" id="live-connection-status">Non collegato</span>
+            <span class="stage-rig-position" id="live-rig-position">BANK — · RIG —</span>
+            <button class="stage-sync" id="live-sync-button" type="button" aria-label="Rileggi lo stato dal Kemper" disabled>SYNC</button>
+          </div>
+          <strong class="stage-rig-name" id="live-rig-name">In attesa del Player</strong>
+        </div>
+
+        <div class="stage-connect">
+          <button class="primary-button" id="live-connect-button" type="button">Connetti MIDI</button>
+          <p>Attiva l’OTG nelle impostazioni del telefono, collega il cavo alla porta USB-B del Player e tocca il pulsante.</p>
+          <button class="stage-demo" id="live-demo-button" type="button">Prova senza Player (demo)</button>
+        </div>
+
+        <div class="stage-tempo" aria-label="Tempo">
+          <button class="stage-step" id="live-tempo-down-button" type="button" aria-label="Diminuisci il tempo di un BPM" disabled>−1</button>
+          <div class="stage-bpm" aria-live="polite">
+            <strong id="live-bpm-value">—</strong>
+            <span>BPM</span>
+          </div>
+          <button class="stage-step" id="live-tempo-up-button" type="button" aria-label="Aumenta il tempo di un BPM" disabled>+1</button>
+          <button class="stage-round" id="live-tempo-round-button" type="button" aria-label="Arrotonda il tempo al BPM intero più vicino" disabled>BPM INTERO</button>
+          <button class="stage-tap live-tap-button" id="live-tap-button" type="button" disabled>
+            <strong>TAP</strong>
+            <small id="live-tap-state">COLLEGA IL KEMPER</small>
+          </button>
+        </div>
+
+        <div class="live-morph stage-morph" id="live-morph" data-active="unknown" aria-label="Stato Morph del Rig">
+          <button class="live-morph-toggle" id="live-morph-toggle" type="button" disabled>ATTIVA MORPH</button>
+          <div class="stage-morph-state">
+            <div class="live-morph-top">
+              <span>MORPH</span>
+              <strong id="live-morph-mode" aria-live="polite">IN LETTURA</strong>
+              <span id="live-morph-percent">—</span>
+            </div>
+            <div class="live-morph-meter" id="live-morph-meter" role="progressbar" aria-label="Livello Morph" aria-valuemin="0" aria-valuemax="100">
+              <span id="live-morph-fill"></span>
+            </div>
+          </div>
+          <details class="stage-morph-level">
+            <summary aria-label="Livello Morph intermedio">%</summary>
+            <div class="stage-morph-popover">
+              <label for="live-morph-slider">LIVELLO MORPH <output id="live-morph-target">0%</output></label>
+              <div class="live-morph-set">
+                <input id="live-morph-slider" type="range" min="0" max="100" step="1" value="0" aria-label="Scegli livello Morph" disabled />
+                <button id="live-morph-apply" type="button" disabled>IMPOSTA</button>
+              </div>
+              <p>Funzione non ancora provata sul Player.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="live-effects-grid" id="live-effects-grid" aria-label="Otto effetti del Rig: tocca per ON/OFF"></div>
+
+        <div class="stage-fx" aria-label="Fixed FX, Freeze e Tuner">
+          <div class="live-fixed-fx-grid" id="live-fixed-fx-grid"></div>
+          <button class="live-action-button live-freeze-button" id="live-freeze-button" type="button" data-active="unknown" data-pending="false" aria-pressed="false" disabled>
+            <strong>REV FREEZE</strong>
+            <small id="live-freeze-state">IN LETTURA</small>
+          </button>
+          <button class="live-action-button live-tuner-button" id="live-tuner-button" type="button" data-active="unknown" aria-pressed="false" disabled>
+            <strong>TUNER <span id="live-tuner-note">APRI</span></strong>
+            <small id="live-tuner-state">IN ATTESA</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="rig-panel" aria-labelledby="rig-panel-heading">
+        <div class="live-rig-selector" aria-label="Scelta Bank e Rig">
+          <div class="live-rig-selector-heading">
+            <strong id="rig-panel-heading">SCEGLI IL RIG</strong>
+            <span id="live-rig-status" aria-live="polite">Collega il Kemper</span>
+          </div>
+          <div class="live-bank-row" aria-label="Selezione Bank">
+            <button id="live-bank-down" type="button" aria-label="Bank precedente">−</button>
+            <span>BANK <strong id="live-bank-value">1</strong></span>
+            <button id="live-bank-up" type="button" aria-label="Bank successiva">+</button>
+          </div>
+          <div class="live-rig-slots" aria-label="Cinque Rig della Bank">
+            <button type="button" data-live-rig-slot="1" disabled><strong>1</strong><span>RIG 1</span></button>
+            <button type="button" data-live-rig-slot="2" disabled><strong>2</strong><span>RIG 2</span></button>
+            <button type="button" data-live-rig-slot="3" disabled><strong>3</strong><span>RIG 3</span></button>
+            <button type="button" data-live-rig-slot="4" disabled><strong>4</strong><span>RIG 4</span></button>
+            <button type="button" data-live-rig-slot="5" disabled><strong>5</strong><span>RIG 5</span></button>
+          </div>
+          <p class="rig-panel-note">Dopo il cambio l’app torna automaticamente alla schermata PALCO.</p>
+        </div>
+      </section>
+
+      <section class="looper-panel" aria-labelledby="looper-heading">
+        <p class="section-kicker">KEMPER PLAYER · LEVEL III</p>
+        <h2 id="looper-heading">Looper</h2>
+        <p class="looper-info">I pulsanti simulano la pressione e il rilascio dei controlli del Player. La schermata indica il comando inviato; il Player non comunica qui uno stato verificato della registrazione.</p>
+        <div class="looper-main-controls">
+          <button class="looper-button looper-record" data-looper-switch="record" type="button" disabled><strong>●</strong> REC / PLAY / OVERDUB</button>
+          <button class="looper-button looper-stop" data-looper-switch="stop" type="button" disabled><strong>■</strong> STOP</button>
+        </div>
+        <div class="looper-extra-controls">
+          <button class="looper-button" data-looper-switch="trigger" type="button" disabled>TRIGGER</button>
+          <button class="looper-button" data-looper-switch="reverse" type="button" disabled>REVERSE</button>
+          <button class="looper-button" data-looper-switch="half" type="button" disabled>½ SPEED</button>
+          <button class="looper-button" data-looper-switch="undo" type="button" disabled>UNDO / REDO</button>
+        </div>
+        <button class="looper-button looper-erase" id="looper-erase" type="button" aria-label="Tieni premuto un secondo per cancellare il loop" disabled>TIENI PREMUTO 1 S · CANCELLA LOOP</button>
+        <p class="looper-status" id="looper-status" role="status">Collega il Kemper per usare il Looper.</p>
+      </section>
+
+      <section class="hero-panel" aria-labelledby="rig-title">
+        <div class="rig-copy">
+          <p class="section-kicker">RIG ATTUALE</p>
+          <h2 id="rig-title">In attesa del Player</h2>
+          <div class="rig-meta">
+            <span id="program-label">Program —</span>
+            <span id="channel-label">Canale —</span>
+          </div>
+        </div>
+        <div class="tempo-block" data-pending="false" data-tapping="false">
+          <div class="tempo-readout" aria-live="polite">
+            <span class="tempo-number" id="bpm-value">—</span>
+            <span class="tempo-unit">BPM</span>
+          </div>
+          <div class="tempo-controls" aria-label="Controlli tempo">
+            <button class="tempo-step-button" id="tempo-down-button" type="button" aria-label="Diminuisci il tempo di un BPM" disabled>−1</button>
+            <button class="tempo-tap-button" id="tempo-tap-button" type="button" disabled>TAP</button>
+            <button class="tempo-step-button" id="tempo-up-button" type="button" aria-label="Aumenta il tempo di un BPM" disabled>+1</button>
+          </div>
+          <button class="tempo-round-button" id="tempo-round-button" type="button" aria-label="Arrotonda il tempo al BPM intero più vicino" disabled>BPM INTERO</button>
+          <span class="tempo-status" id="tempo-status">Collega il Kemper</span>
+        </div>
+      </section>
+
+      <section class="rig-control-panel" aria-labelledby="rig-control-heading" data-pending="false">
+        <div class="rig-control-heading">
+          <div>
+            <p class="section-kicker">RIG CONTROL</p>
+            <h2 id="rig-control-heading">Selezione diretta Player</h2>
+          </div>
+          <span id="rig-control-status" aria-live="polite">Scegli Bank e Rig</span>
+        </div>
+        <div class="rig-control-body">
+          <div class="rig-bank-control" aria-label="Selezione Bank">
+            <button id="rig-bank-down" type="button" aria-label="Bank precedente">−</button>
+            <div>
+              <span>BANK</span>
+              <strong id="rig-bank-value">1</strong>
+            </div>
+            <button id="rig-bank-up" type="button" aria-label="Bank successivo">+</button>
+          </div>
+          <div class="rig-slot-controls" aria-label="Selezione Rig della Bank">
+            <button type="button" data-rig-slot="1" disabled><span>RIG</span><strong>1</strong></button>
+            <button type="button" data-rig-slot="2" disabled><span>RIG</span><strong>2</strong></button>
+            <button type="button" data-rig-slot="3" disabled><span>RIG</span><strong>3</strong></button>
+            <button type="button" data-rig-slot="4" disabled><span>RIG</span><strong>4</strong></button>
+            <button type="button" data-rig-slot="5" disabled><span>RIG</span><strong>5</strong></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="performance-panel" aria-labelledby="performance-heading">
+        <div class="effects-heading-row">
+          <div>
+            <p class="section-kicker">PERFORMANCE STATE</p>
+            <h2 id="performance-heading">Morph e Accordatore</h2>
+          </div>
+          <span>Stato BASE/MORPH in tempo reale, nota stabile e intonazione in cent</span>
+        </div>
+        <div class="performance-grid">
+          <article class="performance-card morph-card" id="morph-card" data-active="unknown">
+            <div class="performance-card-top">
+              <span>MORPH</span>
+              <strong id="morph-percent">—</strong>
+            </div>
+            <h3 id="morph-mode">DA ALLINEARE</h3>
+            <div class="morph-meter" id="morph-meter" role="progressbar" aria-label="Livello Morph" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="morph-fill"></span>
+            </div>
+            <p id="morph-source">Collega il Kemper: l’app leggerà il livello reale e confermerà ogni comando.</p>
+            <button class="secondary-button morph-probe-button" id="morph-probe-button" type="button" aria-pressed="false" disabled>
+              Allinea BASE
+            </button>
+          </article>
+          <article class="performance-card tuner-card" id="tuner-card" data-active="unknown" data-zone="waiting">
+            <div class="performance-card-top">
+              <span>TUNER</span>
+              <strong id="tuner-status">—</strong>
+            </div>
+            <h3 id="tuner-note">In attesa</h3>
+            <div class="tuner-gauge" id="tuner-gauge" role="meter" aria-label="Scostamento dell’intonazione" aria-valuemin="-50" aria-valuemax="50" aria-valuenow="0">
+              <div class="tuner-scale" aria-hidden="true">
+                <span class="tuner-center-line"></span>
+                <span class="tuner-needle" id="tuner-needle"></span>
+              </div>
+              <div class="tuner-gauge-labels">
+                <span>CALANTE</span>
+                <strong id="tuner-cents">—</strong>
+                <span>CRESCENTE</span>
+              </div>
+            </div>
+            <p id="tuner-hint">Apri l’accordatore dall’app o dal tasto TAP/TUNER del Kemper.</p>
+            <button class="secondary-button tuner-control-button" id="tuner-control-button" type="button" aria-pressed="false" disabled>
+              Apri Tuner
+            </button>
+            <div class="tuner-history" aria-live="polite">
+              <span>NOTE CONFERMATE</span>
+              <strong id="tuner-history">—</strong>
+            </div>
+            <details class="tuner-debug">
+              <summary>Diagnostica accordatore</summary>
+              <div class="tuner-readouts" aria-live="polite">
+                <div class="tuner-raw">
+                  <span>NOTA MIDI</span>
+                  <strong id="tuner-raw">—</strong>
+                </div>
+                <div class="tuner-raw">
+                  <span>SEGNALE PITCH</span>
+                  <strong id="tuner-signal">—</strong>
+                </div>
+              </div>
+            </details>
+          </article>
+        </div>
+      </section>
+
+      <section class="effects-panel" aria-labelledby="effects-heading">
+        <div class="effects-heading-row">
+          <div>
+            <p class="section-kicker">EFFECT MODULES</p>
+            <h2 id="effects-heading">Effetti del Rig</h2>
+          </div>
+          <div class="effects-heading-meta">
+            <span>Tocca uno slot per attivarlo o disattivarlo</span>
+            <span id="sync-status">In attesa della sincronizzazione</span>
+          </div>
+        </div>
+        <div class="effects-grid" id="effects-grid"></div>
+      </section>
+
+      <section class="fixed-fx-panel" id="fixed-fx-panel" aria-labelledby="fixed-fx-heading">
+        <div class="effects-heading-row">
+          <div>
+            <p class="section-kicker">FIXED FX · PLAYER MK2</p>
+            <h2 id="fixed-fx-heading">Effetti rapidi</h2>
+          </div>
+          <div class="effects-heading-meta">
+            <span>Controlli integrati, indipendenti dagli otto slot</span>
+            <span id="fixed-fx-status" aria-live="polite">Collega il Kemper</span>
+          </div>
+        </div>
+        <div class="fixed-fx-grid" id="fixed-fx-grid"></div>
+      </section>
+
+      <section class="freeze-panel" id="freeze-panel" aria-labelledby="freeze-heading" data-supported="unknown" data-active="unknown" data-pending="false">
+        <div class="effects-heading-row">
+          <div>
+            <p class="section-kicker">REV HOLD · PLAYER MK2</p>
+            <h2 id="freeze-heading">Freeze del riverbero</h2>
+          </div>
+          <div class="effects-heading-meta">
+            <span id="freeze-address">REV Hold · Page 125/115</span>
+            <span id="freeze-status" aria-live="polite">Collega il Kemper</span>
+          </div>
+        </div>
+        <p class="freeze-note">
+          Congela soltanto la coda del blocco REV. Puoi usare questo pulsante oppure tenere premuto il riquadro REV nella griglia effetti.
+        </p>
+        <div class="freeze-actions">
+          <button class="secondary-button freeze-rev-button" id="freeze-rev-button" type="button" aria-pressed="false" disabled>Attiva Freeze REV</button>
+        </div>
+      </section>
+
+      <section class="control-panel" aria-labelledby="connection-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">PASSO 1</p>
+            <h2 id="connection-heading">Collega il Player</h2>
+          </div>
+          <p id="support-note">Controllo compatibilità in corso…</p>
+        </div>
+
+        <div class="action-row">
+          <button class="primary-button" id="connect-button" type="button">
+            <span class="button-icon" aria-hidden="true">↳</span>
+            Connetti MIDI
+          </button>
+          <button class="secondary-button" id="identity-button" type="button" disabled>
+            Sincronizza Profiler
+          </button>
+          <button class="secondary-button auto-button" id="auto-button" type="button" aria-pressed="true" disabled>
+            Auto sync: ON
+          </button>
+          <button class="secondary-button" id="clear-button" type="button">
+            Pulisci log
+          </button>
+        </div>
+
+        <div class="device-grid">
+          <article class="device-card">
+            <div class="device-card-top">
+              <span class="device-icon" aria-hidden="true">IN</span>
+              <span class="count-badge" id="input-count">0</span>
+            </div>
+            <h3>Ingressi MIDI</h3>
+            <ul class="device-list" id="input-list">
+              <li>Nessuna porta rilevata</li>
+            </ul>
+          </article>
+          <article class="device-card">
+            <div class="device-card-top">
+              <span class="device-icon" aria-hidden="true">OUT</span>
+              <span class="count-badge" id="output-count">0</span>
+            </div>
+            <h3>Uscite MIDI</h3>
+            <ul class="device-list" id="output-list">
+              <li>Nessuna porta rilevata</li>
+            </ul>
+          </article>
+          <article class="device-card capability-card">
+            <div class="device-card-top">
+              <span class="device-icon" aria-hidden="true">SYS</span>
+              <span class="count-badge" id="sysex-badge">—</span>
+            </div>
+            <h3>System Exclusive</h3>
+            <p id="sysex-note">Il test verificherà se Chrome autorizza i messaggi SysEx.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="monitor-panel" aria-labelledby="monitor-heading">
+        <div class="panel-heading monitor-heading">
+          <div>
+            <p class="section-kicker">MIDI MONITOR</p>
+            <h2 id="monitor-heading">Messaggi ricevuti</h2>
+          </div>
+          <button class="text-button" id="copy-button" type="button" disabled>Copia diagnostica</button>
+        </div>
+
+        <div class="monitor-summary" aria-live="polite">
+          <div><span>Ultimo evento</span><strong id="last-event">—</strong></div>
+          <div><span>Messaggi</span><strong id="message-count">0</strong></div>
+          <div><span>Ultimo dato</span><strong id="last-value">—</strong></div>
+        </div>
+
+        <div class="log-shell">
+          <div class="log-empty" id="log-empty">
+            Cambia Rig o premi un footswitch: i messaggi appariranno qui.
+          </div>
+          <ol class="midi-log" id="midi-log" aria-label="Registro dei messaggi MIDI"></ol>
+        </div>
+      </section>
+
+      <details class="help-panel">
+        <summary>Come fare il primo test</summary>
+        <ol>
+          <li>Usa <strong>PALCO</strong> per effetti, Morph e tempo, <strong>RIG</strong> per scegliere Bank e Rig, <strong>LOOPER</strong> per i comandi del Player Level III, e <strong>ALTRO</strong> per i dettagli e la diagnostica. I nomi dei Rig compaiono quando il Player li ha comunicati all’app.</li>
+          <li>Collega il telefono o tablet alla porta USB-B del Player con adattatore OTG.</li>
+          <li>Apri questa pagina in Chrome e premi <strong>Connetti MIDI</strong>.</li>
+          <li>L’auto sync controlla direttamente il Player. Cambia Rig e verifica che la schermata si aggiorni.</li>
+          <li>Tocca uno slot effetto: mostra <strong>ATTENDO</strong> finché il Kemper non conferma ON oppure OFF.</li>
+          <li>Nel pannello <strong>Fixed FX</strong> puoi gestire Transpose, Pure Booster, Vintage Chorus e Double Tracker. Con auto sync attivo, lo stato si aggiorna anche quando li cambi dal Player o da un altro controller.</li>
+          <li>Usa <strong>−1</strong> e <strong>+1</strong> per regolare il tempo, oppure premi <strong>TAP</strong>. Se il TAP produce un decimale, <strong>BPM INTERO</strong> lo arrotonda al valore intero più vicino.</li>
+          <li>Nel pannello <strong>Rig Control</strong> scegli una Bank da 1 a 10 e poi uno dei cinque Rig: l’app carica direttamente quel suono e ne legge il nome dal Kemper.</li>
+          <li>Usa <strong>Freeze REV</strong> dal pannello dedicato oppure tieni premuto il riquadro REV. Un tocco breve sul riquadro continua a gestire soltanto REV ON/OFF.</li>
+          <li>Configura i parametri Morph in Rig Manager. Stage View mostra lo stato reale del Player senza duplicare l’editor.</li>
+          <li>Premi <strong>Attiva MORPH</strong> o <strong>Torna a BASE</strong>: l’indicatore cambia solo dopo la conferma del Kemper.</li>
+          <li>Puoi usarla senza MIDI Captain; Morph, Tuner ed effetti restano controllabili direttamente dall’app.</li>
+          <li>Apri il Tuner e suona una corda: l’ago mostra se è <strong>calante</strong>, <strong>centrata</strong> o <strong>crescente</strong>.</li>
+          <li>Quando sei entro ±3 cent, l’indicatore diventa verde e mostra <strong>CENTRATA</strong>.</li>
+          <li>Chiudi il Tuner e verifica che la scheda mostri <strong>OFF</strong>.</li>
+          <li>Dopo un cambio Rig, l’app riallinea automaticamente lo stato del Player.</li>
+          <li>Se necessario premi <strong>Copia diagnostica</strong> e incolla qui il risultato.</li>
+        </ol>
+      </details>
+    </main>
+
+    <div class="tuner-overlay" id="tuner-overlay" data-zone="waiting" hidden>
+      <p class="tuner-overlay-kicker">ACCORDATORE</p>
+      <strong class="tuner-overlay-note" id="tuner-overlay-note">SUONA</strong>
+      <div class="tuner-overlay-gauge" aria-hidden="true">
+        <span class="tuner-overlay-center"></span>
+        <span class="tuner-overlay-needle" id="tuner-overlay-needle"></span>
+      </div>
+      <div class="tuner-overlay-labels"><span>♭ CALANTE</span><strong id="tuner-overlay-cents">—</strong><span>CRESCENTE ♯</span></div>
+      <button class="tuner-overlay-close" id="tuner-overlay-close" type="button">CHIUDI TUNER</button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
