@@ -1,4 +1,4 @@
-const CACHE = "kemper-stage-view-v1310";
+const CACHE = "kemper-stage-view-v1320";
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./kemper-midi.js", "./demo.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

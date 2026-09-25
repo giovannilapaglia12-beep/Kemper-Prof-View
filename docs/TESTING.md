@@ -1,4 +1,11 @@
-# Verifiche hardware, test locali e problemi aperti — v1.31
+# Verifiche hardware, test locali e problemi aperti — v1.32
+
+## Da provare con la v1.32
+
+- [ ] Cambiando Bank dai pulsanti del Player, la scheda RIG mostra nome Bank e 5 nomi slot.
+- [ ] Cambiando Bank dall'app (scheda RIG, + e −, poi uno slot) arrivano anche i nomi? (vedi `bankNames.received` nella diagnostica)
+
+# Verifiche v1.31
 
 ## Esito prova sul Player v1.30 (25/09/2026, Reno 12 Pro)
 

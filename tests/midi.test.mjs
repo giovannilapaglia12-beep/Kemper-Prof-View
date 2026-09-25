@@ -28,6 +28,18 @@ test('Parser keeps the real 14-bit Morph and tempo values', () => {
   assert.equal(parser.state.tempoRaw, 4290);
 });
 
+test('Parser reads bank and slot names sent by the Player (function 0x07, real log bytes)', () => {
+  const parser = new midi.KemperMidiState();
+  const hex = str => Uint8Array.from(str.split(' ').map(h => parseInt(h, 16)));
+  const bank = parser.ingest({ data: hex('F0 00 20 33 00 00 07 00 00 00 01 00 00 52 54 20 46 49 52 45 53 50 49 54 00 F7') });
+  assert.equal(bank.type, 'Kemper Bank Names');
+  assert.equal(bank.index, 0);
+  assert.equal(bank.text, 'RT FIRESPIT');
+  const slot = parser.ingest({ data: hex('F0 00 20 33 00 00 07 00 00 00 01 00 03 42 72 65 61 6B 75 70 00 F7') });
+  assert.equal(slot.index, 3);
+  assert.equal(slot.text, 'Breakup');
+});
+
 test('Parser distinguishes program change and effect state', () => {
   const parser = new midi.KemperMidiState();
   assert.equal(parser.ingest({ data: Uint8Array.from([0xc0, 0x2b]) }).program, 43);
@@ -118,6 +130,7 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
+    handleBankNames() {}, refreshRigControlsOnBankNames() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},

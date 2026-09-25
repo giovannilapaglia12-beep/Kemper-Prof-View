@@ -13,7 +13,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.31</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.32</p>
         <h1>Kemper Stage View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -109,17 +109,17 @@
           </div>
           <div class="live-bank-row" aria-label="Selezione Bank">
             <button id="live-bank-down" type="button" aria-label="Bank precedente">−</button>
-            <span>BANK <strong id="live-bank-value">1</strong></span>
+            <span>BANK <strong id="live-bank-value">1</strong><em class="live-bank-name" id="live-bank-name"></em></span>
             <button id="live-bank-up" type="button" aria-label="Bank successiva">+</button>
           </div>
           <div class="live-rig-slots" aria-label="Cinque Rig della Bank">
-            <button type="button" data-live-rig-slot="1" disabled><strong>1</strong><span>RIG 1</span></button>
-            <button type="button" data-live-rig-slot="2" disabled><strong>2</strong><span>RIG 2</span></button>
-            <button type="button" data-live-rig-slot="3" disabled><strong>3</strong><span>RIG 3</span></button>
-            <button type="button" data-live-rig-slot="4" disabled><strong>4</strong><span>RIG 4</span></button>
-            <button type="button" data-live-rig-slot="5" disabled><strong>5</strong><span>RIG 5</span></button>
+            <button type="button" data-live-rig-slot="1" disabled><strong>1</strong><span>RIG 1</span><small></small></button>
+            <button type="button" data-live-rig-slot="2" disabled><strong>2</strong><span>RIG 2</span><small></small></button>
+            <button type="button" data-live-rig-slot="3" disabled><strong>3</strong><span>RIG 3</span><small></small></button>
+            <button type="button" data-live-rig-slot="4" disabled><strong>4</strong><span>RIG 4</span><small></small></button>
+            <button type="button" data-live-rig-slot="5" disabled><strong>5</strong><span>RIG 5</span><small></small></button>
           </div>
-          <p class="rig-panel-note">Dopo il cambio l’app torna automaticamente alla schermata PALCO.</p>
+          <p class="rig-panel-note">Dopo il cambio l’app torna automaticamente alla schermata PALCO. I nomi di tutta la Bank arrivano dal Player quando cambi Bank sul Player; l’app li ricorda.</p>
         </div>
       </section>
 

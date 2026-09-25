@@ -1,6 +1,10 @@
-# Kemper Stage View v1.31
+# Kemper Stage View v1.32
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+
+## Novità v1.32
+
+- **Nomi di Bank e slot dal Player**: quando si cambia Bank sul Player, il Player invia da solo (SysEx funzione `0x07`, non documentata) il nome della Bank e i nomi dei 5 slot, seguiti dal Program Change. L'app li associa alla Bank del Program Change, li mostra nella scheda RIG (nome dello slot grande, nome del Rig piccolo sotto) e li ricorda sul telefono. Scoperto nella diagnostica del 25/09/2026.
 
 ## Novità v1.31 (dopo la prova sul Player del 25/09/2026)
 

@@ -209,6 +209,21 @@ export class KemperMidiState {
         };
       }
 
+      if (functionCode === 0x07 && bytes.length >= 14) {
+        // Non documentato: il Player lo invia da solo al cambio Bank.
+        // Indice 0 = nome della Bank, 1…5 = nomi degli slot.
+        const index = bytes[12];
+        const terminator = bytes.indexOf(0x00, 13);
+        const end = terminator === -1 ? bytes.length - 1 : terminator;
+        const text = String.fromCharCode(...bytes.slice(13, end)).trim();
+        return {
+          type: "Kemper Bank Names",
+          detail: `${index === 0 ? "Bank" : `Slot ${index}`} · ${text || "(vuoto)"}`,
+          index,
+          text,
+        };
+      }
+
       return { type: "Kemper SysEx", detail: bytesToHex(bytes) };
     }
 

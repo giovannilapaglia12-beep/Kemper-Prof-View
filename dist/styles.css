@@ -1496,3 +1496,12 @@ body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8r
 }
 .stage-rig-meta:has(.stage-looper:not([hidden])) .live-connection { flex: 0 0 auto; width: 1.1em; }
 .stage-sync { margin-left: auto; }
+
+/* v1.32 · nomi Bank e slot dal Player */
+.live-bank-name { display: block; margin-top: 2px; color: var(--text); font-size: 0.9rem; font-style: normal; font-weight: 800; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.live-bank-name:empty { display: none; }
+.rig-panel .live-rig-slots button { grid-template-areas: "num name" "num rig"; row-gap: 2px; }
+.rig-panel .live-rig-slots button strong { grid-area: num; }
+.rig-panel .live-rig-slots button span { grid-area: name; }
+.rig-panel .live-rig-slots button small { grid-area: rig; color: var(--muted); font-size: 0.78rem; font-weight: 700; overflow-wrap: anywhere; }
+.rig-panel .live-rig-slots button small:empty { display: none; }

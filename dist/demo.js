@@ -50,6 +50,11 @@ export function installDemoKemper() {
       }
       const family = b[0] & 0xf0;
       if (family === 0xc0) {
+        const newBank = Math.floor((b[1] % 50) / 5);
+        if (newBank !== Math.floor(st.program / 5)) {
+          const names = [`Bank ${newBank + 1}`, "Clean", "Edge", "Breakup", "Drive", "Swells"];
+          names.forEach((name, index) => emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(name), 0x00, 0xf7]));
+        }
         st.program = b[1] % 50;
         st.fx = structuredClone(fxSets[st.program % 2]);
         st.morph = 0; st.freeze = 0;

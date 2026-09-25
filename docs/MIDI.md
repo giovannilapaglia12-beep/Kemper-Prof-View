@@ -77,3 +77,19 @@ La UI fa seguire la sequenza di rilascio (`CC38=0`) al termine del tocco; ERASE 
 - [Documentazione ufficiale Kemper: download dei manuali e MIDI Parameter Documentation](https://www.kemper-amps.com/downloads/5/User-Manuals).
 - [Forum Kemper: risposta ufficiale su funzioni Looper e NRPN](https://forum.kemper-amps.com/forum/thread/64104-using-external-4-switches-to-control-all-looper-functions-also-loop-volume/?postID=682503).
 - [Forum Kemper: test con Player III per Undo e sequenze PRESS/RELEASE](https://forum.kemper-amps.com/forum/thread/66591-midi-to-undo-in-the-looper/?postID=706518). Le risposte del forum sono un riferimento aggiuntivo: la prova sul Player dell’utente resta necessaria.
+
+
+## Nomi di Bank e slot inviati dal Player (v1.32)
+
+Osservato sul Player dell'utente il 25/09/2026, non presente nella documentazione ufficiale. Al cambio Bank sul Player arrivano sei messaggi, poi `B0 00 00`, `B0 20 00` e il Program Change:
+
+```
+F0 00 20 33 00 00 07 00 00 00 01 00 <indice> <testo ASCII> 00 F7
+```
+
+| Indice | Contenuto | Esempio reale |
+| --- | --- | --- |
+| `00` | Nome Bank | `RT FIRESPIT` |
+| `01`…`05` | Nome slot 1…5 | `Clean`, `Edge`, `Breakup`, `Drive`, `Swells` |
+
+Il Program Change che segue (es. `C0 2A` = 42 → Bank 9, slot 3) indica a quale Bank appartengono i nomi. Da verificare se il Player invia questi messaggi anche quando è l'app a cambiare Bank.

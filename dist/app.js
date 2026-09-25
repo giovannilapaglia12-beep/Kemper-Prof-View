@@ -20,7 +20,7 @@ import {
   bytesToHex,
 } from "./kemper-midi.js";
 
-const APP_VERSION = "1.31";
+const APP_VERSION = "1.32";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -63,6 +63,7 @@ const ui = {
   liveBankDown: $("#live-bank-down"),
   liveBankUp: $("#live-bank-up"),
   liveBankValue: $("#live-bank-value"),
+  liveBankName: $("#live-bank-name"),
   liveRigStatus: $("#live-rig-status"),
   liveRigPosition: $("#live-rig-position"),
   stageLooper: $("#stage-looper"),
@@ -171,6 +172,10 @@ const session = {
   rigSelectedBank: null,
   rigSelectedSlot: null,
   rigNames: new Map(),
+  slotNames: new Map(),
+  bankNames: new Map(),
+  pendingBankList: null,
+  bankListsReceived: [],
   rigSelectPending: null,
   rigSelectLastCommand: null,
   rigSelectConfirmedAt: null,
@@ -263,6 +268,39 @@ try {
     if (/^\d+:[1-5]$/.test(key) && typeof name === "string" && name) session.rigNames.set(key, name);
   }
 } catch { /* nomi ricordati facoltativi */ }
+
+const BANK_NAMES_KEY = "kemper-stage-view-bank-names";
+try {
+  const stored = JSON.parse(localStorage.getItem(BANK_NAMES_KEY) ?? "{}");
+  for (const [key, name] of Object.entries(stored.banks ?? {})) if (typeof name === "string") session.bankNames.set(key, name);
+  for (const [key, name] of Object.entries(stored.slots ?? {})) if (/^\d+:[1-5]$/.test(key) && typeof name === "string") session.slotNames.set(key, name);
+} catch { /* facoltativo */ }
+
+function rememberBankList(bank, list) {
+  if (list.bankName) session.bankNames.set(String(bank), list.bankName);
+  for (const [slot, name] of Object.entries(list.slots)) {
+    if (Number(slot) >= 1 && Number(slot) <= 5 && name) session.slotNames.set(`${bank}:${slot}`, name);
+  }
+  session.bankListsReceived.push({ time: new Date().toISOString(), bank, ...list });
+  session.bankListsReceived = session.bankListsReceived.slice(-10);
+  try {
+    localStorage.setItem(BANK_NAMES_KEY, JSON.stringify({
+      banks: Object.fromEntries(session.bankNames),
+      slots: Object.fromEntries(session.slotNames),
+    }));
+  } catch { /* facoltativo */ }
+}
+
+function handleBankNames(decoded) {
+  if (decoded?.type !== "Kemper Bank Names") return;
+  const now = performance.now();
+  if (decoded.index === 0 || !session.pendingBankList || now - session.pendingBankList.at > 1000) {
+    session.pendingBankList = { bankName: null, slots: {}, at: now };
+  }
+  if (decoded.index === 0) session.pendingBankList.bankName = decoded.text;
+  else session.pendingBankList.slots[decoded.index] = decoded.text;
+  session.pendingBankList.at = now;
+}
 
 function rememberRigName(bank, slot, name) {
   if (!name) return;
@@ -574,6 +612,7 @@ function refreshRigControls() {
   ui.rigControlPanel.dataset.pending = String(pending);
   ui.rigBankValue.textContent = String(session.rigTargetBank);
   ui.liveBankValue.textContent = String(session.rigTargetBank);
+  ui.liveBankName.textContent = session.bankNames.get(String(session.rigTargetBank)) ?? "";
   ui.rigBankDown.disabled = pending || session.rigTargetBank <= 1;
   ui.rigBankUp.disabled = pending || session.rigTargetBank >= 10;
   ui.liveBankDown.disabled = pending || session.rigTargetBank <= 1;
@@ -589,13 +628,16 @@ function refreshRigControls() {
   for (const button of ui.liveRigSlots) {
     const slot = Number(button.dataset.liveRigSlot);
     const active = session.rigSelectedBank === session.rigTargetBank && session.rigSelectedSlot === slot;
-    const name = session.rigNames.get(`${session.rigTargetBank}:${slot}`);
+    const rigName = session.rigNames.get(`${session.rigTargetBank}:${slot}`);
+    const slotName = session.slotNames.get(`${session.rigTargetBank}:${slot}`);
+    const name = slotName ?? rigName;
     button.disabled = !hasOutput || !session.sysex || pending;
     button.dataset.active = String(active);
     button.dataset.pending = String(pending && session.rigSelectPending.slot === slot);
     button.setAttribute("aria-pressed", String(active));
     button.setAttribute("aria-label", `Carica Bank ${session.rigTargetBank}, Rig ${slot}${name ? `, ${name}` : ""}`);
     button.querySelector("span").textContent = name || `RIG ${slot}`;
+    button.querySelector("small").textContent = slotName && rigName && rigName !== slotName ? rigName : "";
   }
   if (pending) {
     ui.rigControlStatus.textContent = `ATTENDO · BANK ${pending.bank} · RIG ${pending.slot}`;
@@ -634,6 +676,10 @@ function requestRigSelectionConfirmation() {
   sendProfilerRequests([buildRigNameRequest()], { record: false });
 }
 
+function refreshRigControlsOnBankNames(decoded) {
+  if (decoded?.type === "Program Change") refreshRigControls();
+}
+
 function handleRigSelectionState(decoded) {
   if (decoded?.type !== "Kemper String" || decoded.page !== 0x00 || decoded.parameter !== 0x01) return;
   if (session.rigSelectPollTimer === null || session.rigSelectPending === null || !session.rigSelectAwaitingReply) return;
@@ -656,6 +702,11 @@ function trackProfilerRig(decoded) {
     if (!Number.isInteger(decoded.program) || decoded.program < 0 || decoded.program >= 50) return;
     const bank = Math.floor(decoded.program / 5) + 1;
     const slot = decoded.program % 5 + 1;
+    const list = session.pendingBankList;
+    if (list && performance.now() - list.at < 1500) {
+      rememberBankList(bank, list);
+      session.pendingBankList = null;
+    }
     if (session.rigSelectPending !== null) {
       if (session.rigSelectPending.bank === bank && session.rigSelectPending.slot === slot) return;
       stopRigSelectionConfirmation();
@@ -1644,7 +1695,9 @@ function attachInputs() {
       if (!isProfilerPort(input)) return;
       const sourceName = describePort(input);
       const decoded = kemper.ingest(event);
+      handleBankNames(decoded);
       trackProfilerRig(decoded);
+      refreshRigControlsOnBankNames(decoded);
       handlePerformanceControl(decoded, sourceName);
       handleMorphState(decoded, sourceName);
       handleEffectState(decoded);
@@ -2517,6 +2570,11 @@ function buildDiagnostics() {
         pollsSent: session.tempoPollsSent,
         repliesReceived: session.tempoRepliesReceived,
       },
+    },
+    bankNames: {
+      received: session.bankListsReceived,
+      remembered: Object.fromEntries(session.bankNames),
+      slots: Object.fromEntries(session.slotNames),
     },
     rigControl: {
       targetBank: session.rigTargetBank,
