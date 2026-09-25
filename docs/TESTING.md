@@ -1,4 +1,24 @@
-# Verifiche hardware, test locali e problemi aperti — v1.30
+# Verifiche hardware, test locali e problemi aperti — v1.31
+
+## Esito prova sul Player v1.30 (25/09/2026, Reno 12 Pro)
+
+| Funzione | Esito |
+| --- | --- |
+| PALCO senza scorrere, effetti ON/OFF, accordatore, scheda RIG, schermo sempre acceso | OK |
+| Looper REC/PLAY/OVERDUB, STOP, UNDO, REVERSE | OK |
+| Looper ½ SPEED | Suonava al doppio: probabile ½ SPEED attivo durante la registrazione (comportamento Kemper). Da riprovare: registra, poi tocca ½ SPEED una volta |
+| Looper CANCELLA | Non funzionava con la pressione lunga → v1.31 doppio tocco + Erase + STOP tenuto 2,2 s |
+| Orizzontale | Nomi effetti uscivano dai riquadri → v1.31 carattere ridotto |
+| Nomi Rig | Solo dopo aver scelto il Rig → v1.31 li ricorda; lettura di tutta la Bank prevista con la modalità bidirezionale |
+
+## Da provare con la v1.31
+
+- [ ] Stato Looper: REGISTRAZIONE/RIPRODUZIONE/OVERDUB/FERMO corrispondono a ciò che fa il Player.
+- [ ] CANCELLA LOOP (due tocchi) con loop in riproduzione e con loop fermo.
+- [ ] ½ SPEED toccato una volta dopo aver registrato: il loop rallenta; ritoccato: torna normale.
+- [ ] Salva diagnostica (file) crea il .json nei Download.
+
+# Storico v1.30
 
 ## Da provare sul Player con la v1.30
 

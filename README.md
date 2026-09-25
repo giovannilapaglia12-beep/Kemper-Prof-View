@@ -1,6 +1,14 @@
-# Kemper Stage View v1.30
+# Kemper Stage View v1.31
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+
+## Novità v1.31 (dopo la prova sul Player del 25/09/2026)
+
+- **Stato del Looper visibile**: REGISTRAZIONE (rosso lampeggiante, con secondi), RIPRODUZIONE, OVERDUB, FERMO, LOOP VUOTO; durata del loop e indicatori REVERSE / ½ SPEED. È uno **stato stimato** dall'app in base ai comandi inviati secondo la logica Kemper (il Player non lo comunica); pulsante SEGNA COME VUOTO per riallinearlo. Sulla schermata PALCO compare un indicatore del loop che porta alla scheda LOOPER.
+- **CANCELLA LOOP**: ora si conferma con un secondo tocco (niente pressione lunga, che su Android poteva annullarsi) e invia sia il comando Erase (NRPN 125/94) sia STOP tenuto premuto 2,2 s, come indicato nel manuale Kemper.
+- **Nomi dei Rig ricordati** sul telefono: una volta visto, il nome resta nella scheda RIG anche dopo il riavvio dell'app.
+- **Orizzontale**: nomi degli effetti più piccoli per restare nei riquadri.
+- **Diagnostica su file**: ALTRO → "Salva diagnostica (file)" salva un .json nei Download, da allegare in chat (la copia negli appunti poteva essere tagliata).
 
 ## Novità v1.30
 

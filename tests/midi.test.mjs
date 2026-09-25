@@ -35,15 +35,23 @@ test('Parser distinguishes program change and effect state', () => {
   assert.equal(parser.state.effects.get(0x3d).active, true);
 });
 
-test('Looper Record and Undo send an NRPN press then release on the selected channel', () => {
-  const sent = [];
+function looperContext(sent, channel = 2) {
   const output = { name: 'Profiler', manufacturer: 'Kemper', send: bytes => sent.push([...bytes]) };
-  const session = { lastState: { channel: 2 }, transmitted: [], looperLastCommands: [] };
-  const ui = { looperStatus: { textContent: '' }, copy: { disabled: true } };
+  const session = { lastState: { channel }, transmitted: [], looperLastCommands: [] };
+  const node = () => ({ textContent: '', hidden: false, dataset: {} });
+  const ui = { looperStatus: node(), copy: { disabled: true }, looperState: node(), looperStateLabel: node(),
+    looperStateTime: node(), looperStateFlags: node(), stageLooper: node() };
   const source = functionSnippet('const LOOPER_SWITCHES = {', 'function releaseAllLooperSwitches()');
   const context = { session, ui, profilerOutputs: () => [output], describePort: () => 'Profiler · Kemper',
-    bytesToHex: midi.bytesToHex, Date, Set };
-  vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch;`, context);
+    bytesToHex: midi.bytesToHex, Date, Set, performance: { now: () => 1000 },
+    window: { setInterval: () => 1, clearInterval() {} } };
+  vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;`, context);
+  return context;
+}
+
+test('Looper Record and Undo send an NRPN press then release on the selected channel', () => {
+  const sent = [];
+  const context = looperContext(sent);
   for (const [key, parameter] of [['record', 88], ['undo', 93]]) {
     const start = sent.length;
     assert.equal(context.sendLooperSwitch(key, true), true);
@@ -51,8 +59,26 @@ test('Looper Record and Undo send an NRPN press then release on the selected cha
     assert.deepEqual(sent.slice(start), [[0xb1, 99, 125], [0xb1, 98, parameter], [0xb1, 6, 0], [0xb1, 38, 1],
       [0xb1, 99, 125], [0xb1, 98, parameter], [0xb1, 6, 0], [0xb1, 38, 0]]);
   }
-  assert.equal(session.looperLastCommands.length, 2);
-  assert.match(ui.looperStatus.textContent, /non verificato/);
+  assert.equal(context.session.looperLastCommands.length, 2);
+  assert.match(context.ui.looperStatus.textContent, /comando inviato/);
+});
+
+test('Looper estimated state follows the Kemper Rec/Play/Dub and Stop logic', () => {
+  const context = looperContext([]);
+  const press = key => context.sendLooperSwitch(key, true);
+  assert.equal(context.looper.state, 'empty');
+  press('record'); assert.equal(context.looper.state, 'recording');
+  assert.equal(context.ui.stageLooper.hidden, false);
+  press('record'); assert.equal(context.looper.state, 'playing');
+  press('record'); assert.equal(context.looper.state, 'overdub');
+  press('undo'); assert.equal(context.looper.state, 'playing');
+  press('stop'); assert.equal(context.looper.state, 'stopped');
+  press('record'); assert.equal(context.looper.state, 'playing');
+  press('stop'); press('stop'); press('stop');
+  assert.equal(context.looper.state, 'empty');
+  assert.equal(context.ui.stageLooper.hidden, true);
+  press('record'); press('erase');
+  assert.equal(context.looper.state, 'empty');
 });
 
 test('Morph slider sends the requested CC11 value and waits for a reply', () => {

@@ -13,7 +13,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.30</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.31</p>
         <h1>Kemper Stage View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -34,6 +34,7 @@
         <div class="stage-rig">
           <div class="stage-rig-meta">
             <span class="live-connection" id="live-connection-status">Non collegato</span>
+            <button class="stage-looper" id="stage-looper" type="button" data-state="empty" hidden>LOOP</button>
             <span class="stage-rig-position" id="live-rig-position">BANK — · RIG —</span>
             <button class="stage-sync" id="live-sync-button" type="button" aria-label="Rileggi lo stato dal Kemper" disabled>SYNC</button>
           </div>
@@ -125,7 +126,13 @@
       <section class="looper-panel" aria-labelledby="looper-heading">
         <p class="section-kicker">KEMPER PLAYER · LEVEL III</p>
         <h2 id="looper-heading">Looper</h2>
-        <p class="looper-info">I pulsanti simulano la pressione e il rilascio dei controlli del Player. La schermata indica il comando inviato; il Player non comunica qui uno stato verificato della registrazione.</p>
+        <div class="looper-state" id="looper-state" data-state="empty" role="status" aria-live="polite">
+          <span class="looper-state-dot" aria-hidden="true"></span>
+          <strong id="looper-state-label">LOOP VUOTO</strong>
+          <span class="looper-state-time" id="looper-state-time"></span>
+          <span class="looper-state-flags" id="looper-state-flags"></span>
+        </div>
+        <p class="looper-info">Stato stimato dall’app in base ai comandi inviati: il Player non lo comunica. Se usi anche i pulsanti del Player e lo stato non corrisponde, tocca <button class="looper-state-reset" id="looper-state-reset" type="button">SEGNA COME VUOTO</button></p>
         <div class="looper-main-controls">
           <button class="looper-button looper-record" data-looper-switch="record" type="button" disabled><strong>●</strong> REC / PLAY / OVERDUB</button>
           <button class="looper-button looper-stop" data-looper-switch="stop" type="button" disabled><strong>■</strong> STOP</button>
@@ -136,7 +143,7 @@
           <button class="looper-button" data-looper-switch="half" type="button" disabled>½ SPEED</button>
           <button class="looper-button" data-looper-switch="undo" type="button" disabled>UNDO / REDO</button>
         </div>
-        <button class="looper-button looper-erase" id="looper-erase" type="button" aria-label="Tieni premuto un secondo per cancellare il loop" disabled>TIENI PREMUTO 1 S · CANCELLA LOOP</button>
+        <button class="looper-button looper-erase" id="looper-erase" type="button" aria-label="Cancella il loop: tocca due volte per confermare" disabled>CANCELLA LOOP</button>
         <p class="looper-status" id="looper-status" role="status">Collega il Kemper per usare il Looper.</p>
       </section>
 
@@ -366,7 +373,10 @@
             <p class="section-kicker">MIDI MONITOR</p>
             <h2 id="monitor-heading">Messaggi ricevuti</h2>
           </div>
-          <button class="text-button" id="copy-button" type="button" disabled>Copia diagnostica</button>
+          <div class="diagnostic-actions">
+            <button class="text-button" id="save-diagnostics-button" type="button">Salva diagnostica (file)</button>
+            <button class="text-button" id="copy-button" type="button" disabled>Copia diagnostica</button>
+          </div>
         </div>
 
         <div class="monitor-summary" aria-live="polite">

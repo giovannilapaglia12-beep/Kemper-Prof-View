@@ -257,7 +257,7 @@ body[data-view="full"] .looper-panel { display: none; }
 .looper-button[data-pressed="true"] { background: rgba(114, 235, 220, 0.2); border-color: var(--cyan); }
 .looper-button:disabled { opacity: 0.42; cursor: not-allowed; }
 .looper-erase { width: 100%; min-height: 56px; margin-top: 22px; border-color: rgba(255, 106, 106, 0.38); color: var(--red); font-size: 0.85rem; }
-.looper-erase[data-arming="true"] { border-color: var(--red); background: rgba(255, 106, 106, 0.13); }
+.looper-erase[data-arming="true"] { border-color: var(--red); background: rgba(255, 106, 106, 0.22); color: var(--text); }
 .looper-status { min-height: 32px; margin: 16px 2px 0; color: var(--cyan); font-size: 0.86rem; font-weight: 750; }
 
 .live-utility-row { justify-content: flex-start; margin-bottom: 16px; }
@@ -1430,3 +1430,69 @@ body:not([data-view="full"]) .toast[data-visible="true"] { transform: translateY
   .tuner-overlay-note { font-size: clamp(3.5rem, 22vh, 7rem); }
   .tuner-overlay-close { min-height: 46px; margin-top: 4px; }
 }
+
+/* ==========================================================================
+   v1.31 · Stato Looper, nomi rig, orizzontale, diagnostica
+   ========================================================================== */
+.looper-state {
+  --state: var(--muted);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "dot label time" "dot flags flags";
+  align-items: center;
+  column-gap: 12px;
+  margin: 6px 0 12px;
+  padding: 16px 18px;
+  border: 2px solid color-mix(in srgb, var(--state) 55%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--state) 10%, #050a07);
+}
+.looper-state[data-state="recording"] { --state: var(--red); }
+.looper-state[data-state="overdub"] { --state: var(--amber); }
+.looper-state[data-state="playing"] { --state: var(--green); }
+.looper-state[data-state="stopped"] { --state: var(--cyan); }
+.looper-state-dot { grid-area: dot; width: 18px; height: 18px; border-radius: 50%; background: var(--state); }
+.looper-state[data-state="recording"] .looper-state-dot,
+.looper-state[data-state="overdub"] .looper-state-dot { animation: looper-blink 0.9s steps(2, jump-none) infinite; box-shadow: 0 0 18px var(--state); }
+#looper-state-label { grid-area: label; min-width: 0; color: var(--state); font-size: clamp(1.05rem, 5.2vw, 1.8rem); font-weight: 900; letter-spacing: 0.02em; }
+.looper-state-time { grid-area: time; font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.looper-state-flags { grid-area: flags; color: var(--amber); font-size: 0.75rem; font-weight: 900; letter-spacing: 0.1em; }
+.looper-state-flags:empty { display: none; }
+.looper-state-reset {
+  margin-left: 4px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 7px;
+  background: transparent; color: var(--text); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.06em; cursor: pointer;
+}
+body:not([data-view="full"]) .looper-panel { padding: 16px; }
+body:not([data-view="full"]) .looper-panel h2 { font-size: 1.6rem; margin-bottom: 4px; }
+body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8rem; }
+@keyframes looper-blink { 50% { opacity: 0.25; } }
+
+/* Indicatore Looper sulla schermata PALCO */
+.stage-looper {
+  --state: var(--cyan);
+  flex: 0 0 auto; min-height: 26px; padding: 0 8px; border: 1px solid var(--state); border-radius: 7px;
+  background: color-mix(in srgb, var(--state) 16%, transparent); color: var(--state);
+  font-size: 0.7rem; font-weight: 900; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.stage-looper[hidden] { display: none; }
+.stage-looper[data-state="recording"] { --state: var(--red); animation: looper-blink 0.9s steps(2, jump-none) infinite; }
+.stage-looper[data-state="overdub"] { --state: var(--amber); }
+.stage-looper[data-state="playing"] { --state: var(--green); }
+
+.diagnostic-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .stage .live-effect-button { padding: 5px 6px; }
+  body[data-view="live"] .stage .live-effect-button > strong {
+    font-size: clamp(0.64rem, 1.45vw, 0.86rem);
+    -webkit-line-clamp: 2;
+  }
+  body[data-view="live"] .stage .live-effect-button > span,
+  body[data-view="live"] .stage .live-effect-button > small { font-size: 0.66rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .looper-state-dot, .stage-looper { animation: none !important; }
+}
+.stage-rig-meta:has(.stage-looper:not([hidden])) .live-connection { flex: 0 0 auto; width: 1.1em; }
+.stage-sync { margin-left: auto; }

@@ -20,7 +20,7 @@ import {
   bytesToHex,
 } from "./kemper-midi.js";
 
-const APP_VERSION = "1.30";
+const APP_VERSION = "1.31";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -65,6 +65,13 @@ const ui = {
   liveBankValue: $("#live-bank-value"),
   liveRigStatus: $("#live-rig-status"),
   liveRigPosition: $("#live-rig-position"),
+  stageLooper: $("#stage-looper"),
+  looperState: $("#looper-state"),
+  looperStateLabel: $("#looper-state-label"),
+  looperStateTime: $("#looper-state-time"),
+  looperStateFlags: $("#looper-state-flags"),
+  looperStateReset: $("#looper-state-reset"),
+  saveDiagnostics: $("#save-diagnostics-button"),
   tunerOverlay: $("#tuner-overlay"),
   tunerOverlayNote: $("#tuner-overlay-note"),
   tunerOverlayNeedle: $("#tuner-overlay-needle"),
@@ -248,6 +255,20 @@ const session = {
   wakeLock: null,
   wakeLockError: null,
 };
+
+const RIG_NAMES_KEY = "kemper-stage-view-rig-names";
+try {
+  const stored = JSON.parse(localStorage.getItem(RIG_NAMES_KEY) ?? "{}");
+  for (const [key, name] of Object.entries(stored)) {
+    if (/^\d+:[1-5]$/.test(key) && typeof name === "string" && name) session.rigNames.set(key, name);
+  }
+} catch { /* nomi ricordati facoltativi */ }
+
+function rememberRigName(bank, slot, name) {
+  if (!name) return;
+  session.rigNames.set(`${bank}:${slot}`, name);
+  try { localStorage.setItem(RIG_NAMES_KEY, JSON.stringify(Object.fromEntries(session.rigNames))); } catch { /* facoltativo */ }
+}
 
 const effectNodes = new Map();
 const liveEffectNodes = new Map();
@@ -620,7 +641,7 @@ function handleRigSelectionState(decoded) {
   const pending = session.rigSelectPending;
   session.rigSelectedBank = pending.bank;
   session.rigSelectedSlot = pending.slot;
-  session.rigNames.set(`${pending.bank}:${pending.slot}`, decoded.text);
+  rememberRigName(pending.bank, pending.slot, decoded.text);
   session.rigSelectConfirmedAt = new Date().toISOString();
   session.rigSelectLastCommand = { ...session.rigSelectLastCommand, confirmedRigName: decoded.text };
   stopRigSelectionConfirmation();
@@ -648,7 +669,7 @@ function trackProfilerRig(decoded) {
     const recentName = session.lastProfilerRigNameEvent;
     if (recentName && session.lastProfilerProgramAt - recentName.at < 250
       && session.lastProfilerProgramAt >= recentName.at && recentName.at - previousProgramAt > 1000) {
-      session.rigNames.set(`${bank}:${slot}`, recentName.name);
+      rememberRigName(bank, slot, recentName.name);
       session.profilerProgramAwaitsName = false;
     }
     refreshRigControls();
@@ -658,7 +679,7 @@ function trackProfilerRig(decoded) {
     const now = performance.now();
     session.lastProfilerRigNameEvent = { name: decoded.text, at: now };
     if (session.rigSelectedBank !== null && now - session.lastProfilerProgramAt < 1000) {
-      session.rigNames.set(`${session.rigSelectedBank}:${session.rigSelectedSlot}`, decoded.text);
+      rememberRigName(session.rigSelectedBank, session.rigSelectedSlot, decoded.text);
       session.profilerProgramAwaitsName = false;
       refreshRigControls();
     }
@@ -2131,6 +2152,73 @@ const LOOPER_SWITCHES = {
   erase: { parameter: 94, label: "CANCELLA LOOP" },
 };
 const looperSwitchReleases = new Set();
+const LOOPER_LABELS = {
+  empty: "LOOP VUOTO",
+  recording: "REGISTRAZIONE",
+  playing: "RIPRODUZIONE",
+  overdub: "OVERDUB",
+  stopped: "FERMO",
+};
+const looper = { state: "empty", since: 0, loopLength: null, stopPresses: 0, reverse: false, half: false, timer: null };
+
+function setLooperState(next) {
+  const now = performance.now();
+  if (looper.state === "recording" && next !== "recording") looper.loopLength = (now - looper.since) / 1000;
+  if (next === "empty") { looper.loopLength = null; looper.reverse = false; looper.half = false; }
+  if (next !== looper.state) looper.since = now;
+  looper.state = next;
+  window.clearInterval(looper.timer);
+  looper.timer = next === "recording" ? window.setInterval(paintLooperState, 250) : null;
+  paintLooperState();
+}
+
+function paintLooperState() {
+  const { state } = looper;
+  const seconds = state === "recording"
+    ? (performance.now() - looper.since) / 1000
+    : looper.loopLength;
+  const time = seconds === null ? "" : `${state === "recording" ? "" : "LOOP "}${seconds.toFixed(1)} s`;
+  const flags = [looper.reverse ? "REVERSE" : "", looper.half ? "½ SPEED" : ""].filter(Boolean).join(" · ");
+  ui.looperState.dataset.state = state;
+  ui.looperStateLabel.textContent = LOOPER_LABELS[state];
+  ui.looperStateTime.textContent = time;
+  ui.looperStateFlags.textContent = flags;
+  ui.stageLooper.hidden = state === "empty";
+  ui.stageLooper.dataset.state = state;
+  ui.stageLooper.textContent = state === "recording"
+    ? `● REC ${Math.floor(seconds)}s`
+    : { playing: "▶ LOOP", overdub: "● DUB", stopped: "■ LOOP" }[state] ?? "LOOP";
+}
+
+function trackLooperPress(key) {
+  if (key !== "stop") looper.stopPresses = 0;
+  switch (key) {
+    case "record":
+      setLooperState({ empty: "recording", recording: "playing", playing: "overdub", overdub: "playing", stopped: "playing" }[looper.state]);
+      break;
+    case "stop":
+      looper.stopPresses += 1;
+      // Manuale Kemper: premere STOP tre volte cancella il loop.
+      if (looper.stopPresses >= 3) { looper.stopPresses = 0; setLooperState("empty"); }
+      else if (looper.state !== "empty") setLooperState("stopped");
+      break;
+    case "undo":
+      if (looper.state === "overdub") setLooperState("playing");
+      break;
+    case "reverse":
+      if (looper.state !== "empty") { looper.reverse = !looper.reverse; paintLooperState(); }
+      break;
+    case "half":
+      looper.half = !looper.half;
+      paintLooperState();
+      break;
+    case "erase":
+      setLooperState("empty");
+      break;
+    default:
+      break;
+  }
+}
 let cancelLooperErase = () => {};
 
 function refreshLooperControls() {
@@ -2139,7 +2227,7 @@ function refreshLooperControls() {
   if (!connected) ui.looperStatus.textContent = "Player scollegato · comandi Looper disattivati";
   else if (ui.looperStatus.textContent.startsWith("Player scollegato")
     || ui.looperStatus.textContent.startsWith("Collega il Kemper")) {
-    ui.looperStatus.textContent = "Player collegato · comandi pronti; stato del loop non verificato";
+    ui.looperStatus.textContent = "Player collegato · comandi pronti";
   }
 }
 
@@ -2162,9 +2250,10 @@ function sendLooperSwitch(key, pressed) {
   }
   session.transmitted = session.transmitted.slice(-100);
   if (pressed) {
-    session.looperLastCommands.push({ time, key, parameter: command.parameter, channel });
+    trackLooperPress(key);
+    session.looperLastCommands.push({ time, key, parameter: command.parameter, channel, estimatedState: looper.state });
     session.looperLastCommands = session.looperLastCommands.slice(-20);
-    ui.looperStatus.textContent = `${command.label} · comando inviato; stato del loop non verificato`;
+    ui.looperStatus.textContent = `${command.label} · comando inviato`;
     ui.copy.disabled = false;
   }
   return true;
@@ -2222,47 +2311,47 @@ function bindLooperSwitch(button) {
 
 function bindLooperErase() {
   const button = ui.looperErase;
-  let timer = null;
-  let lastDirectAt = 0;
+  let armTimer = null;
+  let busy = false;
+  const idleLabel = "CANCELLA LOOP";
   cancelLooperErase = () => {
-    window.clearTimeout(timer);
-    timer = null;
+    window.clearTimeout(armTimer);
+    armTimer = null;
     button.dataset.arming = "false";
+    if (!busy) button.textContent = idleLabel;
   };
   const erase = () => {
-    if (!sendLooperSwitch("erase", true)) return;
-    window.setTimeout(() => sendLooperSwitch("erase", false), 90);
+    busy = true;
+    button.dataset.arming = "false";
+    button.textContent = "CANCELLAZIONE…";
+    // 1) comando dedicato Erase (NRPN 125/94), pressione breve
+    if (!sendLooperSwitch("erase", true)) { busy = false; cancelLooperErase(); return; }
+    window.setTimeout(() => sendLooperSwitch("erase", false), 250);
+    // 2) come sul Player: STOP tenuto premuto 2 secondi cancella il loop
+    window.setTimeout(() => {
+      sendLooperSwitch("stop", true);
+      looper.stopPresses = 0;
+      setLooperState("empty");
+      window.setTimeout(() => {
+        sendLooperSwitch("stop", false);
+        busy = false;
+        button.textContent = idleLabel;
+        ui.looperStatus.textContent = "CANCELLA LOOP · comando inviato (Erase + STOP tenuto 2 s)";
+      }, 2200);
+    }, 450);
   };
-  const arm = () => {
-    if (button.disabled || timer !== null) return;
-    button.dataset.arming = "true";
-    timer = window.setTimeout(() => { timer = null; button.dataset.arming = "false"; erase(); }, 1000);
-  };
-  button.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0) return;
-    lastDirectAt = Date.now();
-    arm();
-    if (timer !== null) button.setPointerCapture(event.pointerId);
-  });
-  button.addEventListener("pointerup", () => { lastDirectAt = Date.now(); cancelLooperErase(); });
-  button.addEventListener("pointercancel", cancelLooperErase);
-  button.addEventListener("lostpointercapture", cancelLooperErase);
-  button.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    lastDirectAt = Date.now();
-    if (!event.repeat) arm();
-  });
-  button.addEventListener("keyup", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    lastDirectAt = Date.now();
-    cancelLooperErase();
-  });
-  button.addEventListener("blur", cancelLooperErase);
   button.addEventListener("click", () => {
-    if (button.disabled || Date.now() - lastDirectAt < 600) return;
-    if (window.confirm("Cancellare il loop registrato sul Kemper?")) erase();
+    if (button.disabled || busy) return;
+    if (armTimer === null) {
+      button.dataset.arming = "true";
+      button.textContent = "TOCCA DI NUOVO PER CANCELLARE";
+      navigator.vibrate?.(20);
+      armTimer = window.setTimeout(cancelLooperErase, 3000);
+      return;
+    }
+    window.clearTimeout(armTimer);
+    armTimer = null;
+    erase();
   });
 }
 
@@ -2373,8 +2462,8 @@ function clearLog() {
   }
 }
 
-async function copyDiagnostics() {
-  const payload = {
+function buildDiagnostics() {
+  return {
     app: `Kemper Stage View v${APP_VERSION}`,
     screenWakeLock: {
       supported: "wakeLock" in navigator,
@@ -2404,7 +2493,12 @@ async function copyDiagnostics() {
       confirmedAt: session.morphConfirmedAt,
       lastCommand: session.morphLastCommand,
     },
-    looperControl: { lastCommands: session.looperLastCommands, statusFeedback: "non disponibile" },
+    looperControl: {
+      lastCommands: session.looperLastCommands,
+      estimatedState: looper.state,
+      estimatedLoopSeconds: looper.loopLength,
+      statusFeedback: "stimato dall'app, non letto dal Player",
+    },
     effectControl: {
       pending: [...session.effectPending.entries()].map(([page, pending]) => ({
         page,
@@ -2495,6 +2589,24 @@ async function copyDiagnostics() {
     },
     messages: session.messages.slice().reverse(),
   };
+}
+
+function saveDiagnostics() {
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const blob = new Blob([JSON.stringify(buildDiagnostics(), null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `kemper-diagnostica-${stamp}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast("Diagnostica salvata nei Download");
+}
+
+async function copyDiagnostics() {
+  const payload = buildDiagnostics();
   try {
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
     toast("Diagnostica copiata");
@@ -2525,6 +2637,8 @@ ui.liveMorphApply.addEventListener("click", () => {
   sendMorphCommand(Math.round(Number(ui.liveMorphSlider.value) / 100 * 127));
 });
 for (const button of ui.looperButtons) bindLooperSwitch(button);
+ui.looperStateReset.addEventListener("click", () => { looper.stopPresses = 0; setLooperState("empty"); });
+ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();
 window.addEventListener("blur", releaseAllLooperSwitches);
 document.addEventListener("visibilitychange", () => {
@@ -2559,6 +2673,7 @@ for (const button of ui.viewButtons) {
 }
 ui.clear.addEventListener("click", clearLog);
 ui.copy.addEventListener("click", copyDiagnostics);
+ui.saveDiagnostics.addEventListener("click", saveDiagnostics);
 
 if ("requestMIDIAccess" in navigator) {
   ui.support.textContent = "Web MIDI disponibile. Collega il cavo e autorizza l’accesso.";
@@ -2573,6 +2688,7 @@ refreshFreezeControls();
 refreshFixedFxControls();
 refreshLiveMorphControls();
 refreshLooperControls();
+paintLooperState();
 try {
   setAppView(localStorage.getItem("kemper-stage-view-mode") ?? "live", { remember: false });
 } catch {
