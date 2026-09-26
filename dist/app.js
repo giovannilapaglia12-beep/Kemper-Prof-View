@@ -11,6 +11,7 @@ import {
   buildTempoRequest,
   buildTunerModeRequest,
   buildParameterRequest,
+  buildParameterChangeRequest,
   buildTunerStreamRequests,
   buildProfilerPollRequests,
   buildProfilerStateRequests,
@@ -21,7 +22,7 @@ import {
   bytesToHex,
 } from "./kemper-midi.js";
 
-const APP_VERSION = "1.35";
+const APP_VERSION = "1.36";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -79,6 +80,8 @@ const ui = {
   looperHalfFix: $("#looper-half-fix"),
   looperProbe: $("#looper-probe-button"),
   looperProbeResult: $("#looper-probe-result"),
+  locationButtons: [...document.querySelectorAll("[data-looper-location]")],
+  locationNote: $("#looper-location-note"),
   forgetNames: $("#forget-names-button"),
   quantizeButtons: [...document.querySelectorAll("[data-quantize]")],
   quantizeNote: $("#looper-quantize-note"),
@@ -567,6 +570,7 @@ function setAppView(view, { remember = true } = {}) {
   if (document.body.dataset.view === "looper" && next !== "looper") releaseAllLooperSwitches();
   document.body.dataset.view = next;
   if (next !== "live" && ui.morphLevelDetails) ui.morphLevelDetails.open = false;
+  if (next === "looper") requestLooperLocation();
   paintTunerOverlay();
   window.scrollTo(0, 0);
   for (const button of ui.viewButtons) {
@@ -901,6 +905,7 @@ function paintPorts() {
   ui.identity.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.auto.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.looperProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
+  paintLooperLocation();
   ui.morphProbe.disabled = profilerOutputs().length === 0 || session.morphPendingLevel !== null;
   refreshLiveMorphControls();
   refreshLooperControls();
@@ -1189,6 +1194,74 @@ function beginFixedFxConfirmation(effect, target) {
     toast(`${effect.label}: comando non confermato dal Kemper`);
   }, 2800);
   session.fixedFxPollTimers.set(effect.key, { interval, timeout });
+}
+
+// Looper Location (globale, pagina 127 parametro 53): 0 = Input, 1 = Output (verificato 26/09/2026)
+const LOOPER_LOCATION = { page: 0x7f, parameter: 53 };
+session.looperLocation = null;
+session.looperLocationPending = null;
+session.looperLocationTimers = null;
+
+function paintLooperLocation() {
+  const value = session.looperLocation;
+  const pending = session.looperLocationPending;
+  const canControl = session.sysex && profilerOutputs().length > 0;
+  for (const button of ui.locationButtons) {
+    const target = Number(button.dataset.looperLocation);
+    button.setAttribute("aria-pressed", String(value === target));
+    button.dataset.pending = String(pending === target);
+    button.disabled = !canControl || pending !== null || value === null;
+  }
+  ui.locationNote.textContent = pending !== null
+    ? "Attendo la conferma del Kemper…"
+    : value === 1
+      ? "USCITA: il loop registra il suono finito; gli effetti che cambi dopo non lo modificano."
+      : value === 0
+        ? "INGRESSO: il loop registra la chitarra pulita e passa ogni volta dagli effetti attuali."
+        : canControl ? "Lettura dell’impostazione dal Kemper…" : "Collega il Kemper per leggere l’impostazione.";
+}
+
+function requestLooperLocation() {
+  if (!session.sysex || !profilerOutputs().length) return;
+  sendProfilerRequests([buildParameterRequest(LOOPER_LOCATION.page, LOOPER_LOCATION.parameter, "Looper Location 127/53")], { record: false });
+}
+
+function stopLooperLocationConfirmation() {
+  if (session.looperLocationTimers) {
+    window.clearInterval(session.looperLocationTimers.interval);
+    window.clearTimeout(session.looperLocationTimers.timeout);
+  }
+  session.looperLocationTimers = null;
+  session.looperLocationPending = null;
+  paintLooperLocation();
+}
+
+function setLooperLocation(target) {
+  if (session.looperLocationPending !== null || session.looperLocation === target) return;
+  sendProfilerRequests([buildParameterChangeRequest(LOOPER_LOCATION.page, LOOPER_LOCATION.parameter, target,
+    `Looper Location ${target ? "OUTPUT" : "INPUT"}`)]);
+  session.looperLocationPending = target;
+  paintLooperLocation();
+  window.setTimeout(requestLooperLocation, 150);
+  session.looperLocationTimers = {
+    interval: window.setInterval(requestLooperLocation, 400),
+    timeout: window.setTimeout(() => {
+      stopLooperLocationConfirmation();
+      toast("Posizione Looper non confermata dal Kemper");
+    }, 2800),
+  };
+}
+
+function handleLooperLocation(decoded) {
+  if (decoded?.type !== "Kemper Parameter" || decoded.page !== LOOPER_LOCATION.page || decoded.parameter !== LOOPER_LOCATION.parameter) return;
+  if (decoded.value !== 0 && decoded.value !== 1) return;
+  session.looperLocation = decoded.value;
+  if (session.looperLocationPending === decoded.value) {
+    stopLooperLocationConfirmation();
+    toast(`Looper in ${decoded.value ? "USCITA" : "INGRESSO"} · confermato dal Kemper`);
+  } else {
+    paintLooperLocation();
+  }
 }
 
 function handleFixedFxState(decoded) {
@@ -1738,6 +1811,7 @@ function attachInputs() {
       handleRigSelectionState(decoded);
       handleFreezeState(decoded);
       handleFixedFxState(decoded);
+      handleLooperLocation(decoded);
       handleTunerStream(decoded, sourceName);
       captureTunerMode(decoded, sourceName);
       if (decoded?.type === "Kemper Parameter" && decoded.page === 0x7c && decoded.parameter === 0x00 && decoded.value === 1) {
@@ -2027,6 +2101,7 @@ function requestProfilerState({ silent = false, force = false } = {}) {
   }
   if (session.sysex && session.fixedFxPending.size === 0) {
     window.setTimeout(() => requestFixedFxState(FIXED_FX, { record: true }), 190);
+    window.setTimeout(requestLooperLocation, 240);
   }
   ui.syncStatus.textContent = "Richiesta inviata al Profiler…";
   if (!silent) toast("Sincronizzazione inviata al Profiler");
@@ -2718,6 +2793,7 @@ function buildDiagnostics() {
       estimatedHalfSpeed: looper.half,
       quantize: looper.quantize,
       probeResults: session.looperProbeResults ?? [],
+      location: session.looperLocation,
       statusFeedback: "stimato dall'app, non letto dal Player",
     },
     effectControl: {
@@ -2866,6 +2942,7 @@ for (const button of ui.looperButtons) bindLooperSwitch(button);
 ui.looperStateReset.addEventListener("click", () => { looper.stopPresses = 0; setLooperState("empty"); });
 ui.looperHalfFix.addEventListener("click", () => setLooperHalf(!looper.half));
 for (const button of ui.quantizeButtons) button.addEventListener("click", () => setQuantizeMode(button.dataset.quantize));
+for (const button of ui.locationButtons) button.addEventListener("click", () => setLooperLocation(Number(button.dataset.looperLocation)));
 let forgetArmTimer = null;
 ui.forgetNames.addEventListener("click", () => {
   if (forgetArmTimer === null) {

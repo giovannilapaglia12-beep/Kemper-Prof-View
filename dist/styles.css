@@ -1532,3 +1532,9 @@ body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8r
 .looper-quantize-options button { font-size: 0.62rem; letter-spacing: 0; }
 .looper-probe-result { margin: 10px 0 0; color: var(--cyan); font-size: 0.85rem; font-weight: 700; }
 .looper-probe-result:empty { display: none; }
+.looper-location-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.looper-location-options button { font-size: 0.78rem; }
+.looper-location-options button[data-pending="true"] { border-color: var(--amber); color: var(--amber); }
+.looper-location-options button:disabled { opacity: 0.6; cursor: default; }
+.looper-location-options button[aria-pressed="true"]:disabled { opacity: 1; }
+.looper-settings { display: grid; gap: 4px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }

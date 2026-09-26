@@ -1,6 +1,11 @@
-# Kemper Stage View v1.35
+# Kemper Stage View v1.36
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+
+## Novità v1.36
+
+- **Posizione Looper (Looper Location) dall'app**: nella scheda LOOPER, INGRESSO / USCITA, letta dal Kemper all'apertura della scheda e a ogni sincronizzazione, cambiata con conferma del Kemper. Parametro globale 127/53: **0 = Input, 1 = Output** (verificato sul Player il 26/09/2026).
+- Scheda LOOPER riordinata: stato e comandi in alto, impostazioni (aggancio al tempo, posizione, ½ SPEED) sotto CANCELLA LOOP.
 
 ## Novità v1.35
 

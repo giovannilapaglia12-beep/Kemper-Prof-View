@@ -13,7 +13,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.35</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.36</p>
         <h1>Kemper Stage View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -133,21 +133,6 @@
           <span class="looper-state-flags" id="looper-state-flags"></span>
         </div>
         <p class="looper-info">Stato stimato dall’app in base ai comandi inviati: il Player non lo comunica. Se usi anche i pulsanti del Player e lo stato non corrisponde, tocca <button class="looper-state-reset" id="looper-state-reset" type="button">SEGNA COME VUOTO</button></p>
-        <div class="looper-quantize" role="group" aria-label="Chiusura del loop agganciata al tempo">
-          <span class="looper-quantize-title">AGGANCIO AL TEMPO</span>
-          <div class="looper-quantize-options">
-            <button type="button" data-quantize="off" aria-pressed="true">OFF</button>
-            <button type="button" data-quantize="beat" aria-pressed="false">MOVIMENTO</button>
-            <button type="button" data-quantize="bar4" aria-pressed="false">BATTUTA 4/4</button>
-            <button type="button" data-quantize="bar3" aria-pressed="false">BATTUTA 3/4</button>
-          </div>
-          <small id="looper-quantize-note"></small>
-        </div>
-        <div class="looper-half" id="looper-half" data-active="false">
-          <span id="looper-half-label">½ SPEED: OFF</span>
-          <button class="looper-state-reset" id="looper-half-fix" type="button">NON CORRISPONDE? INVERTI</button>
-          <small id="looper-half-note"></small>
-        </div>
         <div class="looper-main-controls">
           <button class="looper-button looper-record" data-looper-switch="record" type="button" disabled><strong>●</strong> REC / PLAY / OVERDUB</button>
           <button class="looper-button looper-stop" data-looper-switch="stop" type="button" disabled><strong>■</strong> STOP</button>
@@ -159,6 +144,31 @@
           <button class="looper-button" data-looper-switch="undo" type="button" disabled>UNDO / REDO</button>
         </div>
         <button class="looper-button looper-erase" id="looper-erase" type="button" aria-label="Cancella il loop: tocca due volte per confermare" disabled>CANCELLA LOOP</button>
+        <div class="looper-settings">
+        <div class="looper-quantize" role="group" aria-label="Chiusura del loop agganciata al tempo">
+          <span class="looper-quantize-title">AGGANCIO AL TEMPO</span>
+          <div class="looper-quantize-options">
+            <button type="button" data-quantize="off" aria-pressed="true">OFF</button>
+            <button type="button" data-quantize="beat" aria-pressed="false">MOVIMENTO</button>
+            <button type="button" data-quantize="bar4" aria-pressed="false">BATTUTA 4/4</button>
+            <button type="button" data-quantize="bar3" aria-pressed="false">BATTUTA 3/4</button>
+          </div>
+          <small id="looper-quantize-note"></small>
+        </div>
+        <div class="looper-quantize looper-location" role="group" aria-label="Posizione del Looper">
+          <span class="looper-quantize-title">POSIZIONE LOOPER (LOOPER LOCATION)</span>
+          <div class="looper-quantize-options looper-location-options">
+            <button type="button" data-looper-location="0" aria-pressed="false" disabled>INGRESSO</button>
+            <button type="button" data-looper-location="1" aria-pressed="false" disabled>USCITA</button>
+          </div>
+          <small id="looper-location-note"></small>
+        </div>
+        <div class="looper-half" id="looper-half" data-active="false">
+          <span id="looper-half-label">½ SPEED: OFF</span>
+          <button class="looper-state-reset" id="looper-half-fix" type="button">NON CORRISPONDE? INVERTI</button>
+          <small id="looper-half-note"></small>
+        </div>
+        </div>
         <p class="looper-status" id="looper-status" role="status">Collega il Kemper per usare il Looper.</p>
       </section>
 

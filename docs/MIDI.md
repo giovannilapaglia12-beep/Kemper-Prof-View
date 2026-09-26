@@ -93,3 +93,16 @@ F0 00 20 33 00 00 07 00 00 00 01 00 <indice> <testo ASCII> 00 F7
 | `01`…`05` | Nome slot 1…5 | `Clean`, `Edge`, `Breakup`, `Drive`, `Swells` |
 
 Il Program Change che segue (es. `C0 2A` = 42 → Bank 9, slot 3) indica a quale Bank appartengono i nomi. Da verificare se il Player invia questi messaggi anche quando è l'app a cambiare Bank.
+
+
+## Parametri Looper leggibili (verificato 26/09/2026, v1.35)
+
+Lettura `F0 00 20 33 02 7F 41 00 <pagina> <parametro> F7`:
+
+| Parametro | Risposta osservata | Significato |
+| --- | --- | --- |
+| 125/88…94 (Rec, Stop, Trigger, Reverse, ½ Speed, Undo, Erase) | sempre 0 | Sono "pulsanti" (press/release), non stati: lo stato del loop **non** è leggibile |
+| 127/52 Looper Volume | 14987 (su 16383) | Volume del loop |
+| 127/53 Looper Location | Output = **1**, Input = **0** | Posizione del Looper nel percorso del segnale |
+
+Scrittura Location (v1.36): `F0 00 20 33 02 7F 01 00 7F 35 00 <00|01> F7`, poi rilettura per conferma.

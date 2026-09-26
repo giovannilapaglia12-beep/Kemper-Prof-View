@@ -10,7 +10,7 @@ export function installDemoKemper() {
     { 0x32: [49, 0], 0x33: [114, 1], 0x34: [42, 0], 0x35: [0, 0], 0x38: [98, 1], 0x3a: [81, 1], 0x3c: [147, 0], 0x3d: [181, 1] },
   ];
   const st = { program: 5, tempo: 4288, morph: 0, tuner: 3, tunerAt: 0, freeze: 0, fx: structuredClone(fxSets[1]),
-    fixed: { 0x10: 0, 0x1a: 1, 0x01: 0, 0x29: 0 } };
+    fixed: { 0x10: 0, 0x1a: 1, 0x01: 0, 0x29: 0 }, location: 1 };
   const rigName = () => rigs[Math.floor(st.program / 5) % 2][st.program % 5];
   const ccPage = { 17: 0x32, 18: 0x33, 19: 0x34, 20: 0x35, 22: 0x38, 24: 0x3a, 26: 0x3c, 27: 0x3c, 28: 0x3d, 29: 0x3d };
   const input = { id: "demo-in", name: "Profiler Player DEMO", manufacturer: "Kemper", state: "connected", type: "input", onmidimessage: null };
@@ -33,6 +33,7 @@ export function installDemoKemper() {
           if (p === 0x7d && q === 0x54) return st.tuner === 1 && param(0x7d, 0x54, 45);
           if (p === 0x7c && q === 0x51) return st.tuner === 1 && param(0x7c, 0x51, 8192 + Math.round(cents() * 81.92));
           if (p === 0x7d && q === 0x73) return param(0x7d, 0x73, st.freeze);
+          if (p === 0x7f && q === 53) return param(0x7f, 53, st.location);
           if (p === 5 && q in st.fixed) return param(5, q, st.fixed[q]);
           if (st.fx[p]) return param(p, q, q === 0 ? st.fx[p][0] : st.fx[p][1]);
         }
@@ -41,6 +42,7 @@ export function installDemoKemper() {
           if (p === 4 && q === 0) st.tempo = v;
           if (p === 0x7d && q === 0x73) st.freeze = v;
           if (p === 5 && q in st.fixed) st.fixed[q] = v;
+          if (p === 0x7f && q === 53) st.location = v;
         }
         if (fn === 0x7c && p === 4) {
           const v = (b[10] << 7) | b[11];

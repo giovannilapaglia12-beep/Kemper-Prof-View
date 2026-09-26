@@ -1,4 +1,11 @@
-# Verifiche hardware, test locali e problemi aperti — v1.35
+# Verifiche hardware, test locali e problemi aperti — v1.36
+
+## Da provare con la v1.36
+
+- [ ] Scheda LOOPER: la posizione mostrata (INGRESSO/USCITA) corrisponde a quella del Kemper.
+- [ ] Toccando l'altra posizione compare "confermato dal Kemper" e il comportamento del loop cambia di conseguenza.
+
+# Verifiche v1.35
 
 ## Esito v1.34 sul Player (26/09/2026)
 
