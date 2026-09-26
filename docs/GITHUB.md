@@ -1,4 +1,6 @@
-# Importare Kemper Stage View v1.29 su GitHub
+# Importare Kemper Profiler View su GitHub
+
+> Fino alla v1.36 l'app si chiamava *Kemper Stage View*; i comandi sotto usano ancora il vecchio nome del repository, che si può tenere.
 
 Questo archivio è un repository sorgente completo: estrarlo e usare la cartella `Kemper-Stage-View/`. La v1.29 è direttamente in `dist/`; non occorre spostare una bozza o una versione precedente.
 
@@ -56,3 +58,14 @@ git push
 ```
 
 Questa operazione non è richiesta per avviare l'app da `dist/` o per caricare lo ZIP su GitHub.
+
+
+## Cambio nome dell'app (v1.37) e indirizzo GitHub Pages
+
+Il nuovo nome **Kemper Profiler View** è già nei file (titolo, manifest, diagnostica). **Non serve rinominare il repository.**
+
+Se si vuole rinominare anche il repository (es. `kemper-profiler-view`): GitHub → repository → **Settings → General → Repository name**. Attenzione:
+
+- l'indirizzo GitHub Pages cambia da `https://UTENTE.github.io/kemper-stage-view/` a `https://UTENTE.github.io/kemper-profiler-view/` e il vecchio indirizzo **non** viene reindirizzato;
+- l'app installata sul telefono va quindi disinstallata e reinstallata dal nuovo indirizzo;
+- nomi di Bank/Rig e impostazioni memorizzati **restano**, perché appartengono al dominio `UTENTE.github.io`, uguale per entrambi gli indirizzi.

@@ -1,4 +1,19 @@
-# Verifiche hardware, test locali e problemi aperti — v1.36
+# Verifiche hardware, test locali e problemi aperti — v1.37
+
+## Da provare con la v1.37 (modalità bidirezionale)
+
+- [ ] Dopo Connetti MIDI, in ALTRO la scheda "Modalità bidirezionale" passa da AVVIO… ad **ATTIVA** entro pochi secondi, e in PALCO compare **● COLLEGATO ⇄**.
+- [ ] "Inviati dal Player" elenca almeno Nome Rig e alcuni effetti; annotare quali compaiono in "Letti dall'app" (atteso: DLY, REV, Fixed FX).
+- [ ] Cambiando un effetto **dai pulsanti del Player**, la schermata PALCO si aggiorna subito (prima poteva servire fino a 1,5 s).
+- [ ] Cambiando Rig dal Player, nome ed effetti si aggiornano.
+- [ ] Accordatore: nota e lancetta si muovono bene; in diagnostica `tunerPolling.pollsSent` resta basso (il Player invia da solo).
+- [ ] Il pallino accanto al BPM batte a tempo (se il Player invia il battito).
+- [ ] Staccando il cavo e ricollegandolo: IN ATTESA DEL PLAYER, poi di nuovo ATTIVA senza toccare nulla.
+- [ ] Con "Bidirezionale: OFF" l'app funziona esattamente come la v1.36.
+- [ ] Salvare la diagnostica dopo 2–3 minuti di uso e allegarla: la sezione `bidirectional` dice cosa invia davvero il Player.
+- [ ] Nessun effetto collaterale sul Player (display, pulsanti, suono) con la modalità attiva.
+
+# Verifiche v1.36
 
 ## Da provare con la v1.36
 

@@ -1,6 +1,19 @@
-# Kemper Stage View v1.36
+# Kemper Profiler View v1.37
 
-Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.37
+
+- **Nuovo nome: Kemper Profiler View** (titolo, icona installata "Profiler View", diagnostica). Le chiavi di memoria del telefono restano quelle di prima (`kemper-stage-view-…`): nomi di Bank/Rig, ½ SPEED, aggancio al tempo e scheda aperta non si perdono.
+- **Modalità bidirezionale** (ALTRO → prima scheda, accesa di serie). L'app invia al Player un *beacon* (`F0 00 20 33 02 7F 7E 00 40 02 03 0F F7`: set 2, INIT + SysEx, validità 30 s) e lo rinnova ogni 12 s. Il Player risponde con un *sensing* circa ogni 500 ms e invia da solo i parametri che cambiano.
+  - L'app **scopre da sola** quali parametri il Player invia (quelli che arrivano senza che l'app li abbia chiesti) e smette di leggerli di continuo; tutto il resto (probabilmente DLY, REV, Fixed FX) resta letto come prima. Un controllo completo di sicurezza ogni 10 s.
+  - Accordatore: se il Player invia da solo nota e intonazione (124/15), l'app non fa più letture ogni 100 ms.
+  - Se il sensing si interrompe per più di 2 s l'app torna subito alle letture periodiche e riprova ogni 5 s (10 s dopo tre tentativi senza risposta).
+  - Sulla schermata PALCO, accanto a COLLEGATO compare **⇄** quando la modalità è attiva. Accanto al BPM compare un **pallino che batte il tempo** se il Player invia il battito (124/0).
+  - Nella scheda: stato (ATTIVA / AVVIO / PERSA / NON RISPONDE / SPENTA), elenco "Inviati dal Player" e "Letti dall'app", richieste al minuto, pulsante per spegnerla.
+  - Diagnostica: nuova sezione `bidirectional` con beacon inviati, sensing ricevuti, parametri arrivati spontaneamente, cadute del collegamento e SysEx sconosciuti ricevuti in modalità bidirezionale.
+- Demo aggiornata: il Kemper simulato risponde al beacon (con `window.__demoNoBidi = true` simula un Player che non risponde).
+- **Da verificare sul Player**: vedi [`docs/TESTING.md`](docs/TESTING.md). Il formato del beacon viene dal firmware PySwitch per MIDI Captain, usato con i Kemper Player; non è nella documentazione ufficiale Kemper (dove la funzione `0x7E` è indicata come "reserved").
 
 ## Novità v1.36
 
@@ -67,9 +80,9 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 | --- | --- |
 | `dist/index.html` | Tre viste e controlli |
 | `dist/styles.css` | Layout responsive |
-| `dist/app.js` | UI, gestione porte, azioni MIDI, polling, diagnostica |
+| `dist/app.js` | UI, gestione porte, azioni MIDI, modalità bidirezionale, polling, diagnostica |
 | `dist/demo.js` | Kemper simulato per la modalità demo |
-| `dist/kemper-midi.js` | Parser MIDI/SysEx, mapping effetti, costruttori di messaggi |
+| `dist/kemper-midi.js` | Parser MIDI/SysEx, mapping effetti, costruttori di messaggi (anche beacon bidirezionale) |
 | `dist/manifest.webmanifest` | PWA |
 | `dist/sw.js` | Service worker e cache offline |
 | `dist/icon.svg` | Icona SVG |
@@ -78,7 +91,7 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 | `tests/midi.test.mjs` | Prove locali per parser, Morph, Looper, tempo e Program Change |
 | `docs/MIDI.md` | Tabella dei comandi e codici esadecimali |
 | `docs/TESTING.md` | Prove hardware, limiti e problemi aperti |
-| `docs/GITHUB.md` | Guida all'importazione su GitHub e ripristino dei nomi tecnici |
+| `docs/GITHUB.md` | Guida all'importazione su GitHub, cambio nome del repository e ripristino dei nomi tecnici |
 
 Non ci sono dipendenze npm, backend, chiavi né file generati da una build. Nessun file sorgente è abbreviato.
 

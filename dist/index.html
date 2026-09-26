@@ -4,17 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#07110d" />
-    <meta name="description" content="Schermata da palco e controlli Web MIDI per Kemper Profiler Player." />
+    <meta name="description" content="Kemper Profiler View: schermata da palco e controlli Web MIDI per Kemper Profiler Player." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
-    <title>Kemper Stage View</title>
+    <title>Kemper Profiler View</title>
   </head>
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.36</p>
-        <h1>Kemper Stage View</h1>
+        <p class="eyebrow">KEMPER DIRECT · v1.37</p>
+        <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
         <span class="status-dot" aria-hidden="true"></span>
@@ -50,6 +50,7 @@
         <div class="stage-tempo" aria-label="Tempo">
           <button class="stage-step" id="live-tempo-down-button" type="button" aria-label="Diminuisci il tempo di un BPM" disabled>−1</button>
           <div class="stage-bpm" aria-live="polite">
+            <i class="stage-beat" aria-hidden="true"></i>
             <strong id="live-bpm-value">—</strong>
             <span>BPM</span>
           </div>
@@ -170,6 +171,20 @@
         </div>
         </div>
         <p class="looper-status" id="looper-status" role="status">Collega il Kemper per usare il Looper.</p>
+      </section>
+
+      <section class="bidi-panel" id="bidi-card" data-state="off" aria-labelledby="bidi-heading">
+        <div class="bidi-head">
+          <span class="bidi-dot" aria-hidden="true"></span>
+          <div>
+            <p class="section-kicker">COLLEGAMENTO</p>
+            <h2 id="bidi-heading">Modalità bidirezionale</h2>
+          </div>
+          <strong class="bidi-state" id="bidi-state" aria-live="polite">IN ATTESA DEL PLAYER</strong>
+        </div>
+        <p class="bidi-note" id="bidi-note"></p>
+        <p class="bidi-covered" id="bidi-covered"></p>
+        <button class="secondary-button" id="bidi-toggle" type="button" aria-pressed="true">Bidirezionale: ON</button>
       </section>
 
       <section class="hero-panel" aria-labelledby="rig-title">
@@ -427,13 +442,13 @@
           <li>Usa <strong>PALCO</strong> per effetti, Morph e tempo, <strong>RIG</strong> per scegliere Bank e Rig, <strong>LOOPER</strong> per i comandi del Player Level III, e <strong>ALTRO</strong> per i dettagli e la diagnostica. I nomi dei Rig compaiono quando il Player li ha comunicati all’app.</li>
           <li>Collega il telefono o tablet alla porta USB-B del Player con adattatore OTG.</li>
           <li>Apri questa pagina in Chrome e premi <strong>Connetti MIDI</strong>.</li>
-          <li>L’auto sync controlla direttamente il Player. Cambia Rig e verifica che la schermata si aggiorni.</li>
+          <li>Con la <strong>modalità bidirezionale</strong> (in alto in ALTRO) il Player invia da solo i cambiamenti; per ciò che non invia, l’auto sync continua a leggerlo. Accanto a COLLEGATO compare ⇄ quando è attiva.</li>
           <li>Tocca uno slot effetto: mostra <strong>ATTENDO</strong> finché il Kemper non conferma ON oppure OFF.</li>
           <li>Nel pannello <strong>Fixed FX</strong> puoi gestire Transpose, Pure Booster, Vintage Chorus e Double Tracker. Con auto sync attivo, lo stato si aggiorna anche quando li cambi dal Player o da un altro controller.</li>
           <li>Usa <strong>−1</strong> e <strong>+1</strong> per regolare il tempo, oppure premi <strong>TAP</strong>. Se il TAP produce un decimale, <strong>BPM INTERO</strong> lo arrotonda al valore intero più vicino.</li>
           <li>Nel pannello <strong>Rig Control</strong> scegli una Bank da 1 a 10 e poi uno dei cinque Rig: l’app carica direttamente quel suono e ne legge il nome dal Kemper.</li>
           <li>Usa <strong>Freeze REV</strong> dal pannello dedicato oppure tieni premuto il riquadro REV. Un tocco breve sul riquadro continua a gestire soltanto REV ON/OFF.</li>
-          <li>Configura i parametri Morph in Rig Manager. Stage View mostra lo stato reale del Player senza duplicare l’editor.</li>
+          <li>Configura i parametri Morph in Rig Manager. Profiler View mostra lo stato reale del Player senza duplicare l’editor.</li>
           <li>Premi <strong>Attiva MORPH</strong> o <strong>Torna a BASE</strong>: l’indicatore cambia solo dopo la conferma del Kemper.</li>
           <li>Puoi usarla senza MIDI Captain; Morph, Tuner ed effetti restano controllabili direttamente dall’app.</li>
           <li>Apri il Tuner e suona una corda: l’ago mostra se è <strong>calante</strong>, <strong>centrata</strong> o <strong>crescente</strong>.</li>

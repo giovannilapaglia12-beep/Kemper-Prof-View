@@ -106,3 +106,37 @@ Lettura `F0 00 20 33 02 7F 41 00 <pagina> <parametro> F7`:
 | 127/53 Looper Location | Output = **1**, Input = **0** | Posizione del Looper nel percorso del segnale |
 
 Scrittura Location (v1.36): `F0 00 20 33 02 7F 01 00 7F 35 00 <00|01> F7`, poi rilettura per conferma.
+
+
+## Modalità bidirezionale (v1.37, da verificare sul Player)
+
+Non descritta nella documentazione ufficiale Kemper (funzione `0x7E` "reserved"); formato ripreso dal firmware open source PySwitch per MIDI Captain, che lo usa con i Kemper Player.
+
+**Beacon inviato dall'app** (all'avvio e ogni 5 s finché il Player non risponde; poi rinnovo ogni 12 s):
+
+```
+F0 00 20 33 02 7F 7E 00 40 <set> <flag> <lease> F7
+```
+
+| Byte | Valore usato | Significato |
+| --- | --- | --- |
+| set | `02` | Insieme di parametri: tipo e stato effetti A, B, C, D, X, MOD; nome Rig; Tuner (modo, nota, intonazione) |
+| flag | `03` al primo invio, poi `02` | bit0 INIT = invia subito tutti i parametri del set; bit1 SYSEX = usa SysEx invece di NRPN; (bit2 ECHO, bit3 NOFE, bit4 NOCTR, bit5 TUNEMODE non usati) |
+| lease | `0F` | Validità in passi di 2 s = 30 s; senza rinnovo il Player smette da solo |
+
+Esempi: primo beacon `F0 00 20 33 02 7F 7E 00 40 02 03 0F F7`, rinnovo `F0 00 20 33 02 7F 7E 00 40 02 02 0F F7`.
+
+**Sensing dal Player** (circa ogni 500 ms mentre il beacon è valido): `F0 00 20 33 00 00 7E 00 7F … F7`. Se manca per più di 2 s l'app considera il collegamento perso.
+
+**Parametri inviati spontaneamente** (stesso formato delle risposte, funzione `01` per i valori e `03` per le stringhe). Attesi secondo PySwitch:
+
+| Parametro | Indirizzo |
+| --- | --- |
+| Nome Rig | stringa 0/1 |
+| Tipo / stato effetti A–MOD | 50…58/0 e /3 (pagine `32`–`3A`) |
+| Modo Tuner | 127/126 |
+| Nota Tuner | 125/84 |
+| Intonazione Tuner | 124/15 (0 … 16383, centro 8192) |
+| Battito del tempo | 124/0 (valore > 0 sul movimento) |
+
+L'app non si fida dell'elenco: considera "inviato dal Player" ogni parametro che arriva senza una lettura dell'app nei 350 ms precedenti (dopo il beacon INIT l'app sospende le letture per 700 ms, così l'invio iniziale del Player si riconosce). Solo quei parametri escono dalle letture periodiche; il riepilogo è in ALTRO e nella diagnostica (`bidirectional.pushedByPlayer`).

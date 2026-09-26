@@ -1538,3 +1538,52 @@ body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8r
 .looper-location-options button:disabled { opacity: 0.6; cursor: default; }
 .looper-location-options button[aria-pressed="true"]:disabled { opacity: 1; }
 .looper-settings { display: grid; gap: 4px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* v1.37 · Modalità bidirezionale */
+.bidi-panel {
+  padding: clamp(18px, 4vw, 26px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, rgba(15, 27, 20, 0.97), rgba(6, 13, 9, 0.97));
+  box-shadow: var(--shadow);
+}
+body:not([data-view="full"]) .bidi-panel { display: none; }
+.bidi-head { display: flex; align-items: center; gap: 14px; }
+.bidi-head > div { flex: 1 1 auto; min-width: 0; }
+.bidi-head h2 { margin: 2px 0 0; font-size: clamp(1.1rem, 4.4vw, 1.4rem); }
+.bidi-dot { flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); opacity: 0.5; }
+.bidi-state { flex: 0 0 auto; color: var(--muted); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-align: right; }
+.bidi-panel[data-state="active"] { border-color: rgba(141, 255, 100, 0.34); }
+.bidi-panel[data-state="active"] .bidi-dot { background: var(--green); opacity: 1; box-shadow: 0 0 12px rgba(141, 255, 100, 0.7); }
+.bidi-panel[data-state="active"] .bidi-state { color: var(--green); }
+.bidi-panel[data-state="starting"] .bidi-dot { background: var(--amber); opacity: 1; animation: bidi-blink 0.9s ease-in-out infinite; }
+.bidi-panel[data-state="starting"] .bidi-state,
+.bidi-panel[data-state="lost"] .bidi-state,
+.bidi-panel[data-state="unavailable"] .bidi-state { color: var(--amber); }
+.bidi-panel[data-state="lost"] .bidi-dot,
+.bidi-panel[data-state="unavailable"] .bidi-dot { background: var(--amber); opacity: 1; }
+.bidi-note { margin: 12px 0 0; color: var(--muted); line-height: 1.5; }
+.bidi-covered { margin: 10px 0 0; color: var(--cyan); font-size: 0.85rem; font-weight: 700; line-height: 1.55; white-space: pre-line; }
+.bidi-covered:empty { display: none; }
+.bidi-panel .secondary-button { margin-top: 14px; }
+@keyframes bidi-blink { 50% { opacity: 0.25; } }
+
+.live-connection[data-bidi="true"] { color: var(--green); text-shadow: 0 0 10px rgba(141, 255, 100, 0.35); }
+
+/* Battito del tempo inviato dal Player (124/0) sulla schermata PALCO */
+.stage-bpm { position: relative; }
+.stage-beat {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(141, 255, 100, 0.16);
+  transition: background 0.06s, box-shadow 0.06s;
+}
+.stage-bpm:not([data-beat-seen="true"]) .stage-beat { display: none; }
+.stage-bpm[data-pulse="true"] .stage-beat { background: var(--green); box-shadow: 0 0 12px var(--green); }
+@media (prefers-reduced-motion: reduce) {
+  .bidi-panel[data-state="starting"] .bidi-dot { animation: none; }
+}

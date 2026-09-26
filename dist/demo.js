@@ -19,12 +19,46 @@ export function installDemoKemper() {
   const text = (t) => [...t].map((c) => c.charCodeAt(0) & 0x7f);
   const param = (p, q, v) => emit([...H, 0x01, 0x00, p, q, (v >> 7) & 0x7f, v & 0x7f, 0xf7]);
   const cents = () => -22 * Math.exp(-(performance.now() - st.tunerAt) / 3500) + (Math.random() - 0.5) * 1.6;
+  // Modalità bidirezionale simulata (set 2): sensing ogni 500 ms, invio spontaneo di nome Rig,
+  // effetti A–MOD, Tuner e battito del tempo. DLY/REV e Fixed FX NON vengono inviati, come probabilmente sul Player.
+  const bidi = { until: 0, timer: null, beatTimer: null, tunerTimer: null };
+  // window.__demoNoBidi = true simula un Player che non risponde (per provare il ritorno alle letture periodiche).
+  const bidiOn = () => performance.now() < bidi.until && !window.__demoNoBidi;
+  const BIDI_PAGES = [0x32, 0x33, 0x34, 0x35, 0x38, 0x3a];
+  const pushRig = () => {
+    emit([...H, 0x03, 0x00, 0, 1, ...text(rigName()), 0x00, 0xf7]);
+    for (const page of BIDI_PAGES) { param(page, 0, st.fx[page][0]); param(page, 3, st.fx[page][1]); }
+  };
+  const pushTuner = () => {
+    if (!bidiOn() || st.tuner !== 1) return;
+    param(0x7d, 0x54, 45);
+    param(0x7c, 0x0f, 8192 + Math.round(cents() * 81.92));
+  };
+  const beat = () => {
+    if (!bidiOn()) return;
+    param(0x7c, 0x00, 1);
+    setTimeout(() => param(0x7c, 0x00, 0), 90);
+  };
+  const startBidi = (flags, lease) => {
+    bidi.until = performance.now() + Math.max(1, lease) * 2000;
+    if (!bidi.timer) {
+      bidi.timer = setInterval(() => {
+        if (!bidiOn()) { clearInterval(bidi.timer); clearInterval(bidi.beatTimer); clearInterval(bidi.tunerTimer); bidi.timer = null; return; }
+        if (!window.__demoNoBidi) emit([...H, 0x7e, 0x00, 0x7f, 0x00, 0xf7]);
+      }, 500);
+      bidi.tunerTimer = setInterval(pushTuner, 80);
+    }
+    clearInterval(bidi.beatTimer);
+    bidi.beatTimer = setInterval(beat, 60000 / (st.tempo / 64));
+    if (flags & 0x01) { pushRig(); param(0x7f, 0x7e, st.tuner); }
+  };
   const output = {
     id: "demo-out", name: "Profiler Player DEMO", manufacturer: "Kemper", state: "connected", type: "output",
     send(data) {
       const b = Array.from(data);
       if (b[0] === 0xf0) {
         const fn = b[6]; const p = b[8]; const q = b[9];
+        if (fn === 0x7e && p === 0x40) return window.__demoNoBidi ? undefined : startBidi(b[10], b[11]);
         if (fn === 0x43 && p === 0 && q === 1) return emit([...H, 0x03, 0x00, 0, 1, ...text(rigName()), 0x00, 0xf7]);
         if (fn === 0x41) {
           if (p === 4 && q === 0) return param(4, 0, st.tempo);
@@ -61,11 +95,15 @@ export function installDemoKemper() {
         st.fx = structuredClone(fxSets[st.program % 2]);
         st.morph = 0; st.freeze = 0;
         emit([0xc0, b[1]]);
+        if (bidiOn()) setTimeout(pushRig, 30);
       }
       if (family === 0xb0) {
         if (ccPage[b[1]]) st.fx[ccPage[b[1]]][1] = b[2] ? 1 : 0;
         if (b[1] === 11) st.morph = Math.round(b[2] / 127 * 16383);
-        if (b[1] === 31) { st.tuner = b[2] ? 1 : 3; st.tunerAt = performance.now(); }
+        if (b[1] === 31) {
+          st.tuner = b[2] ? 1 : 3; st.tunerAt = performance.now();
+          if (bidiOn()) param(0x7f, 0x7e, st.tuner);
+        }
         if (b[1] === 30) st.tempo = Math.round((st.tempo + 64 * (Math.random() * 6 - 3)) );
       }
     },

@@ -176,11 +176,11 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
-    handleBankNames() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
+    handleBidirectional() {}, handleBankNames() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {}, handleLooperLocation() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},
-    shouldLog: () => false, addLog() {}, pulseTempo() {}, scheduleProfilerSync() {},
+    shouldLog: () => false, addLog() {}, pulseTempo() {}, ui: { liveBpmBox: { dataset: {} } }, scheduleProfilerSync() {},
     sendProfilerRequests() {}, buildRenderedValueRequest() {},
   };
   vm.runInNewContext(`${functionSnippet('function attachInputs() {', 'async function requestMidiAccess() {')}\nthis.attachInputs = attachInputs;`, context);
@@ -189,4 +189,34 @@ test('Only the Kemper input can update live MIDI state', () => {
   assert.equal(seen.length, 0);
   profiler.onmidimessage({ data: Uint8Array.from([0xc0, 43]) });
   assert.equal(seen.length, 1);
+});
+
+test('Beacon bidirezionale: INIT + SYSEX, set 2, lease 30 s (v1.37)', () => {
+  const init = midi.buildBeaconRequest({ init: true, leaseSeconds: 30 });
+  assert.equal(midi.bytesToHex(init.bytes), 'F0 00 20 33 02 7F 7E 00 40 02 03 0F F7');
+  const keepAlive = midi.buildBeaconRequest({ leaseSeconds: 30 });
+  assert.equal(midi.bytesToHex(keepAlive.bytes), 'F0 00 20 33 02 7F 7E 00 40 02 02 0F F7');
+  const tuner = midi.buildBeaconRequest({ init: true, tuneMode: true, leaseSeconds: 10 });
+  assert.equal(midi.bytesToHex(tuner.bytes), 'F0 00 20 33 02 7F 7E 00 40 02 23 05 F7');
+});
+
+test('Sensing del Player riconosciuto (7E 00 7F), anche con lunghezze diverse', () => {
+  const parser = new midi.KemperMidiState();
+  const hex = str => Uint8Array.from(str.split(' ').map(h => parseInt(h, 16)));
+  assert.equal(parser.ingest({ data: hex('F0 00 20 33 00 00 7E 00 7F 00 F7') }).type, 'Kemper Heartbeat');
+  assert.equal(parser.ingest({ data: hex('F0 00 20 33 00 00 7E 00 7F F7') }).type, 'Kemper Heartbeat');
+  assert.equal(parser.ingest({ data: hex('F0 00 20 33 00 00 7E 00 40 02 03 0F F7') }).type, 'Kemper Live Data');
+});
+
+test('Chiavi di richiesta e risposta coincidono (per riconoscere gli invii spontanei)', () => {
+  const parser = new midi.KemperMidiState();
+  const request = midi.buildParameterRequest(0x3c, 3);
+  const reply = parser.ingest({ data: playerReply(0x3c, 3, 1) });
+  assert.equal(midi.requestKey(request.bytes), 'par:60/3');
+  assert.equal(midi.decodedKey(reply), 'par:60/3');
+  const rigName = midi.buildRigNameRequest();
+  const nameReply = parser.ingest({ data: Uint8Array.from([0xf0, 0, 0x20, 0x33, 0, 0, 3, 0, 0, 1, 0x41, 0x42, 0, 0xf7]) });
+  assert.equal(midi.requestKey(rigName.bytes), 'str:0/1');
+  assert.equal(midi.decodedKey(nameReply), 'str:0/1');
+  assert.equal(midi.requestKey(midi.buildBeaconRequest().bytes), null);
 });

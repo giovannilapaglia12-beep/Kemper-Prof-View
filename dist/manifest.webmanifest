@@ -1,6 +1,6 @@
 {
-  "name": "Kemper Stage View",
-  "short_name": "Stage View",
+  "name": "Kemper Profiler View",
+  "short_name": "Profiler View",
   "description": "Vista live e controlli Web MIDI per Kemper Profiler Player.",
   "start_url": "./",
   "scope": "./",

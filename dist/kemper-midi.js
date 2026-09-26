@@ -205,7 +205,9 @@ export class KemperMidiState {
 
       if (functionCode === 0x7e) {
         const data = bytes.slice(7, -1);
-        const heartbeat = bytes.length === 11 && data[0] === 0x00 && data[1] === 0x7f;
+        // "Sensing" della modalità bidirezionale: F0 00 20 33 00 00 7E 00 7F … F7,
+        // inviato dal Player circa ogni 500 ms finché il beacon dell'app è valido.
+        const heartbeat = data[0] === 0x00 && data[1] === 0x7f;
         return {
           type: heartbeat ? "Kemper Heartbeat" : "Kemper Live Data",
           detail: bytesToHex(bytes),
@@ -361,6 +363,51 @@ export function buildEffectStateRequests(pages = EFFECT_MODULES.map((module) => 
     label: `${module.key} On/Off Poll`,
     bytes: [...KEMPER_HEADER, 0x41, 0x00, module.page, 0x03, 0xf7],
   }));
+}
+
+// Modalità bidirezionale (beacon). Formato usato anche dal firmware PySwitch per
+// MIDI Captain, verificato da quel progetto sui Kemper Player:
+// F0 00 20 33 02 7F 7E 00 40 <set> <flag> <lease> F7
+//   set   = 0x02 (effetti A–MOD tipo/stato, nome Rig, Tuner)
+//   flag  = bit0 INIT (invia subito tutti i parametri del set), bit1 SYSEX (usa SysEx invece di NRPN),
+//           bit2 ECHO, bit3 NOFE, bit4 NOCTR, bit5 TUNEMODE (dati Tuner anche fuori dal Tuner)
+//   lease = durata in passi di 2 s: se il beacon non viene ripetuto, il Player smette di inviare.
+export const BIDIRECTIONAL = {
+  parameterSet: 0x02,
+  flags: { init: 0x01, sysex: 0x02, echo: 0x04, nofe: 0x08, noctr: 0x10, tuneMode: 0x20 },
+};
+
+export function buildBeaconRequest({
+  init = false,
+  sysex = true,
+  echo = false,
+  tuneMode = false,
+  leaseSeconds = 30,
+  parameterSet = BIDIRECTIONAL.parameterSet,
+} = {}) {
+  const { flags } = BIDIRECTIONAL;
+  const flagByte = (init ? flags.init : 0) | (sysex ? flags.sysex : 0)
+    | (echo ? flags.echo : 0) | (tuneMode ? flags.tuneMode : 0);
+  const lease = Math.max(1, Math.min(0x7f, Math.round(leaseSeconds / 2)));
+  return {
+    label: `Beacon bidirezionale${init ? " INIT" : ""} · set ${parameterSet} · ${lease * 2} s`,
+    bytes: [...KEMPER_HEADER, 0x7e, 0x00, 0x40, parameterSet & 0x7f, flagByte, lease, 0xf7],
+  };
+}
+
+// Chiave "tipo:pagina/parametro" di una richiesta di lettura (0x41 parametro, 0x43/0x47 stringa).
+export function requestKey(bytes) {
+  const functionCode = bytes[6];
+  if (functionCode === 0x41) return `par:${bytes[8]}/${bytes[9]}`;
+  if (functionCode === 0x43 || functionCode === 0x47) return `str:${bytes[8]}/${bytes[9]}`;
+  return null;
+}
+
+// Stessa chiave per un messaggio ricevuto e decodificato.
+export function decodedKey(decoded) {
+  if (decoded?.type === "Kemper Parameter") return `par:${decoded.page}/${decoded.parameter}`;
+  if (decoded?.type === "Kemper String") return `str:${decoded.page}/${decoded.parameter}`;
+  return null;
 }
 
 export function buildRenderedValueRequest(page, parameter, value) {
