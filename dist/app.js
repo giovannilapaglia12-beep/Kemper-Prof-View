@@ -26,7 +26,7 @@ import {
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.38";
+const APP_VERSION = "1.40";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -527,14 +527,26 @@ function softHyphenate(text) {
   }).join(" ");
 }
 
+// v1.39: colori delle categorie come sul Kemper (manuale Profiler/Player):
+// Wah arancio, Distorsione/Booster/Shaper rosso, EQ e Widener giallo, Compressore/Gate ciano,
+// Chorus/Vibrato/Rotary/Tremolo blu, Phaser/Flanger viola, Pitch bianco, Delay verde,
+// Delay con pitch verde chiaro, Riverbero verde, Effect Loop rosa.
 function effectTone(type) {
+  if (type === null || type === undefined) return "standard";
   if (type === 0) return "empty";
+  if (type === 11 || type === 13) return "pitch"; // Pedal Pitch, Pedal Vinyl Stop
+  if (type >= 1 && type <= 16) return "wah";
+  if (type >= 17 && type <= 48) return "drive";
+  if (type >= 49 && type <= 63) return "dynamics";
+  if (type >= 64 && type <= 80) return "chorus";
+  if (type >= 81 && type <= 96) return "phaser";
+  if (type >= 97 && type <= 112) return "eq";
+  if (type >= 113 && type <= 120) return "drive";
+  if (type >= 121 && type <= 128) return "loop";
+  if (type >= 129 && type <= 144) return "pitch";
+  if ([150, 151, 152, 162, 163, 165, 166].includes(type)) return "pitchdelay";
+  if (type >= 145 && type <= 176) return "delay";
   if (type >= 177) return "reverb";
-  if (type >= 145) return "delay";
-  if (type >= 129) return "pitch";
-  if (type >= 64 && type <= 104) return "modulation";
-  if (type >= 113 && type <= 123 || type >= 32 && type <= 42) return "drive";
-  if (type >= 49 && type <= 58) return "dynamics";
   return "standard";
 }
 
@@ -815,7 +827,7 @@ function handleRigSelectionState(decoded) {
   ui.program.textContent = `Bank ${pending.bank} · Rig ${pending.slot}`;
   toast(`Bank ${pending.bank} · Rig ${pending.slot} · ${decoded.text}`);
   if (document.body.dataset.view === "rig") setAppView("live");
-  window.setTimeout(() => requestProfilerState({ silent: true, force: true }), 120);
+  syncAfterChange(120, { silent: true, force: true });
 }
 
 function trackProfilerRig(decoded) {
@@ -1482,7 +1494,7 @@ function refreshLiveMorphControls() {
 
 function renderMorph(level, sourceName) {
   const percent = Math.max(0, Math.min(100, Math.round(level)));
-  const mode = percent === 0 ? "BASE" : percent === 100 ? "MORPH" : "TRANSIZIONE";
+  const mode = percent === 0 ? "BASE" : percent === 100 ? "MORPH" : "PARZIALE";
   session.performanceState.morphLevel = percent;
   session.performanceState.morphMode = mode;
   session.performanceState.morphSource = sourceName;
@@ -1493,6 +1505,9 @@ function renderMorph(level, sourceName) {
   ui.morphMeter.setAttribute("aria-valuenow", String(percent));
   ui.morphSource.textContent = `Segnale ricevuto da ${sourceName}`;
   ui.liveMorph.dataset.active = String(percent > 0);
+  // Colore Kemper: rosso in BASE, blu con Morph pieno, sfumato nei livelli intermedi.
+  ui.liveMorph.style.setProperty("--morph", String(percent));
+  ui.morphCard.style.setProperty("--morph", String(percent));
   ui.liveMorphMode.textContent = mode;
   ui.liveMorphPercent.textContent = `${percent}%`;
   ui.liveMorphFill.style.width = `${percent}%`;
@@ -1710,7 +1725,9 @@ function renderTunerPitch(rawValue) {
   const cents = (smoothedRaw - 8192) / 81.92;
   const rounded = Math.round(cents * 10) / 10;
   const position = Math.max(0, Math.min(100, cents + 50));
-  const zone = Math.abs(cents) <= 3 ? "in-tune" : cents < 0 ? "flat" : "sharp";
+  // v1.39: isteresi, così lo schermo verde non lampeggia al limite: entra entro ±3 cent, esce oltre ±5.
+  const wasInTune = session.performanceState.tunerZone === "in-tune";
+  const zone = Math.abs(cents) <= 3 || (wasInTune && Math.abs(cents) <= 5) ? "in-tune" : cents < 0 ? "flat" : "sharp";
 
   session.performanceState.tunerSignalRaw = Math.round(smoothedRaw);
   session.performanceState.tunerCents = rounded;
@@ -2483,9 +2500,38 @@ function requestProfilerState({ silent = false, force = false } = {}) {
   if (!silent) toast("Sincronizzazione inviata al Profiler");
 }
 
+// v1.39: con la modalità bidirezionale attiva il Player invia già tutto dopo un cambio Rig
+// (e all'apertura del Tuner rimanda il Program Change del Rig in uso): invece della lettura
+// completa (24 richieste) si leggono solo i valori ancora sconosciuti, dopo 1 s.
+function fillUnknownState() {
+  if (!session.sysex || !profilerOutputs().length) return;
+  const state = session.lastState;
+  const requests = [];
+  if (!state?.rigName) requests.push(buildRigNameRequest("Rig Name (mancante)"));
+  if (!Number.isInteger(state?.tempoRaw)) requests.push(buildTempoRequest("Tempo (mancante)"));
+  if (session.morphConfirmedRaw === null && session.morphPendingLevel === null) requests.push(buildMorphLevelRequest("Morph (mancante)"));
+  for (const [page, effect] of state?.effects ?? []) {
+    if (effect.type === null) requests.push(buildParameterRequest(page, 0, `${effect.key} Type (mancante)`));
+    if (effect.active === null && !session.effectPending.has(page)) requests.push(buildParameterRequest(page, 3, `${effect.key} On/Off (mancante)`));
+  }
+  if (requests.length) sendProfilerRequests(requests);
+  if (session.freezeRevRaw === null && session.freezeRevPending === null && session.freezeProbePollTimer === null) {
+    beginRevHoldProbe({ record: false });
+  }
+  const unknownFx = FIXED_FX.filter((effect) => (session.fixedFxState.get(effect.key)?.raw ?? null) === null
+    && !session.fixedFxPending.has(effect.key));
+  if (unknownFx.length) requestFixedFxState(unknownFx, { record: true });
+  session.gapFills = (session.gapFills ?? 0) + 1;
+}
+
+function syncAfterChange(delay = 240, options = { silent: true }) {
+  const bidi = session.bidi.state === "active";
+  return window.setTimeout(() => (bidi ? fillUnknownState() : requestProfilerState(options)), bidi ? 1000 : delay);
+}
+
 function scheduleRigChangeSync() {
   window.clearTimeout(session.rigChangeSyncTimer);
-  session.rigChangeSyncTimer = window.setTimeout(() => requestProfilerState({ silent: true }), 240);
+  session.rigChangeSyncTimer = syncAfterChange(240);
 }
 
 function pollProfilerState() {
@@ -3048,7 +3094,7 @@ function toggleAutoSync() {
 
 function scheduleProfilerSync() {
   window.clearTimeout(session.syncTimer);
-  session.syncTimer = window.setTimeout(requestProfilerState, 180);
+  session.syncTimer = syncAfterChange(180, {});
 }
 
 function clearLog() {
@@ -3275,6 +3321,7 @@ function buildDiagnostics() {
       otherSysexWhileActive: session.bidi.otherSysex,
       transitions: session.bidi.transitions,
       sysexRequestsSent: session.requestsSent,
+      gapFillsInsteadOfFullSync: session.gapFills ?? 0,
       requestsPerMinute: requestsPerMinute(),
     },
     rawTunerNotes: [...session.tunerRawNotes.values()],

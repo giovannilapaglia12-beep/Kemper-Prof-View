@@ -1,6 +1,21 @@
-# Kemper Profiler View v1.38
+# Kemper Profiler View v1.40
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.40
+
+- **Double Tracker giallo** (categoria EQ, come sul Kemper).
+- **Morph con i colori del Kemper**: **rosso** in BASE, **blu** con Morph pieno; nei livelli intermedi il colore sfuma dal rosso al blu (bordo, scritta, barra e pulsante), come fa il Kemper. Livello intermedio indicato come PARZIALE (prima TRANSIZIONE, che si sovrapponeva al pulsante %). Stessi colori nella scheda Morph in ALTRO.
+
+## Novità v1.39
+
+**Esito della prova sul Player (26/09/2026, v1.38):** nessuna caduta del collegamento bidirezionale in 3 cambi di Rig; nomi della Bank ricevuti all'avvio e memorizzati; **accordatore in modalità bidirezionale funzionante** (le 6 corde riconosciute, nota e intonazione inviate dal Player: 22 letture dell'app contro circa 7000 invii del Player). Riquadri pieni e scheda RIG approvati.
+
+- **Colori come sul Kemper** (riquadri effetti in PALCO): Wah arancio · Distorsione, Booster, Shaper rosso · EQ, Widener, Double Tracker giallo · Compressore, Gate ciano · Chorus, Vibrato, Rotary, Tremolo blu · Phaser, Flanger viola · Pitch (Transpose, Octaver…) bianco · Delay verde · Delay con pitch verde chiaro · Riverbero verde (tonalità leggermente diversa per distinguerlo dal Delay) · Effect Loop rosa.
+- **Fixed FX colorati**: Pure Booster rosso, Vintage Chorus blu, Transpose bianco, Double Tracker blu (giallo dalla v1.40).
+- **Morph (proposta 3)**: prima prova con BASE neutro e MORPH azzurro; sostituita nella v1.40 dai colori del Kemper (rosso → blu).
+- **Accordatore leggibile da lontano (proposta 5)**: quando la corda è centrata tutto lo schermo diventa **verde** con la nota nera; calante = sfondo ambra scuro, crescente = sfondo rosso scuro; nota più grande. Isteresi: diventa verde entro ±3 cent ed esce oltre ±5, così non lampeggia al limite.
+- **Meno richieste**: all'apertura del Tuner il Player rimanda il Program Change del Rig già in uso e l'app rileggeva tutto (24 richieste) ogni volta. Con la modalità bidirezionale attiva, dopo un Program Change o un cambio Rig l'app legge solo i valori ancora sconosciuti, dopo 1 s (in diagnostica: `bidirectional.gapFillsInsteadOfFullSync`). Senza modalità bidirezionale tutto resta come prima.
 
 ## Novità v1.38
 

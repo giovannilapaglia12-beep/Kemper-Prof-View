@@ -1779,3 +1779,74 @@ body[data-view="rig"] .rig-panel .live-rig-selector {
   .rig-panel .live-rig-slots button:has(small:empty) { grid-template-areas: "num" "name" "tag"; }
 }
 .rig-panel .live-rig-slots button[data-pending="true"] { opacity: 1; }
+
+/* ───────── v1.39 · Colori delle categorie come sul Kemper ───────── */
+.live-effect-button[data-tone="wah"] { --tone: #ff9d3d; --tone-rgb: 255, 157, 61; }
+.live-effect-button[data-tone="drive"] { --tone: #ff5f55; --tone-rgb: 255, 95, 85; }
+.live-effect-button[data-tone="eq"] { --tone: #ffd84d; --tone-rgb: 255, 216, 77; }
+.live-effect-button[data-tone="dynamics"] { --tone: #56e3e0; --tone-rgb: 86, 227, 224; }
+.live-effect-button[data-tone="chorus"] { --tone: #6f9bff; --tone-rgb: 111, 155, 255; }
+.live-effect-button[data-tone="phaser"] { --tone: #b98cff; --tone-rgb: 185, 140, 255; }
+.live-effect-button[data-tone="pitch"] { --tone: #eef3f0; --tone-rgb: 238, 243, 240; }
+.live-effect-button[data-tone="delay"] { --tone: #5fdc5a; --tone-rgb: 95, 220, 90; }
+.live-effect-button[data-tone="pitchdelay"] { --tone: #b7f58c; --tone-rgb: 183, 245, 140; }
+.live-effect-button[data-tone="reverb"] { --tone: #34c98a; --tone-rgb: 52, 201, 138; }
+.live-effect-button[data-tone="loop"] { --tone: #ff7cc6; --tone-rgb: 255, 124, 198; }
+
+/* Fixed FX: Pure Booster rosso (booster), Vintage Chorus blu (chorus),
+   Transpose bianco (pitch), Double Tracker giallo (categoria EQ, come sul Kemper) */
+.live-fixed-fx-booster { --fx: #ff5f55; --fx-rgb: 255, 95, 85; }
+.live-fixed-fx-chorus { --fx: #6f9bff; --fx-rgb: 111, 155, 255; }
+.live-fixed-fx-transpose { --fx: #eef3f0; --fx-rgb: 238, 243, 240; }
+.live-fixed-fx-doubleTracker { --fx: #ffd84d; --fx-rgb: 255, 216, 77; }
+body[data-view="live"] .stage-fx .live-fixed-fx-button { border-color: rgba(var(--fx-rgb), 0.22); }
+body[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] {
+  border-color: var(--fx);
+  background: linear-gradient(165deg, rgba(var(--fx-rgb), 1), rgba(var(--fx-rgb), 0.78));
+  box-shadow: 0 0 14px rgba(var(--fx-rgb), 0.28);
+}
+.live-fixed-fx-button[data-active="true"] { border-color: rgba(var(--fx-rgb), 0.7); }
+.live-fixed-fx-button[data-active="true"] span { color: var(--fx); }
+
+/* ───────── v1.39 · Morph con i colori del Kemper ─────────
+   BASE = rosso, MORPH pieno = blu; nei livelli intermedi il colore sfuma dal rosso al blu
+   (--morph = percentuale 0…100, impostata dall'app). */
+.live-morph,
+.morph-card { --morph-color: color-mix(in srgb, #4f8dff calc(var(--morph, 0) * 1%), #ff5f55); }
+.live-morph[data-active="false"],
+.live-morph[data-active="true"] {
+  border-color: var(--morph-color);
+  background: color-mix(in srgb, var(--morph-color) 9%, rgba(4, 10, 7, 0.7));
+}
+.live-morph[data-active="false"] .live-morph-top strong,
+.live-morph[data-active="true"] .live-morph-top strong { color: var(--morph-color); }
+.live-morph-top > span:first-child { color: var(--muted); }
+.live-morph-meter { background: rgba(255, 95, 85, 0.22); }
+.live-morph-meter span { background: var(--morph-color); }
+.live-morph-toggle { border-color: color-mix(in srgb, var(--morph-color) 60%, transparent); background: rgba(255, 255, 255, 0.04); }
+.live-morph-toggle[aria-pressed="true"] { border-color: var(--morph-color); background: var(--morph-color); color: #04100a; }
+.morph-card[data-active="false"],
+.morph-card[data-active="true"] { border-color: var(--morph-color); }
+.morph-card[data-active="false"] .performance-card-top,
+.morph-card[data-active="false"] h3,
+.morph-card[data-active="true"] h3 { color: var(--morph-color); }
+.morph-card .morph-meter span { background: var(--morph-color); }
+
+/* ───────── v1.39 · Proposta 5: accordatore leggibile da lontano ─────────
+   Corda centrata = tutto lo schermo verde con la nota nera; calante = sfondo ambra scuro;
+   crescente = sfondo rosso scuro. */
+.tuner-overlay { transition: background-color 160ms ease; }
+.tuner-overlay[data-zone="flat"] { background: radial-gradient(circle at 50% 45%, rgba(255, 194, 92, 0.22), transparent 75%), #0b0803; }
+.tuner-overlay[data-zone="sharp"] { background: radial-gradient(circle at 50% 45%, rgba(255, 106, 106, 0.22), transparent 75%), #0b0404; }
+.tuner-overlay[data-zone="in-tune"] { --zone: #04100a; background: #45e04a; }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-kicker,
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-labels { color: rgba(4, 16, 10, 0.7); }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-gauge { background: rgba(4, 16, 10, 0.18); }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-center { background: #04100a; }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-needle { box-shadow: none; }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-close { border-color: rgba(4, 16, 10, 0.4); background: rgba(4, 16, 10, 0.12); color: #04100a; }
+.tuner-overlay-note { font-size: clamp(6rem, 42vw, 13rem); }
+@media (orientation: landscape) and (max-height: 560px) {
+  .tuner-overlay-note { font-size: clamp(4rem, 30vh, 8rem); }
+}
+@media (prefers-reduced-motion: reduce) { .tuner-overlay { transition: none; } }

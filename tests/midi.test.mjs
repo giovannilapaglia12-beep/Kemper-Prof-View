@@ -233,3 +233,32 @@ test('Sillabazione dei nomi effetto: mai spezzati a caso (v1.38)', () => {
   assert.equal(show('Studio EQ'), 'Studio EQ');
   assert.equal(show('Chromatic Pitch'), 'Chro-ma-tic Pitch');
 });
+
+test('Colori delle categorie come sul Kemper (v1.39)', () => {
+  const start = appSource.indexOf('function effectTone(type) {');
+  const end = appSource.indexOf('const kemper = new KemperMidiState');
+  const context = {};
+  vm.runInNewContext(`${appSource.slice(start, end)}\nthis.effectTone = effectTone;`, context);
+  const tone = context.effectTone;
+  assert.equal(tone(1), 'wah');          // Wah Wah → arancio
+  assert.equal(tone(33), 'drive');       // Green Scream → rosso
+  assert.equal(tone(115), 'drive');      // Pure Booster → rosso
+  assert.equal(tone(49), 'dynamics');    // Compressor → ciano
+  assert.equal(tone(65), 'chorus');      // Vintage Chorus → blu
+  assert.equal(tone(81), 'phaser');      // Phaser → viola
+  assert.equal(tone(98), 'eq');          // Studio EQ → giallo
+  assert.equal(tone(104), 'eq');         // Double Tracker (effetto) → giallo come sul Kemper
+  assert.equal(tone(129), 'pitch');      // Transpose → bianco
+  assert.equal(tone(146), 'delay');      // Single Delay → verde
+  assert.equal(tone(150), 'pitchdelay'); // Crystal Delay → verde chiaro
+  assert.equal(tone(181), 'reverb');     // Cirrus Reverb → verde
+  assert.equal(tone(122), 'loop');       // Loop Stereo → rosa
+  assert.equal(tone(0), 'empty');
+});
+
+test('Morph: il colore segue la percentuale (rosso BASE → blu MORPH, v1.40)', () => {
+  const css = fs.readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8');
+  assert.match(css, /--morph-color: color-mix\(in srgb, #4f8dff calc\(var\(--morph, 0\) \* 1%\), #ff5f55\)/);
+  assert.match(css, /\.live-fixed-fx-doubleTracker \{ --fx: #ffd84d;/);
+  assert.match(appSource, /ui\.liveMorph\.style\.setProperty\("--morph", String\(percent\)\)/);
+});

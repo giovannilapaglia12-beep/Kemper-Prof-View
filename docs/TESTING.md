@@ -1,4 +1,21 @@
-# Verifiche hardware, test locali e problemi aperti — v1.38
+# Verifiche hardware, test locali e problemi aperti — v1.40
+
+## Da provare con la v1.40 (comprende la v1.39)
+
+- [ ] PALCO: i colori degli effetti corrispondono ai LED del Kemper (es. Compressor ciano, Green Scream rosso, Studio EQ giallo, Phaser viola, Delay e Reverb verdi).
+- [ ] Fixed FX accesi: Pure Booster rosso, Vintage Chorus blu, Transpose bianco, Double Tracker giallo.
+- [ ] Morph: in BASE riquadro rosso; con Morph pieno blu; a metà (tasto %) colore intermedio viola; stessi colori del Kemper.
+- [ ] Accordatore: con la corda centrata tutto lo schermo è verde e si legge dal leggio; non lampeggia quando la corda è quasi centrata.
+- [ ] Aprendo e chiudendo il Tuner più volte, in ALTRO le richieste al minuto restano basse (circa 50) e in diagnostica cresce `gapFillsInsteadOfFullSync`.
+- [ ] Cambiando Rig, Freeze e Fixed FX mostrano subito lo stato giusto (non restano su IN LETTURA).
+
+## Esito v1.38 sul Player (26/09/2026)
+
+- Nessuna caduta del collegamento bidirezionale in 3 cambi di Rig. Nomi Bank 9 ricevuti all'avvio e memorizzati.
+- Accordatore in modalità bidirezionale: E2, A2, D3, G3, B3, E4 riconosciute; 22 letture dell'app, circa 7000 invii del Player; 124/15 e 124/81 hanno la stessa scala.
+- All'apertura del Tuner il Player invia `B0 2F 7F`, `B0 00 00`, `B0 20 00` e il Program Change del Rig in uso → l'app rileggeva tutto (142 richieste/min) → corretto in v1.39.
+- Riquadri pieni e scheda RIG: approvati. Colori da allineare al Kemper → v1.39.
+
 
 ## Da provare con la v1.38 (grafica)
 

@@ -152,3 +152,9 @@ L'app non si fida dell'elenco: considera "inviato dal Player" ogni parametro che
 - Altri parametri visti, non usati dall'app: 4/2, 127/125, 50…61/30, 74/2 e 75/2 (seguono lo stato di DLY e REV).
 - Durante il caricamento di un Rig il sensing si interrompe per circa 2 s.
 - Richieste dell'app: da circa 450 a 49 al minuto.
+
+### Verificato sul Player (26/09/2026, diagnostica v1.38)
+
+- All'apertura del Tuner (dal Player o con CC31 dall'app) il Player invia `B0 2F 7F`, `B0 00 00`, `B0 20 00`, il Program Change **del Rig già in uso** e poi `127/126 = 1`. Alla chiusura invia solo `127/126 = 3`.
+- Con il Tuner aperto: nota 125/84 (0 senza segnale; alcuni valori spuri come 9830 o G1, scartati dal filtro dell'app) e intonazione 124/15 e 124/81, stessa scala (centro 8192, circa 82 unità per cent).
+- Dalla v1.39, con la modalità bidirezionale attiva, dopo un Program Change l'app non rifà la lettura completa: legge solo i valori ancora sconosciuti.
