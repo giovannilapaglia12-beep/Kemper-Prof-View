@@ -13,7 +13,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.34</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.35</p>
         <h1>Kemper Stage View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -346,10 +346,12 @@
             Auto sync: ON
           </button>
           <button class="secondary-button" id="looper-probe-button" type="button" disabled>Leggi parametri Looper</button>
+          <button class="secondary-button" id="forget-names-button" type="button">Cancella nomi Bank/Rig memorizzati</button>
           <button class="secondary-button" id="clear-button" type="button">
             Pulisci log
           </button>
         </div>
+        <p class="looper-probe-result" id="looper-probe-result" role="status"></p>
 
         <div class="device-grid">
           <article class="device-card">

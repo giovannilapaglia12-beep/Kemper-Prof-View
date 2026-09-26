@@ -1,6 +1,13 @@
-# Kemper Stage View v1.34
+# Kemper Stage View v1.35
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+
+## Novità v1.35
+
+- **Correzione**: la modalità demo (v1.31–v1.34) salvava sul telefono i suoi nomi finti di Bank/Rig mescolandoli a quelli reali. Ora la demo non salva nulla; al primo avvio della v1.35 i nomi memorizzati vengono azzerati una volta (si ripopolano cambiando Bank sul Player e scegliendo i Rig).
+- **Cancella nomi Bank/Rig memorizzati** (ALTRO), con conferma a doppio tocco.
+- **Leggi parametri Looper** mostra subito il risultato sotto i pulsanti (risposte del Player o "Nessuna risposta") e lo salva nella diagnostica.
+- Verificato sul Player (26/09/2026): aggancio al tempo BATTUTA 4/4 a 68 BPM → primo giro di 14,119 s = 4 battute (scarto 1,4 ms).
 
 ## Novità v1.34
 

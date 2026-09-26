@@ -176,7 +176,7 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
-    handleBankNames() {}, refreshRigControlsOnBankNames() {},
+    handleBankNames() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},

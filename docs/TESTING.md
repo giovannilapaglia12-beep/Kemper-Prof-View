@@ -1,4 +1,12 @@
-# Verifiche hardware, test locali e problemi aperti — v1.34
+# Verifiche hardware, test locali e problemi aperti — v1.35
+
+## Esito v1.34 sul Player (26/09/2026)
+
+- Aggancio al tempo BATTUTA 4/4, 68 BPM (battuta 3,529 s): REC 11:37:58.266 → chiusura 11:38:12.385 = 14,119 s = 4 battute; scarto 1,4 ms. OK.
+- "Leggi parametri Looper": nessuna risposta nel log (da ripetere con v1.35, che mostra il risultato a schermo).
+- Trovato difetto: i nomi della demo finivano nella memoria dei nomi reali → corretto in v1.35.
+
+# Verifiche v1.34
 
 ## Da provare con la v1.34 (aggancio al tempo)
 

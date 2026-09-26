@@ -21,7 +21,7 @@ import {
   bytesToHex,
 } from "./kemper-midi.js";
 
-const APP_VERSION = "1.34";
+const APP_VERSION = "1.35";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -78,6 +78,8 @@ const ui = {
   looperHalfNote: $("#looper-half-note"),
   looperHalfFix: $("#looper-half-fix"),
   looperProbe: $("#looper-probe-button"),
+  looperProbeResult: $("#looper-probe-result"),
+  forgetNames: $("#forget-names-button"),
   quantizeButtons: [...document.querySelectorAll("[data-quantize]")],
   quantizeNote: $("#looper-quantize-note"),
   saveDiagnostics: $("#save-diagnostics-button"),
@@ -270,6 +272,14 @@ const session = {
 };
 
 const RIG_NAMES_KEY = "kemper-stage-view-rig-names";
+// v1.35: la demo delle versioni 1.31–1.34 salvava nomi finti; azzera una volta i nomi memorizzati.
+try {
+  if (!localStorage.getItem("kemper-stage-view-names-reset-v135")) {
+    localStorage.removeItem(RIG_NAMES_KEY);
+    localStorage.removeItem("kemper-stage-view-bank-names");
+    localStorage.setItem("kemper-stage-view-names-reset-v135", "1");
+  }
+} catch { /* facoltativo */ }
 try {
   const stored = JSON.parse(localStorage.getItem(RIG_NAMES_KEY) ?? "{}");
   for (const [key, name] of Object.entries(stored)) {
@@ -291,6 +301,7 @@ function rememberBankList(bank, list) {
   }
   session.bankListsReceived.push({ time: new Date().toISOString(), bank, ...list });
   session.bankListsReceived = session.bankListsReceived.slice(-10);
+  if (window.__kemperDemo) return; // la demo non salva nomi finti sul telefono
   try {
     localStorage.setItem(BANK_NAMES_KEY, JSON.stringify({
       banks: Object.fromEntries(session.bankNames),
@@ -310,9 +321,21 @@ function handleBankNames(decoded) {
   session.pendingBankList.at = now;
 }
 
+function forgetAllNames() {
+  session.rigNames.clear();
+  session.slotNames.clear();
+  session.bankNames.clear();
+  try {
+    localStorage.removeItem(RIG_NAMES_KEY);
+    localStorage.removeItem(BANK_NAMES_KEY);
+  } catch { /* facoltativo */ }
+  refreshRigControls();
+}
+
 function rememberRigName(bank, slot, name) {
   if (!name) return;
   session.rigNames.set(`${bank}:${slot}`, name);
+  if (window.__kemperDemo) return;
   try { localStorage.setItem(RIG_NAMES_KEY, JSON.stringify(Object.fromEntries(session.rigNames))); } catch { /* facoltativo */ }
 }
 
@@ -1705,6 +1728,7 @@ function attachInputs() {
       const sourceName = describePort(input);
       const decoded = kemper.ingest(event);
       handleBankNames(decoded);
+      captureLooperProbe(decoded);
       trackProfilerRig(decoded);
       refreshRigControlsOnBankNames(decoded);
       handlePerformanceControl(decoded, sourceName);
@@ -2693,6 +2717,7 @@ function buildDiagnostics() {
       estimatedLoopSeconds: looper.loopLength,
       estimatedHalfSpeed: looper.half,
       quantize: looper.quantize,
+      probeResults: session.looperProbeResults ?? [],
       statusFeedback: "stimato dall'app, non letto dal Player",
     },
     effectControl: {
@@ -2841,7 +2866,42 @@ for (const button of ui.looperButtons) bindLooperSwitch(button);
 ui.looperStateReset.addEventListener("click", () => { looper.stopPresses = 0; setLooperState("empty"); });
 ui.looperHalfFix.addEventListener("click", () => setLooperHalf(!looper.half));
 for (const button of ui.quantizeButtons) button.addEventListener("click", () => setQuantizeMode(button.dataset.quantize));
+let forgetArmTimer = null;
+ui.forgetNames.addEventListener("click", () => {
+  if (forgetArmTimer === null) {
+    ui.forgetNames.textContent = "Tocca ancora per cancellare i nomi";
+    forgetArmTimer = window.setTimeout(() => { forgetArmTimer = null; ui.forgetNames.textContent = "Cancella nomi Bank/Rig memorizzati"; }, 3000);
+    return;
+  }
+  window.clearTimeout(forgetArmTimer);
+  forgetArmTimer = null;
+  forgetAllNames();
+  ui.forgetNames.textContent = "Cancella nomi Bank/Rig memorizzati";
+  toast("Nomi memorizzati cancellati");
+});
+session.looperProbe = null;
+function captureLooperProbe(decoded) {
+  const probe = session.looperProbe;
+  if (!probe || decoded?.type !== "Kemper Parameter") return;
+  const looperParam = decoded.page === 0x7d && decoded.parameter >= 88 && decoded.parameter <= 94;
+  const globalParam = decoded.page === 0x7f && (decoded.parameter === 52 || decoded.parameter === 53);
+  if (looperParam || globalParam) probe.replies[`${decoded.page}/${decoded.parameter}`] = decoded.value;
+}
 ui.looperProbe.addEventListener("click", () => {
+  session.looperProbe = { at: new Date().toISOString(), estimatedState: looper.state, replies: {} };
+  ui.looperProbeResult.textContent = "Lettura in corso…";
+  window.setTimeout(() => {
+    const probe = session.looperProbe;
+    if (!probe) return;
+    const entries = Object.entries(probe.replies);
+    const names = { "125/88": "Rec/Play/Dub", "125/89": "Stop", "125/90": "Trigger", "125/91": "Reverse",
+      "125/92": "½ Speed", "125/93": "Undo", "125/94": "Erase", "127/52": "Volume", "127/53": "Location" };
+    ui.looperProbeResult.textContent = entries.length
+      ? `Risposte (loop stimato: ${LOOPER_LABELS[probe.estimatedState]}): ${entries.map(([key, value]) => `${names[key] ?? key} = ${value}`).join(" · ")}`
+      : "Nessuna risposta dal Player ai parametri del Looper.";
+    session.looperProbeResults = [...(session.looperProbeResults ?? []), probe].slice(-10);
+    session.looperProbe = null;
+  }, 2500);
   // Sola lettura: verifica se il Player comunica lo stato del Looper.
   const reads = [88, 89, 90, 91, 92, 93, 94].map((parameter) => buildParameterRequest(0x7d, parameter, `Looper probe 125/${parameter}`));
   reads.push(buildParameterRequest(0x7f, 52, "Looper Volume 127/52"), buildParameterRequest(0x7f, 53, "Looper Location 127/53"));

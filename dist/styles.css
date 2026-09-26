@@ -1530,3 +1530,5 @@ body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8r
 .looper-state { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "dot label" "dot time" "dot flags"; row-gap: 2px; }
 .looper-state-time { font-size: 1rem; }
 .looper-quantize-options button { font-size: 0.62rem; letter-spacing: 0; }
+.looper-probe-result { margin: 10px 0 0; color: var(--cyan); font-size: 0.85rem; font-weight: 700; }
+.looper-probe-result:empty { display: none; }
