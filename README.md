@@ -1,6 +1,18 @@
-# Kemper Profiler View v1.37
+# Kemper Profiler View v1.38
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.38
+
+**Esito della prova sul Player (26/09/2026, v1.37):** la modalità bidirezionale funziona. Il Player ha risposto al beacon in 2 s e invia da solo **tutti** i parametri che l'app usa (effetti A–REV con tipo e stato, Fixed FX, Freeze REV, BPM, Morph, Tuner, posizione Looper, nome Rig, battito del tempo). Le richieste dell'app sono scese da circa 450 a **49 al minuto**; le conferme dei comandi arrivano in circa 25 ms.
+
+- **Correzioni dalla prova**
+  - Durante il caricamento di un Rig il Player sospende il sensing per circa 2 s: l'app segnalava "collegamento perso". Ora aspetta 4 s e non mostra il messaggio per riconnessioni brevi.
+  - All'avvio della modalità il Player invia i nomi della Bank **dopo** il Program Change (il contrario del cambio Bank dal Player): prima andavano persi, ora vengono assegnati alla Bank giusta.
+  - Scheda RIG: mentre un Rig si caricava lo stato mostrava "BANK undefined" (errore già presente nelle versioni precedenti in ALTRO).
+- **Effetti in PALCO (proposta 1)**: effetto acceso = riquadro pieno del colore della categoria con testo scuro; spento = riquadro scuro con testo attenuato; slot vuoto tratteggiato; in attesa = bordo ambra pulsante; Freeze REV = riquadro azzurro. Il nome si adatta alla larghezza e le parole lunghe vanno a capo per sillabe (Com-pres-sor), mai a metà a caso. Stesso stile per Fixed FX, REV FREEZE e TUNER.
+- **Messaggi brevi (proposta 2)**: pillola compatta in basso, colorata per tipo (verde conferma, ambra problema), non copre più la barra PALCO/RIG/LOOPER/ALTRO e lascia passare i tocchi. In PALCO le conferme di routine non compaiono più (lo stato si vede sui riquadri).
+- **Scheda RIG (proposta 4)**: numero della Bank e nome della Bank in grande; i 5 Rig riempiono lo schermo come pulsanti; il Rig in uso è pieno di verde con "IN USO", quello in caricamento ha il bordo ambra con "CARICO…"; in alto "IN USO: Bank · Rig · nome" e, se stai guardando un'altra Bank, il pulsante TORNA ALLA BANK IN USO. In orizzontale i 5 Rig sono affiancati.
 
 ## Novità v1.37
 
@@ -8,7 +20,7 @@ Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web M
 - **Modalità bidirezionale** (ALTRO → prima scheda, accesa di serie). L'app invia al Player un *beacon* (`F0 00 20 33 02 7F 7E 00 40 02 03 0F F7`: set 2, INIT + SysEx, validità 30 s) e lo rinnova ogni 12 s. Il Player risponde con un *sensing* circa ogni 500 ms e invia da solo i parametri che cambiano.
   - L'app **scopre da sola** quali parametri il Player invia (quelli che arrivano senza che l'app li abbia chiesti) e smette di leggerli di continuo; tutto il resto (probabilmente DLY, REV, Fixed FX) resta letto come prima. Un controllo completo di sicurezza ogni 10 s.
   - Accordatore: se il Player invia da solo nota e intonazione (124/15), l'app non fa più letture ogni 100 ms.
-  - Se il sensing si interrompe per più di 2 s l'app torna subito alle letture periodiche e riprova ogni 5 s (10 s dopo tre tentativi senza risposta).
+  - Se il sensing si interrompe per più di 4 s (dalla v1.38; era 2 s) l'app torna subito alle letture periodiche e riprova ogni 5 s (10 s dopo tre tentativi senza risposta).
   - Sulla schermata PALCO, accanto a COLLEGATO compare **⇄** quando la modalità è attiva. Accanto al BPM compare un **pallino che batte il tempo** se il Player invia il battito (124/0).
   - Nella scheda: stato (ATTIVA / AVVIO / PERSA / NON RISPONDE / SPENTA), elenco "Inviati dal Player" e "Letti dall'app", richieste al minuto, pulsante per spegnerla.
   - Diagnostica: nuova sezione `bidirectional` con beacon inviati, sensing ricevuti, parametri arrivati spontaneamente, cadute del collegamento e SysEx sconosciuti ricevuti in modalità bidirezionale.

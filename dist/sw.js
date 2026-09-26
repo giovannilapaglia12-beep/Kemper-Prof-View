@@ -1,4 +1,4 @@
-const CACHE = "kemper-profiler-view-v1370";
+const CACHE = "kemper-profiler-view-v1380";
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./kemper-midi.js", "./demo.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

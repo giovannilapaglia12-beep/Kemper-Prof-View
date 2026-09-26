@@ -26,7 +26,7 @@ import {
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.37";
+const APP_VERSION = "1.38";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -96,6 +96,7 @@ const ui = {
   bidiCovered: $("#bidi-covered"),
   bidiToggle: $("#bidi-toggle"),
   liveBpmBox: $(".stage-bpm"),
+  rigCurrentJump: $("#rig-current-jump"),
   tunerOverlay: $("#tuner-overlay"),
   tunerOverlayNote: $("#tuner-overlay-note"),
   tunerOverlayNeedle: $("#tuner-overlay-needle"),
@@ -331,11 +332,20 @@ function handleBankNames(decoded) {
   if (decoded?.type !== "Kemper Bank Names") return;
   const now = performance.now();
   if (decoded.index === 0 || !session.pendingBankList || now - session.pendingBankList.at > 1000) {
-    session.pendingBankList = { bankName: null, slots: {}, at: now };
+    session.pendingBankList = { bankName: null, slots: {}, at: now, startedAt: now };
   }
-  if (decoded.index === 0) session.pendingBankList.bankName = decoded.text;
-  else session.pendingBankList.slots[decoded.index] = decoded.text;
-  session.pendingBankList.at = now;
+  const list = session.pendingBankList;
+  if (decoded.index === 0) list.bankName = decoded.text;
+  else list.slots[decoded.index] = decoded.text;
+  list.at = now;
+  // In modalità bidirezionale (invio iniziale) i nomi arrivano DOPO il Program Change
+  // (prova sul Player del 26/09/2026): li si assegna alla Bank dell'ultimo Program Change.
+  const program = session.lastProgramEvent;
+  if (decoded.index === 5 && program && list.startedAt >= program.at && now - program.at < 3000) {
+    rememberBankList(program.bank, list);
+    session.pendingBankList = null;
+    refreshRigControls();
+  }
 }
 
 function forgetAllNames() {
@@ -483,6 +493,40 @@ for (const effect of FIXED_FX) {
   liveFixedFxNodes.set(effect.key, { button: liveButton, state: liveState });
 }
 
+function longestWord(text) {
+  return Math.max(5, ...String(text).replace(/\u00ad/g, "").split(/\s+/).map((word) => word.length));
+}
+
+// Punti di sillabazione (trattino morbido) per le parole lunghe: se il nome non entra,
+// il browser va a capo in quel punto mostrando "-" (es. Com-pres-sor), mai a metà a caso.
+const isVowel = (char) => "aeiouy".includes(char);
+// Gruppi di consonanti che in inglese iniziano una sillaba (Com-pres-sor, Chro-ma-tic).
+const SYLLABLE_ONSETS = new Set(["pr", "br", "tr", "dr", "cr", "gr", "fr", "pl", "bl", "cl", "gl", "fl", "sh", "ch", "th", "ph", "wh"]);
+function softHyphenate(text) {
+  return String(text).split(" ").map((word) => {
+    if (word.length < 7 || /[^a-z]/i.test(word)) return word;
+    const w = word.toLowerCase();
+    const cuts = [];
+    let i = 0;
+    while (i < w.length) {
+      if (!isVowel(w[i])) { i += 1; continue; }
+      let j = i;
+      while (j < w.length && isVowel(w[j])) j += 1; // prima consonante dopo le vocali
+      let k = j;
+      while (k < w.length && !isVowel(w[k])) k += 1; // vocale successiva
+      if (k >= w.length || k === j) break;
+      const cluster = w.slice(j, k);
+      const cut = cluster.endsWith("ck") ? k : cluster.length === 1 ? j : SYLLABLE_ONSETS.has(cluster.slice(-2)) ? k - 2 : k - 1;
+      if (cut >= 3 && w.length - cut >= 3 && (!cuts.length || cut - cuts[cuts.length - 1] >= 2)) cuts.push(cut);
+      i = k;
+    }
+    let out = "";
+    let from = 0;
+    for (const cut of cuts) { out += `${word.slice(from, cut)}\u00ad`; from = cut; }
+    return out + word.slice(from);
+  }).join(" ");
+}
+
 function effectTone(type) {
   if (type === 0) return "empty";
   if (type >= 177) return "reverb";
@@ -530,7 +574,10 @@ const kemper = new KemperMidiState((state) => {
       const pending = session.effectPending.has(page);
       const freezeActive = effect.key === "REV" && session.freezeRevRaw === 1;
       const empty = effect.type === 0;
-      liveNode.name.textContent = empty ? "Slot vuoto" : effect.name;
+      liveNode.name.textContent = empty ? "Slot vuoto" : softHyphenate(effect.name);
+      // v1.38: la dimensione del nome si adatta alla parola più lunga, senza spezzarla.
+      // Oltre 8 lettere la parola va a capo in sillabe (Com-pres-sor) invece di rimpicciolirsi troppo.
+      liveNode.card.style.setProperty("--chars", String(Math.min(8, longestWord(liveNode.name.textContent))));
       liveNode.card.dataset.tone = effectTone(effect.type);
       liveNode.card.dataset.active = empty ? "false" : effect.active === null ? "unknown" : String(effect.active);
       liveNode.card.dataset.pending = String(pending);
@@ -606,11 +653,19 @@ function setAppView(view, { remember = true } = {}) {
   }
 }
 
-function toast(message) {
+// v1.38: messaggi brevi in basso, compatti e trasparenti ai tocchi.
+// kind: "ok" (conferma), "warn" (problema) o "info". In PALCO le conferme di routine
+// non compaiono: lo stato è già visibile sui pulsanti.
+function toast(message, kind) {
+  const resolved = kind ?? (/\b(non|nessun[ao]?|impossibile|prima|fallit[ao]|inattes[ao]|pers[ao])\b/i.test(message)
+    ? "warn"
+    : /confermat|attivato|disattivato/i.test(message) ? "ok" : "info");
+  if (resolved === "ok" && document.body.dataset.view === "live") return;
   ui.toast.textContent = message;
+  ui.toast.dataset.kind = resolved;
   ui.toast.dataset.visible = "true";
   window.clearTimeout(toast.timeout);
-  toast.timeout = window.setTimeout(() => { ui.toast.dataset.visible = "false"; }, 2600);
+  toast.timeout = window.setTimeout(() => { ui.toast.dataset.visible = "false"; }, resolved === "warn" ? 3200 : 2200);
 }
 
 function describePort(port) {
@@ -698,8 +753,9 @@ function refreshRigControls() {
     button.querySelector("span").textContent = name || `RIG ${slot}`;
     button.querySelector("small").textContent = slotName && rigName && rigName !== slotName ? rigName : "";
   }
+  const target = session.rigSelectPending;
   if (pending) {
-    ui.rigControlStatus.textContent = `ATTENDO · BANK ${pending.bank} · RIG ${pending.slot}`;
+    ui.rigControlStatus.textContent = `ATTENDO · BANK ${target.bank} · RIG ${target.slot}`;
   } else if (!hasOutput) {
     ui.rigControlStatus.textContent = "Collega il Kemper";
   } else if (!session.sysex) {
@@ -711,9 +767,15 @@ function refreshRigControls() {
   } else {
     ui.rigControlStatus.textContent = `RIG NON RILEVATO · scegli Bank ${session.rigTargetBank}`;
   }
-  ui.liveRigStatus.textContent = ui.rigControlStatus.textContent;
+  ui.liveRigStatus.textContent = pending
+    ? `CARICO BANK ${target.bank} · RIG ${target.slot}…`
+    : session.rigSelectedBank === null
+      ? ui.rigControlStatus.textContent
+      : `IN USO: BANK ${session.rigSelectedBank} · RIG ${session.rigSelectedSlot}${session.lastState?.rigName ? ` · ${session.lastState.rigName}` : ""}`;
+  ui.rigCurrentJump.hidden = pending || session.rigSelectedBank === null || session.rigSelectedBank === session.rigTargetBank;
+  ui.liveRigSlots[0]?.closest(".live-rig-selector")?.setAttribute("data-other-bank", String(!ui.rigCurrentJump.hidden));
   ui.liveRigPosition.textContent = pending
-    ? `→ BANK ${pending.bank} · RIG ${pending.slot}`
+    ? `→ BANK ${target.bank} · RIG ${target.slot}`
     : session.rigSelectedBank !== null
       ? `BANK ${session.rigSelectedBank} · RIG ${session.rigSelectedSlot}`
       : "BANK — · RIG —";
@@ -772,6 +834,7 @@ function trackProfilerRig(decoded) {
     }
     const previousProgramAt = session.lastProfilerProgramAt;
     session.lastProfilerProgramAt = performance.now();
+    session.lastProgramEvent = { bank, at: session.lastProfilerProgramAt };
     session.profilerProgramAwaitsName = true;
     session.rigSelectedBank = bank;
     session.rigSelectedSlot = slot;
@@ -1986,7 +2049,8 @@ const BIDI_KEY = "kemper-stage-view-bidi"; // le chiavi di memoria restano quell
 const BIDI_LEASE_SECONDS = 30;
 const BIDI_RESEND_MS = 12000;
 const BIDI_INIT_RETRY_MS = 5000;
-const BIDI_SENSING_TIMEOUT_MS = 2000;
+// Prova sul Player (26/09/2026): durante il caricamento di un Rig il sensing si ferma per circa 2 s.
+const BIDI_SENSING_TIMEOUT_MS = 4000;
 const BIDI_PUSH_WINDOW_MS = 350;
 const BIDI_SAFETY_POLL_MS = 10000;
 const BIDI_TICK_MS = 250;
@@ -2043,10 +2107,14 @@ function setBidiState(next, reason = "") {
   bidi.transitions = bidi.transitions.slice(-30);
   if (next === "active") {
     bidi.activeSince = new Date().toISOString();
-    toast("Modalità bidirezionale attiva · il Player invia i cambiamenti");
+    const brief = previous === "lost" && performance.now() - (bidi.lostAt ?? 0) < 10000;
+    if (!brief) toast("Bidirezionale attiva ⇄");
   } else if (previous === "active") {
     bidi.activeSince = null;
-    if (next === "lost") toast("Collegamento bidirezionale perso · torno alle letture periodiche");
+    if (next === "lost") {
+      bidi.lostAt = performance.now();
+      toast("Collegamento bidirezionale perso · torno alle letture periodiche", "warn");
+    }
   }
   paintBidi();
 }
@@ -2112,7 +2180,7 @@ function bidiTick() {
     if (now - bidi.lastSensingAt > BIDI_SENSING_TIMEOUT_MS) {
       bidi.drops += 1;
       bidi.covered.clear();
-      setBidiState("lost", "Nessun sensing dal Player da oltre 2 s");
+      setBidiState("lost", "Nessun sensing dal Player da oltre 4 s");
       return;
     }
     if (now - bidi.lastBeaconAt >= BIDI_RESEND_MS) sendBeacon(false);
@@ -3339,6 +3407,11 @@ ui.rigBankDown.addEventListener("click", () => changeRigTargetBank(-1));
 ui.rigBankUp.addEventListener("click", () => changeRigTargetBank(1));
 ui.liveBankDown.addEventListener("click", () => changeRigTargetBank(-1));
 ui.liveBankUp.addEventListener("click", () => changeRigTargetBank(1));
+ui.rigCurrentJump.addEventListener("click", () => {
+  if (session.rigSelectedBank === null || session.rigSelectPending !== null) return;
+  session.rigTargetBank = session.rigSelectedBank;
+  refreshRigControls();
+});
 for (const button of ui.rigSlots) {
   button.addEventListener("click", () => selectRigSlot(Number(button.dataset.rigSlot)));
 }

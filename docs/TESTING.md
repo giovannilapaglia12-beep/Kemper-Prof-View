@@ -1,4 +1,22 @@
-# Verifiche hardware, test locali e problemi aperti — v1.37
+# Verifiche hardware, test locali e problemi aperti — v1.38
+
+## Da provare con la v1.38 (grafica)
+
+- [ ] PALCO: gli effetti accesi sono riquadri pieni colorati, quelli spenti scuri; si distinguono da lontano (anche col telefono sul leggio).
+- [ ] Nomi lunghi (es. Compressor, Transpose): nessuna parola tagliata o spezzata senza trattino, su A9 e Reno, in verticale e orizzontale.
+- [ ] I messaggi brevi compaiono in basso e non coprono la barra delle schede; toccando un pulsante sotto il messaggio il tocco funziona.
+- [ ] In PALCO, accendendo un effetto non compare più il messaggio "confermato".
+- [ ] Scheda RIG: il Rig in uso è verde con IN USO; toccandone un altro diventa ambra (CARICO…) e poi l'app torna a PALCO; in orizzontale i 5 Rig stanno affiancati.
+- [ ] Scheda RIG su un'altra Bank: compare TORNA ALLA BANK IN USO.
+- [ ] All'avvio con la modalità bidirezionale, la scheda RIG mostra subito nome della Bank e nomi degli slot.
+- [ ] Cambiando Rig non compare più "Collegamento bidirezionale perso".
+
+## Esito v1.37 sul Player (26/09/2026, Reno 12 Pro)
+
+- Modalità bidirezionale ATTIVA in 2 s; ⇄ in PALCO; 49 richieste al minuto (prima circa 450). Dettagli in `docs/MIDI.md`.
+- Due "perso" di un istante durante i cambi di Rig (sensing sospeso circa 2 s) → v1.38 aspetta 4 s.
+- Nomi Bank arrivati dopo il Program Change e non memorizzati → corretto in v1.38.
+- Accordatore non provato in quella sessione.
 
 ## Da provare con la v1.37 (modalità bidirezionale)
 

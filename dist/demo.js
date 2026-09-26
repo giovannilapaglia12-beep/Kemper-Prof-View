@@ -50,7 +50,16 @@ export function installDemoKemper() {
     }
     clearInterval(bidi.beatTimer);
     bidi.beatTimer = setInterval(beat, 60000 / (st.tempo / 64));
-    if (flags & 0x01) { pushRig(); param(0x7f, 0x7e, st.tuner); }
+    if (flags & 0x01) {
+      // Come sul Player reale: stato completo, poi Program Change e SOLO DOPO i nomi della Bank.
+      pushRig(); param(0x7f, 0x7e, st.tuner);
+      setTimeout(() => {
+        emit([0xc0, st.program]);
+        const bank = Math.floor(st.program / 5);
+        [`Bank ${bank + 1}`, "Clean", "Edge", "Breakup", "Drive", "Swells"]
+          .forEach((name, index) => emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(name), 0x00, 0xf7]));
+      }, 60);
+    }
   };
   const output = {
     id: "demo-out", name: "Profiler Player DEMO", manufacturer: "Kemper", state: "connected", type: "output",

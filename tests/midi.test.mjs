@@ -220,3 +220,16 @@ test('Chiavi di richiesta e risposta coincidono (per riconoscere gli invii spont
   assert.equal(midi.decodedKey(nameReply), 'str:0/1');
   assert.equal(midi.requestKey(midi.buildBeaconRequest().bytes), null);
 });
+
+test('Sillabazione dei nomi effetto: mai spezzati a caso (v1.38)', () => {
+  const start = appSource.indexOf('const isVowel');
+  const end = appSource.indexOf('function effectTone');
+  const context = {};
+  vm.runInNewContext(`${appSource.slice(start, end)}\nthis.softHyphenate = softHyphenate;`, context);
+  const show = (name) => context.softHyphenate(name).replace(/­/g, '-');
+  assert.equal(show('Compressor'), 'Com-pres-sor');
+  assert.equal(show('Transpose'), 'Trans-pose');
+  assert.equal(show('Double Tracker'), 'Double Tracker');
+  assert.equal(show('Studio EQ'), 'Studio EQ');
+  assert.equal(show('Chromatic Pitch'), 'Chro-ma-tic Pitch');
+});

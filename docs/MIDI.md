@@ -126,7 +126,7 @@ F0 00 20 33 02 7F 7E 00 40 <set> <flag> <lease> F7
 
 Esempi: primo beacon `F0 00 20 33 02 7F 7E 00 40 02 03 0F F7`, rinnovo `F0 00 20 33 02 7F 7E 00 40 02 02 0F F7`.
 
-**Sensing dal Player** (circa ogni 500 ms mentre il beacon è valido): `F0 00 20 33 00 00 7E 00 7F … F7`. Se manca per più di 2 s l'app considera il collegamento perso.
+**Sensing dal Player** (circa ogni 500 ms mentre il beacon è valido): `F0 00 20 33 00 00 7E 00 7F … F7`. Se manca per più di 4 s l'app considera il collegamento perso (durante il caricamento di un Rig il Player lo sospende per circa 2 s).
 
 **Parametri inviati spontaneamente** (stesso formato delle risposte, funzione `01` per i valori e `03` per le stringhe). Attesi secondo PySwitch:
 
@@ -140,3 +140,15 @@ Esempi: primo beacon `F0 00 20 33 02 7F 7E 00 40 02 03 0F F7`, rinnovo `F0 00 20
 | Battito del tempo | 124/0 (valore > 0 sul movimento) |
 
 L'app non si fida dell'elenco: considera "inviato dal Player" ogni parametro che arriva senza una lettura dell'app nei 350 ms precedenti (dopo il beacon INIT l'app sospende le letture per 700 ms, così l'invio iniziale del Player si riconosce). Solo quei parametri escono dalle letture periodiche; il riepilogo è in ALTRO e nella diagnostica (`bidirectional.pushedByPlayer`).
+
+
+### Verificato sul Player (26/09/2026, diagnostica v1.37)
+
+- Beacon accettato: sensing dopo 2 s, poi circa 2 messaggi al secondo. Prima del beacon è arrivato un solo sensing (probabilmente il resto di una sessione precedente ancora valida).
+- Parametri inviati dal Player senza richiesta (molto più del set 2 atteso): nome Rig; tipo e stato di **tutti** gli effetti A, B, C, D, X, MOD, DLY, REV; Fixed FX (5/1, 5/16, 5/26, 5/41); Freeze REV 125/115; BPM 4/0; Morph 0/11; Looper Location 127/53; Tuner 127/126; nota 125/84 e intonazione 124/15 e 124/81 (inviate di continuo anche con Tuner chiuso); battito 124/0 (1 sul movimento, poi 0).
+- I comandi inviati dall'app tornano confermati dal Player in circa 25 ms anche **senza** il flag ECHO.
+- Alcuni parametri vengono ripetuti periodicamente anche senza cambiamenti (BPM, Morph, DLY/REV, Double Tracker: circa 1,5 al secondo).
+- All'avvio (INIT) l'ordine è: stato dei parametri, `B0 2F 7F`, `B0 00 00`, `B0 20 00`, Program Change, cinque messaggi funzione `06` (`F0 00 20 33 02 00 06 00 00 00 01 00 0N 00 00 00 00 01 F7`, N = 0…4, significato sconosciuto), poi **nome Bank e 5 nomi slot** (funzione `07`).
+- Altri parametri visti, non usati dall'app: 4/2, 127/125, 50…61/30, 74/2 e 75/2 (seguono lo stato di DLY e REV).
+- Durante il caricamento di un Rig il sensing si interrompe per circa 2 s.
+- Richieste dell'app: da circa 450 a 49 al minuto.
