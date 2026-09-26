@@ -1,4 +1,13 @@
-# Verifiche hardware, test locali e problemi aperti — v1.33
+# Verifiche hardware, test locali e problemi aperti — v1.34
+
+## Da provare con la v1.34 (aggancio al tempo)
+
+- [ ] Con BATTUTA 4/4 e il BPM del brano impostato: registra 2 o 4 battute toccando REC durante l'ultimo movimento; il loop gira senza sfasarsi rispetto a un metronomo allo stesso BPM.
+- [ ] Il conteggio BATTUTA · movimento corrisponde al tempo che senti (se parte sfasato è normale: l'1 è il momento in cui tocchi REC).
+- [ ] Secondo tocco durante "CHIUDO TRA…" chiude subito.
+- [ ] Latenza: se i loop risultano sistematicamente un poco lunghi o corti, segnalarlo (si può aggiungere una compensazione).
+
+# Verifiche v1.33
 
 ## Problema noto del Player (non dell'app): Freeze REV + Fixed FX
 

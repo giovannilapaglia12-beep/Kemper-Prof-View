@@ -1,6 +1,13 @@
-# Kemper Stage View v1.33
+# Kemper Stage View v1.34
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx.
+
+## Novità v1.34
+
+- **Aggancio al tempo del Looper** (scheda LOOPER, impostazione ricordata sul telefono): OFF, MOVIMENTO, BATTUTA 4/4, BATTUTA 3/4. Il Kemper non quantizza il Looper; l'app, che conosce il BPM del Rig e l'istante di inizio registrazione, ritarda il comando REC di chiusura fino alla fine esatta della battuta (o del movimento) in corso, così il primo giro dura un numero intero di battute al tempo del Rig. Durante la registrazione mostra BATTUTA n · movimento, con il pallino che batte il tempo (più grande sull'1).
+  - Regola: la chiusura avviene alla fine della battuta/movimento in corso. Se il tocco arriva in ritardo di al massimo mezzo movimento (max 250 ms) il loop si chiude subito, per non aggiungere un giro intero.
+  - Un secondo tocco su REC durante l'attesa chiude subito.
+  - Vale solo per la chiusura del primo giro; overdub e altri comandi restano immediati.
 
 ## Novità v1.33
 

@@ -21,7 +21,7 @@ import {
   bytesToHex,
 } from "./kemper-midi.js";
 
-const APP_VERSION = "1.33";
+const APP_VERSION = "1.34";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -78,6 +78,8 @@ const ui = {
   looperHalfNote: $("#looper-half-note"),
   looperHalfFix: $("#looper-half-fix"),
   looperProbe: $("#looper-probe-button"),
+  quantizeButtons: [...document.querySelectorAll("[data-quantize]")],
+  quantizeNote: $("#looper-quantize-note"),
   saveDiagnostics: $("#save-diagnostics-button"),
   tunerOverlay: $("#tuner-overlay"),
   tunerOverlayNote: $("#tuner-overlay-note"),
@@ -2222,6 +2224,89 @@ const LOOPER_LABELS = {
 const LOOPER_HALF_KEY = "kemper-stage-view-looper-half";
 const looper = { state: "empty", since: 0, loopLength: null, stopPresses: 0, reverse: false, half: false, timer: null };
 try { looper.half = localStorage.getItem(LOOPER_HALF_KEY) === "1"; } catch { /* facoltativo */ }
+const QUANTIZE_KEY = "kemper-stage-view-looper-quantize";
+const QUANTIZE_MODES = {
+  off: { label: "OFF", beats: 0 },
+  beat: { label: "MOVIMENTO", beats: 1 },
+  bar4: { label: "BATTUTA 4/4", beats: 4 },
+  bar3: { label: "BATTUTA 3/4", beats: 3 },
+};
+looper.quantize = "off";
+looper.pendingClose = null;
+try {
+  const stored = localStorage.getItem(QUANTIZE_KEY);
+  if (stored in QUANTIZE_MODES) looper.quantize = stored;
+} catch { /* facoltativo */ }
+
+function currentBpm() {
+  const raw = session.lastState?.tempoRaw;
+  return Number.isInteger(raw) && raw > 0 ? raw / TEMPO_UNITS_PER_BPM : null;
+}
+
+function beatsPerBar() {
+  return looper.quantize === "bar3" ? 3 : 4;
+}
+
+function setQuantizeMode(mode) {
+  if (!(mode in QUANTIZE_MODES)) return;
+  looper.quantize = mode;
+  try { localStorage.setItem(QUANTIZE_KEY, mode); } catch { /* facoltativo */ }
+  paintLooperState();
+}
+
+// Chiusura del primo giro agganciata al tempo: il Player non quantizza,
+// quindi l'app ritarda il comando REC fino alla fine della battuta/movimento in corso.
+function planQuantizedClose() {
+  const mode = QUANTIZE_MODES[looper.quantize];
+  const bpm = currentBpm();
+  if (!mode.beats || looper.state !== "recording" || !bpm) return null;
+  const beatMs = 60000 / bpm;
+  const gridMs = beatMs * mode.beats;
+  const elapsed = performance.now() - looper.since;
+  // Tocco in ritardo fino a mezzo movimento (max 250 ms): chiudi subito invece di aggiungere un giro.
+  const lateTolerance = Math.min(beatMs * 0.5, 250);
+  const units = Math.max(1, Math.ceil((elapsed - lateTolerance) / gridMs));
+  const target = units * gridMs;
+  return { wait: target - elapsed, target, units, gridMs, beatMs };
+}
+
+function closeLoopNow() {
+  if (looper.pendingClose) {
+    window.clearTimeout(looper.pendingClose.timer);
+    looper.pendingClose = null;
+  }
+  if (!sendLooperSwitch("record", true)) return;
+  window.setTimeout(() => sendLooperSwitch("record", false), 60);
+}
+
+// Restituisce true se il tocco su REC è stato gestito dall'aggancio al tempo.
+function handleQuantizedRecord() {
+  if (looper.pendingClose) {
+    // Secondo tocco durante l'attesa: chiudi subito.
+    closeLoopNow();
+    return true;
+  }
+  const plan = planQuantizedClose();
+  if (!plan) return false;
+  if (plan.wait <= 0) {
+    closeLoopNow();
+    ui.looperStatus.textContent = `Chiuso in ritardo di ${Math.round(-plan.wait)} ms · loop ${(plan.target / 1000).toFixed(2)} s`;
+    return true;
+  }
+  looper.pendingClose = {
+    at: performance.now() + plan.wait,
+    target: plan.target,
+    timer: window.setTimeout(() => {
+      looper.pendingClose = null;
+      closeLoopNow();
+      ui.looperStatus.textContent = `Loop agganciato al tempo · ${(plan.target / 1000).toFixed(2)} s`;
+    }, plan.wait),
+  };
+  navigator.vibrate?.(15);
+  paintLooperState();
+  return true;
+}
+
 function setLooperHalf(value) {
   looper.half = value;
   try { localStorage.setItem(LOOPER_HALF_KEY, value ? "1" : "0"); } catch { /* facoltativo */ }
@@ -2236,7 +2321,11 @@ function setLooperState(next) {
   if (next !== looper.state) looper.since = now;
   looper.state = next;
   window.clearInterval(looper.timer);
-  looper.timer = next === "recording" ? window.setInterval(paintLooperState, 250) : null;
+  looper.timer = next === "recording" ? window.setInterval(paintLooperState, 50) : null;
+  if (next !== "recording" && looper.pendingClose) {
+    window.clearTimeout(looper.pendingClose.timer);
+    looper.pendingClose = null;
+  }
   paintLooperState();
 }
 
@@ -2245,7 +2334,35 @@ function paintLooperState() {
   const seconds = state === "recording"
     ? (performance.now() - looper.since) / 1000
     : looper.loopLength;
-  const time = seconds === null ? "" : `${state === "recording" ? "" : "LOOP "}${seconds.toFixed(1)} s`;
+  const mode = QUANTIZE_MODES[looper.quantize];
+  const bpm = currentBpm();
+  let time = seconds === null ? "" : `${state === "recording" ? "" : "LOOP "}${seconds.toFixed(1)} s`;
+  let beatLabel = "";
+  ui.looperState.dataset.beat = "none";
+  if (state === "recording" && mode.beats && bpm) {
+    const beatMs = 60000 / bpm;
+    const elapsed = performance.now() - looper.since;
+    const beatIndex = Math.floor(elapsed / beatMs);
+    const perBar = beatsPerBar();
+    const bar = Math.floor(beatIndex / perBar) + 1;
+    const beat = (beatIndex % perBar) + 1;
+    beatLabel = `BATTUTA ${bar} · ${beat}/${perBar}`;
+    time = beatLabel;
+    const inBeat = elapsed - beatIndex * beatMs;
+    ui.looperState.dataset.beat = inBeat < 140 ? (beat === 1 ? "down" : "on") : "off";
+  }
+  if (looper.pendingClose) {
+    const left = Math.max(0, looper.pendingClose.at - performance.now()) / 1000;
+    time = `CHIUDO TRA ${left.toFixed(1)} s`;
+  }
+  for (const button of ui.quantizeButtons) {
+    button.setAttribute("aria-pressed", String(button.dataset.quantize === looper.quantize));
+  }
+  ui.quantizeNote.textContent = !mode.beats
+    ? "Il loop si chiude nel momento esatto in cui tocchi REC."
+    : bpm
+      ? `${bpm.toFixed(1)} BPM · ${mode.beats === 1 ? "1 movimento" : "1 battuta"} = ${(60 / bpm * mode.beats).toFixed(2)} s. Per chiudere tocca REC durante l’ultimo ${mode.beats === 1 ? "movimento" : "movimento della battuta"}: l’app aspetta la fine esatta. Un secondo tocco chiude subito.`
+      : "BPM non ancora letto dal Player: il loop si chiuderà senza aggancio.";
   const flags = [looper.reverse ? "REVERSE" : "", looper.half && state !== "empty" ? "½ SPEED" : ""].filter(Boolean).join(" · ");
   ui.looperHalf.dataset.active = String(looper.half);
   ui.looperHalfLabel.textContent = `½ SPEED: ${looper.half ? "ON" : "OFF"}`;
@@ -2255,13 +2372,13 @@ function paintLooperState() {
       : "Toccando ½ SPEED il loop torna alla velocità di registrazione."
     : "";
   ui.looperState.dataset.state = state;
-  ui.looperStateLabel.textContent = LOOPER_LABELS[state];
+  ui.looperStateLabel.textContent = looper.pendingClose ? "CHIUSURA A TEMPO" : LOOPER_LABELS[state];
   ui.looperStateTime.textContent = time;
   ui.looperStateFlags.textContent = flags;
   ui.stageLooper.hidden = state === "empty";
   ui.stageLooper.dataset.state = state;
   ui.stageLooper.textContent = state === "recording"
-    ? `● REC ${Math.floor(seconds)}s`
+    ? looper.pendingClose ? "● CHIUDO…" : beatLabel ? `● REC ${beatLabel.replace("BATTUTA ", "").replace(" · ", ".")}` : `● REC ${Math.floor(seconds)}s`
     : { playing: "▶ LOOP", overdub: "● DUB", stopped: "■ LOOP" }[state] ?? "LOOP";
 }
 
@@ -2343,7 +2460,9 @@ function bindLooperSwitch(button) {
   let held = false;
   let lastDirectAt = 0;
   const press = () => {
-    if (button.disabled || held || !sendLooperSwitch(key, true)) return;
+    if (button.disabled || held) return;
+    if (key === "record" && (looper.pendingClose || looper.state === "recording") && handleQuantizedRecord()) return;
+    if (!sendLooperSwitch(key, true)) return;
     held = true;
     button.dataset.pressed = "true";
     looperSwitchReleases.add(release);
@@ -2379,6 +2498,7 @@ function bindLooperSwitch(button) {
   button.addEventListener("blur", release);
   button.addEventListener("click", () => {
     if (button.disabled || Date.now() - lastDirectAt < 600) return;
+    if (key === "record" && (looper.pendingClose || looper.state === "recording") && handleQuantizedRecord()) return;
     if (sendLooperSwitch(key, true)) window.setTimeout(() => sendLooperSwitch(key, false), 90);
   });
 }
@@ -2572,6 +2692,7 @@ function buildDiagnostics() {
       estimatedState: looper.state,
       estimatedLoopSeconds: looper.loopLength,
       estimatedHalfSpeed: looper.half,
+      quantize: looper.quantize,
       statusFeedback: "stimato dall'app, non letto dal Player",
     },
     effectControl: {
@@ -2719,6 +2840,7 @@ ui.liveMorphApply.addEventListener("click", () => {
 for (const button of ui.looperButtons) bindLooperSwitch(button);
 ui.looperStateReset.addEventListener("click", () => { looper.stopPresses = 0; setLooperState("empty"); });
 ui.looperHalfFix.addEventListener("click", () => setLooperHalf(!looper.half));
+for (const button of ui.quantizeButtons) button.addEventListener("click", () => setQuantizeMode(button.dataset.quantize));
 ui.looperProbe.addEventListener("click", () => {
   // Sola lettura: verifica se il Player comunica lo stato del Looper.
   const reads = [88, 89, 90, 91, 92, 93, 94].map((parameter) => buildParameterRequest(0x7d, parameter, `Looper probe 125/${parameter}`));

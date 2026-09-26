@@ -53,12 +53,19 @@ function looperContext(sent, channel = 2) {
   const node = () => ({ textContent: '', hidden: false, dataset: {} });
   const ui = { looperStatus: node(), copy: { disabled: true }, looperState: node(), looperStateLabel: node(),
     looperStateTime: node(), looperStateFlags: node(), stageLooper: node(),
-    looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node() };
+    looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node(), quantizeButtons: [], quantizeNote: node() };
   const source = functionSnippet('const LOOPER_SWITCHES = {', 'function releaseAllLooperSwitches()');
+  const clock = { now: 1000 };
+  const timers = [];
   const context = { session, ui, profilerOutputs: () => [output], describePort: () => 'Profiler · Kemper',
-    bytesToHex: midi.bytesToHex, Date, Set, performance: { now: () => 1000 },
-    window: { setInterval: () => 1, clearInterval() {} } };
-  vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;`, context);
+    bytesToHex: midi.bytesToHex, Date, Set, TEMPO_UNITS_PER_BPM: 64, navigator: {},
+    performance: { now: () => clock.now },
+    window: { setInterval: () => 1, clearInterval() {}, clearTimeout() {},
+      setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; } } };
+  vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;
+this.handleQuantizedRecord = handleQuantizedRecord; this.setQuantizeMode = setQuantizeMode;`, context);
+  context.clock = clock;
+  context.timers = timers;
   return context;
 }
 
@@ -98,6 +105,38 @@ test('Looper estimated state follows the Kemper Rec/Play/Dub and Stop logic', ()
   assert.equal(context.ui.looperHalfLabel.textContent, '½ SPEED: ON');
   press('half');
   assert.equal(context.looper.half, false);
+});
+
+test('Quantized close waits for the end of the current bar at the rig tempo', () => {
+  const sent = [];
+  const context = looperContext(sent, 1);
+  context.session.lastState.tempoRaw = 120 * 64; // 120 BPM: 1 movimento = 500 ms, 1 battuta 4/4 = 2000 ms
+  context.setQuantizeMode('bar4');
+  context.sendLooperSwitch('record', true); // inizio registrazione a t=1000
+  assert.equal(context.looper.state, 'recording');
+  context.clock.now = 1000 + 7600; // tocco durante l'ultimo movimento della 4ª battuta
+  const before = sent.length;
+  assert.equal(context.handleQuantizedRecord(), true);
+  assert.equal(sent.length, before, 'nessun comando inviato subito');
+  const close = context.timers.at(-1);
+  assert.equal(Math.round(close.ms), 400, 'attende la fine della battuta (8000 ms)');
+  context.clock.now = 1000 + 8000;
+  close.fn();
+  assert.equal(context.looper.state, 'playing');
+  assert.equal(context.looper.loopLength, 8);
+});
+
+test('Quantized close sends immediately when slightly late', () => {
+  const sent = [];
+  const context = looperContext(sent, 1);
+  context.session.lastState.tempoRaw = 120 * 64;
+  context.setQuantizeMode('beat');
+  context.sendLooperSwitch('record', true);
+  context.clock.now = 1000 + 2080; // 80 ms dopo il 4° movimento
+  const before = sent.length;
+  assert.equal(context.handleQuantizedRecord(), true);
+  assert.ok(sent.length > before, 'chiusura immediata');
+  assert.equal(context.looper.state, 'playing');
 });
 
 test('Morph slider sends the requested CC11 value and waits for a reply', () => {

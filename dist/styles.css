@@ -1512,3 +1512,21 @@ body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8r
 .looper-half[data-active="true"] > span { color: var(--amber); }
 .looper-half small { flex-basis: 100%; color: var(--amber); font-size: 0.78rem; }
 .looper-half small:empty { display: none; }
+
+/* v1.34 · aggancio al tempo */
+.looper-quantize { display: grid; gap: 6px; margin: 0 0 12px; }
+.looper-quantize-title { color: var(--muted); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.12em; }
+.looper-quantize-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.looper-quantize-options button {
+  min-height: 40px; padding: 4px; border: 1px solid var(--line); border-radius: 9px;
+  background: transparent; color: var(--muted); font-size: 0.66rem; font-weight: 900; letter-spacing: 0.03em; cursor: pointer;
+}
+.looper-quantize-options button[aria-pressed="true"] { border-color: var(--cyan); background: rgba(114, 235, 220, 0.14); color: var(--cyan); }
+.looper-quantize small { color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
+.looper-state[data-beat="on"] .looper-state-dot { animation: none; opacity: 1; transform: scale(1.25); }
+.looper-state[data-beat="down"] .looper-state-dot { animation: none; opacity: 1; transform: scale(1.6); background: var(--text); }
+.looper-state[data-beat="off"][data-state="recording"] .looper-state-dot { animation: none; opacity: 0.35; }
+.looper-state-dot { transition: transform 60ms ease; }
+.looper-state { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "dot label" "dot time" "dot flags"; row-gap: 2px; }
+.looper-state-time { font-size: 1rem; }
+.looper-quantize-options button { font-size: 0.62rem; letter-spacing: 0; }

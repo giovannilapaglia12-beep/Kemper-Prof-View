@@ -13,7 +13,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.33</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.34</p>
         <h1>Kemper Stage View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -133,6 +133,16 @@
           <span class="looper-state-flags" id="looper-state-flags"></span>
         </div>
         <p class="looper-info">Stato stimato dall’app in base ai comandi inviati: il Player non lo comunica. Se usi anche i pulsanti del Player e lo stato non corrisponde, tocca <button class="looper-state-reset" id="looper-state-reset" type="button">SEGNA COME VUOTO</button></p>
+        <div class="looper-quantize" role="group" aria-label="Chiusura del loop agganciata al tempo">
+          <span class="looper-quantize-title">AGGANCIO AL TEMPO</span>
+          <div class="looper-quantize-options">
+            <button type="button" data-quantize="off" aria-pressed="true">OFF</button>
+            <button type="button" data-quantize="beat" aria-pressed="false">MOVIMENTO</button>
+            <button type="button" data-quantize="bar4" aria-pressed="false">BATTUTA 4/4</button>
+            <button type="button" data-quantize="bar3" aria-pressed="false">BATTUTA 3/4</button>
+          </div>
+          <small id="looper-quantize-note"></small>
+        </div>
         <div class="looper-half" id="looper-half" data-active="false">
           <span id="looper-half-label">½ SPEED: OFF</span>
           <button class="looper-state-reset" id="looper-half-fix" type="button">NON CORRISPONDE? INVERTI</button>
