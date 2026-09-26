@@ -1,4 +1,22 @@
-# Verifiche hardware, test locali e problemi aperti — v1.41
+# Verifiche hardware, test locali e problemi aperti — v1.43
+
+## Da provare con la v1.43 (comprende la v1.42)
+
+- [ ] Stesse prove della v1.42 qui sotto, in particolare il loop lungo: pulsanti e schermo sempre pronti anche dopo diversi minuti di registrazione/overdub.
+
+## Da provare con la v1.42
+
+- [ ] Looper: registra, suona, fai overdub per qualche minuto con la schermata PALCO e con la scheda LOOPER aperta: i pulsanti rispondono subito, nessun "impuntamento".
+- [ ] Tre STOP di seguito: l'app resta su FERMO (il loop non è cancellato, come sul Player).
+- [ ] REVERSE a loop vuoto: l'app mostra REVERSE: ON; il nuovo loop suona al contrario; toccando REVERSE torna normale. Dopo aver chiuso e riaperto l'app lo stato è ricordato.
+- [ ] Diagnostica: `bidirectional.screenRedraws` con molti meno ridisegni che messaggi.
+
+## Esito v1.41 sul Player (26/09/2026)
+
+- Modalità bidirezionale stabile 12 minuti, nessuna caduta, 72 richieste/min; accordatore con 6 corde.
+- Nomi Bank via 0x47: non provati (nessuna Bank incompleta visitata).
+- Looper: "piccole difficoltà durante il loop" (da chiarire: suono o app); tre STOP facevano segnare VUOTO all'app ma il loop restava; REVERSE rimasto attivo dal loop precedente → nuovo loop al contrario. Corretti i due punti nella v1.42; alleggerito il ridisegno dello schermo.
+
 
 ## Da provare con la v1.41
 

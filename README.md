@@ -1,6 +1,16 @@
-# Kemper Profiler View v1.41
+# Kemper Profiler View v1.43
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.43
+
+- **Looper ancora più leggero**: durante la registrazione il cronometro aggiorna solo il tempo e il battito (non più tutta la scheda LOOPER dieci volte al secondo); l'anello di avanzamento si aggiorna ogni 80 ms invece di 50 e si ferma quando l'app non è in primo piano. Insieme alla v1.42 serve a togliere i rallentamenti dei pulsanti durante il loop.
+
+## Novità v1.42 (dopo la prova sul Player del 26/09/2026)
+
+- **Looper: tolta la regola "tre STOP = loop cancellato"**. Non è vera sul Player: l'app segnava LOOP VUOTO mentre il loop c'era ancora. STOP ora ferma soltanto; per cancellare c'è CANCELLA LOOP (Erase + STOP tenuto premuto).
+- **Looper: REVERSE ricordato** come ½ SPEED. Sul Player REVERSE resta attivo anche dopo la cancellazione del loop (il nuovo loop suonava al contrario). La scheda LOOPER mostra sempre REVERSE: ON/OFF con "NON CORRISPONDE? INVERTI"; l'app segue REVERSE anche a loop vuoto e lo ricorda sul telefono.
+- **App più leggera durante l'uso**: in modalità bidirezionale il Player invia circa 40 messaggi al secondo (dati del Tuner anche a Tuner chiuso, battito, valori ripetuti) e l'app ridisegnava tutta la schermata per ognuno. Ora ridisegna solo quando cambia qualcosa di visibile, al massimo ogni 60 ms (nella prova con il Player simulato: 6 ridisegni invece di 498). Diagnostica: `bidirectional.screenRedraws`.
 
 ## Novità v1.41
 

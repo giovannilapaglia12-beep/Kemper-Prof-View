@@ -27,7 +27,7 @@ import {
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.41";
+const APP_VERSION = "1.43";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -83,6 +83,10 @@ const ui = {
   looperHalfLabel: $("#looper-half-label"),
   looperHalfNote: $("#looper-half-note"),
   looperHalfFix: $("#looper-half-fix"),
+  looperReverse: $("#looper-reverse"),
+  looperReverseLabel: $("#looper-reverse-label"),
+  looperReverseNote: $("#looper-reverse-note"),
+  looperReverseFix: $("#looper-reverse-fix"),
   looperProbe: $("#looper-probe-button"),
   looperProbeResult: $("#looper-probe-result"),
   locationButtons: [...document.querySelectorAll("[data-looper-location]")],
@@ -586,8 +590,23 @@ function effectTone(type) {
   return "standard";
 }
 
-const kemper = new KemperMidiState((state) => {
-  session.lastState = state;
+// v1.42: in modalità bidirezionale il Player invia circa 40 messaggi al secondo (Tuner anche a
+// Tuner chiuso, battito, parametri ripetuti). Ridisegnare tutta la schermata a ogni messaggio
+// appesantiva il telefono: ora lo stato si aggiorna subito, lo schermo al massimo ogni 60 ms.
+const STATE_PAINT_INTERVAL = 60;
+let statePaintTimer = null;
+session.statePaints = 0;
+session.stateMessages = 0;
+function scheduleStatePaint() {
+  if (statePaintTimer !== null) return;
+  statePaintTimer = window.setTimeout(paintKemperState, STATE_PAINT_INTERVAL);
+}
+
+function paintKemperState() {
+  statePaintTimer = null;
+  const state = session.lastState;
+  if (!state) return;
+  session.statePaints += 1;
   if (state.rigName) {
     ui.rigTitle.textContent = state.rigName;
     ui.liveRigName.textContent = state.rigName;
@@ -643,7 +662,24 @@ const kemper = new KemperMidiState((state) => {
   if (state.rigName) ui.syncStatus.textContent = state.tempoRaw === null
     ? "Rig sincronizzato"
     : `${session.autoSync ? "Auto sync attivo" : "Rig sincronizzato"} · Tempo ${state.bpm ?? "…"} BPM`;
+}
 
+// Firma di ciò che la schermata mostra: se non cambia (Tuner, battito, valori ripetuti) niente ridisegno.
+let lastPaintSignature = "";
+function stateSignature(state) {
+  let text = `${state.rigName}|${state.program}|${state.channel}|${state.bpm}|${state.tempoRaw}`;
+  for (const effect of state.effects.values()) text += `|${effect.type}:${effect.active}`;
+  return text;
+}
+
+const kemper = new KemperMidiState((state) => {
+  session.lastState = state;
+  session.stateMessages += 1;
+  const signature = stateSignature(state);
+  if (signature !== lastPaintSignature) {
+    lastPaintSignature = signature;
+    scheduleStatePaint();
+  }
   if (state.rigName && session.lastRigName === null) {
     session.lastRigName = state.rigName;
   } else if (state.rigName && state.rigName !== session.lastRigName) {
@@ -2820,6 +2856,9 @@ const looper = { state: "empty", since: 0, loopLength: null, stopPresses: 0, rev
   // v1.41: posizione stimata nel giro (0…1) per il cerchio di avanzamento.
   recordedHalf: false, phaseAt: 0, phaseTime: 0, phaseRate: 0, ringTimer: null };
 try { looper.half = localStorage.getItem(LOOPER_HALF_KEY) === "1"; } catch { /* facoltativo */ }
+// v1.42: anche REVERSE resta attivo sul Player dopo la cancellazione (prova del 26/09/2026): lo si ricorda.
+const LOOPER_REVERSE_KEY = "kemper-stage-view-looper-reverse";
+try { looper.reverse = localStorage.getItem(LOOPER_REVERSE_KEY) === "1"; } catch { /* facoltativo */ }
 const QUANTIZE_KEY = "kemper-stage-view-looper-quantize";
 const QUANTIZE_MODES = {
   off: { label: "OFF", beats: 0 },
@@ -2903,6 +2942,13 @@ function handleQuantizedRecord() {
   return true;
 }
 
+function setLooperReverse(value) {
+  looper.reverse = value;
+  try { localStorage.setItem(LOOPER_REVERSE_KEY, value ? "1" : "0"); } catch { /* facoltativo */ }
+  rebaseLooperPhase();
+  paintLooperState();
+}
+
 function setLooperHalf(value) {
   looper.half = value;
   try { localStorage.setItem(LOOPER_HALF_KEY, value ? "1" : "0"); } catch { /* facoltativo */ }
@@ -2929,11 +2975,12 @@ function rebaseLooperPhase({ restart = false } = {}) {
   looper.phaseTime = now;
   looper.phaseRate = looperRate();
   window.clearInterval(looper.ringTimer);
-  looper.ringTimer = looper.phaseRate ? window.setInterval(paintLooperRing, 50) : null;
+  looper.ringTimer = looper.phaseRate ? window.setInterval(paintLooperRing, 80) : null;
   paintLooperRing();
 }
 
 function paintLooperRing() {
+  if (document.visibilityState !== "visible" && looper.ringTimer !== null) return;
   const show = looper.loopLength !== null && looper.state !== "empty" && looper.state !== "recording";
   const phase = show ? looperPhase() : 0;
   for (const node of [ui.looperState, ui.stageLooper]) {
@@ -2948,11 +2995,13 @@ function setLooperState(next) {
   if (previous === "empty" && next === "recording") looper.recordedHalf = looper.half;
   if (looper.state === "recording" && next !== "recording") looper.loopLength = (now - looper.since) / 1000;
   // ½ SPEED resta attivo sul Player anche dopo la cancellazione (prova del 25/09/2026)
-  if (next === "empty") { looper.loopLength = null; looper.reverse = false; }
+  // e anche REVERSE (prova del 26/09/2026): nessuno dei due si azzera con la cancellazione.
+  if (next === "empty") looper.loopLength = null;
   if (next !== looper.state) looper.since = now;
   looper.state = next;
   window.clearInterval(looper.timer);
-  looper.timer = next === "recording" ? window.setInterval(paintLooperState, 50) : null;
+  // v1.43: durante la registrazione il timer aggiorna solo contatore e battito (non tutta la scheda).
+  looper.timer = next === "recording" ? window.setInterval(paintLooperClock, 50) : null;
   if (next !== "recording" && looper.pendingClose) {
     window.clearTimeout(looper.pendingClose.timer);
     looper.pendingClose = null;
@@ -2960,6 +3009,36 @@ function setLooperState(next) {
   // Il giro riparte da capo quando si chiude la registrazione o si riparte da FERMO.
   rebaseLooperPhase({ restart: next === "playing" && (previous === "recording" || previous === "stopped") });
   paintLooperState();
+}
+
+function setTextIfChanged(node, text) {
+  if (node.textContent !== text) node.textContent = text;
+}
+
+function paintLooperClock() {
+  if (looper.state !== "recording") { paintLooperState(); return; }
+  if (document.visibilityState !== "visible") return;
+  const mode = QUANTIZE_MODES[looper.quantize];
+  const bpm = currentBpm();
+  const elapsed = performance.now() - looper.since;
+  let time = `${(elapsed / 1000).toFixed(1)} s`;
+  let beatLabel = "";
+  let beatState = "none";
+  if (mode.beats && bpm) {
+    const beatMs = 60000 / bpm;
+    const beatIndex = Math.floor(elapsed / beatMs);
+    const perBar = beatsPerBar();
+    const beat = (beatIndex % perBar) + 1;
+    beatLabel = `BATTUTA ${Math.floor(beatIndex / perBar) + 1} · ${beat}/${perBar}`;
+    time = beatLabel;
+    beatState = elapsed - beatIndex * beatMs < 140 ? (beat === 1 ? "down" : "on") : "off";
+  }
+  if (looper.pendingClose) time = `CHIUDO TRA ${(Math.max(0, looper.pendingClose.at - performance.now()) / 1000).toFixed(1)} s`;
+  if (ui.looperState.dataset.beat !== beatState) ui.looperState.dataset.beat = beatState;
+  setTextIfChanged(ui.looperStateTime, time);
+  setTextIfChanged(ui.looperStateLabel, looper.pendingClose ? "CHIUSURA A TEMPO" : LOOPER_LABELS.recording);
+  setTextIfChanged(ui.stageLooper, looper.pendingClose ? "● CHIUDO…"
+    : beatLabel ? `● REC ${beatLabel.replace("BATTUTA ", "").replace(" · ", ".")}` : `● REC ${Math.floor(elapsed / 1000)}s`);
 }
 
 function paintLooperState() {
@@ -2996,7 +3075,12 @@ function paintLooperState() {
     : bpm
       ? `${bpm.toFixed(1)} BPM · ${mode.beats === 1 ? "1 movimento" : "1 battuta"} = ${(60 / bpm * mode.beats).toFixed(2)} s. Per chiudere tocca REC durante l’ultimo ${mode.beats === 1 ? "movimento" : "movimento della battuta"}: l’app aspetta la fine esatta. Un secondo tocco chiude subito.`
       : "BPM non ancora letto dal Player: il loop si chiuderà senza aggancio.";
-  const flags = [looper.reverse ? "REVERSE" : "", looper.half && state !== "empty" ? "½ SPEED" : ""].filter(Boolean).join(" · ");
+  const flags = [looper.reverse ? "REVERSE" : "", looper.half ? "½ SPEED" : ""].filter(Boolean).join(" · ");
+  ui.looperReverse.dataset.active = String(looper.reverse);
+  ui.looperReverseLabel.textContent = `REVERSE: ${looper.reverse ? "ON" : "OFF"}`;
+  ui.looperReverseNote.textContent = looper.reverse
+    ? "Il loop suona al contrario. REVERSE resta attivo sul Player anche dopo aver cancellato il loop: tocca REVERSE per tornare normale."
+    : "";
   ui.looperHalf.dataset.active = String(looper.half);
   ui.looperHalfLabel.textContent = `½ SPEED: ${looper.half ? "ON" : "OFF"}`;
   ui.looperHalfNote.textContent = looper.half
@@ -3022,16 +3106,16 @@ function trackLooperPress(key) {
       setLooperState({ empty: "recording", recording: "playing", playing: "overdub", overdub: "playing", stopped: "playing" }[looper.state]);
       break;
     case "stop":
-      looper.stopPresses += 1;
-      // Manuale Kemper: premere STOP tre volte cancella il loop.
-      if (looper.stopPresses >= 3) { looper.stopPresses = 0; setLooperState("empty"); }
-      else if (looper.state !== "empty") setLooperState("stopped");
+      // v1.42: tolta la regola "tre STOP = loop cancellato" (non vera sul Player, prova del 26/09/2026).
+      // Il loop si cancella tenendo premuto STOP: lo fa il pulsante CANCELLA LOOP.
+      if (looper.state !== "empty") setLooperState("stopped");
       break;
     case "undo":
       if (looper.state === "overdub") setLooperState("playing");
       break;
     case "reverse":
-      if (looper.state !== "empty") { looper.reverse = !looper.reverse; rebaseLooperPhase(); paintLooperState(); }
+      // Il Player cambia REVERSE anche a loop vuoto: l'app lo segue sempre.
+      setLooperReverse(!looper.reverse);
       break;
     case "half":
       setLooperHalf(!looper.half);
@@ -3333,6 +3417,7 @@ function buildDiagnostics() {
       estimatedState: looper.state,
       estimatedLoopSeconds: looper.loopLength,
       estimatedHalfSpeed: looper.half,
+      estimatedReverse: looper.reverse,
       quantize: looper.quantize,
       probeResults: session.looperProbeResults ?? [],
       location: session.looperLocation,
@@ -3437,6 +3522,7 @@ function buildDiagnostics() {
       transitions: session.bidi.transitions,
       sysexRequestsSent: session.requestsSent,
       gapFillsInsteadOfFullSync: session.gapFills ?? 0,
+      screenRedraws: { messages: session.stateMessages, redraws: session.statePaints },
       requestsPerMinute: requestsPerMinute(),
     },
     rawTunerNotes: [...session.tunerRawNotes.values()],
@@ -3505,6 +3591,7 @@ ui.liveMorphApply.addEventListener("click", () => {
 for (const button of ui.looperButtons) bindLooperSwitch(button);
 ui.looperStateReset.addEventListener("click", () => { looper.stopPresses = 0; setLooperState("empty"); });
 ui.looperHalfFix.addEventListener("click", () => setLooperHalf(!looper.half));
+ui.looperReverseFix.addEventListener("click", () => setLooperReverse(!looper.reverse));
 for (const button of ui.quantizeButtons) button.addEventListener("click", () => setQuantizeMode(button.dataset.quantize));
 for (const button of ui.locationButtons) button.addEventListener("click", () => setLooperLocation(Number(button.dataset.looperLocation)));
 let forgetArmTimer = null;

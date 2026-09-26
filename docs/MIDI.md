@@ -169,3 +169,9 @@ F0 00 20 33 02 7F 47 00 00 00 01 00 <N> F7      N = 00 nome Bank, 01…05 nomi d
 ```
 
 Il Player risponde con la funzione `07` (lo stesso formato che invia da solo al cambio Bank dal Player). Indirizzi non documentati da Kemper, trovati dagli utenti del forum Kemper. Osservato il 26/09/2026: cambiando Bank dall'app il Player invia da solo solo il nome della Bank e quello dello slot 2; l'app ora chiede gli altri se mancano.
+
+## Looper: comportamenti osservati sul Player
+
+- ½ SPEED (25/09/2026) e REVERSE (26/09/2026) restano attivi anche dopo la cancellazione del loop.
+- Tre pressioni di STOP **non** cancellano il loop (26/09/2026). La cancellazione avviene con Erase (125/94) e/o STOP tenuto premuto circa 2 s.
+- Lo stato del Looper non è leggibile via MIDI: l'app lo stima dai comandi inviati.

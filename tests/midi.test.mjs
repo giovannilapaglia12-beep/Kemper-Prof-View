@@ -53,13 +53,14 @@ function looperContext(sent, channel = 2) {
   const node = () => ({ textContent: '', hidden: false, dataset: {}, style: { setProperty() {} } });
   const ui = { looperStatus: node(), copy: { disabled: true }, looperState: node(), looperStateLabel: node(),
     looperStateTime: node(), looperStateFlags: node(), stageLooper: node(),
-    looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node(), quantizeButtons: [], quantizeNote: node() };
+    looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node(), quantizeButtons: [], quantizeNote: node(),
+    looperReverse: node(), looperReverseLabel: node(), looperReverseNote: node() };
   const source = functionSnippet('const LOOPER_SWITCHES = {', 'function releaseAllLooperSwitches()');
   const clock = { now: 1000 };
   const timers = [];
   const context = { session, ui, profilerOutputs: () => [output], describePort: () => 'Profiler · Kemper',
     bytesToHex: midi.bytesToHex, Date, Set, TEMPO_UNITS_PER_BPM: 64, navigator: {},
-    performance: { now: () => clock.now },
+    performance: { now: () => clock.now }, document: { visibilityState: "visible" },
     window: { setInterval: () => 1, clearInterval() {}, clearTimeout() {},
       setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; } } };
   vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;
@@ -94,11 +95,18 @@ test('Looper estimated state follows the Kemper Rec/Play/Dub and Stop logic', ()
   press('undo'); assert.equal(context.looper.state, 'playing');
   press('stop'); assert.equal(context.looper.state, 'stopped');
   press('record'); assert.equal(context.looper.state, 'playing');
+  // v1.42: tre STOP non cancellano il loop (prova sul Player del 26/09/2026)
   press('stop'); press('stop'); press('stop');
+  assert.equal(context.looper.state, 'stopped');
+  press('erase');
   assert.equal(context.looper.state, 'empty');
   assert.equal(context.ui.stageLooper.hidden, true);
-  press('record'); press('erase');
-  assert.equal(context.looper.state, 'empty');
+  // REVERSE resta attivo sul Player anche dopo la cancellazione (prova reale 26/09/2026)
+  press('reverse'); press('record'); press('erase');
+  assert.equal(context.looper.reverse, true);
+  assert.equal(context.ui.looperReverseLabel.textContent, 'REVERSE: ON');
+  press('reverse');
+  assert.equal(context.looper.reverse, false);
   // ½ SPEED resta attivo sul Player anche dopo la cancellazione (prova reale 25/09/2026)
   press('half'); press('erase');
   assert.equal(context.looper.half, true);
@@ -237,7 +245,7 @@ test('Sillabazione dei nomi effetto: mai spezzati a caso (v1.38)', () => {
 
 test('Colori delle categorie come sul Kemper (v1.39)', () => {
   const start = appSource.indexOf('function effectTone(type) {');
-  const end = appSource.indexOf('const kemper = new KemperMidiState');
+  const end = appSource.indexOf('const STATE_PAINT_INTERVAL');
   const context = {};
   vm.runInNewContext(`${appSource.slice(start, end)}\nthis.effectTone = effectTone;`, context);
   const tone = context.effectTone;
@@ -278,7 +286,7 @@ test('Cerchio del Looper: la posizione avanza, REVERSE la fa tornare indietro (v
   const clock = { now: 0 };
   const looper = { state: 'playing', loopLength: 4, half: false, recordedHalf: false, reverse: false, phaseAt: 0, phaseTime: 0, phaseRate: 0, ringTimer: null };
   const node = () => ({ dataset: {}, style: { setProperty() {} } });
-  const context = { looper, ui: { looperState: node(), stageLooper: node() }, performance: { now: () => clock.now },
+  const context = { looper, ui: { looperState: node(), stageLooper: node() }, performance: { now: () => clock.now }, document: { visibilityState: "visible" },
     window: { setInterval: () => 1, clearInterval() {} } };
   vm.runInNewContext(`${appSource.slice(start, end)}\nthis.looperPhase = looperPhase; this.rebase = rebaseLooperPhase;`, context);
   context.rebase({ restart: true });
