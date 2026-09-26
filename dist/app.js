@@ -20,13 +20,14 @@ import {
   buildRevHoldChangeRequest,
   buildRevHoldRequest,
   buildBeaconRequest,
+  buildBankNamesRequests,
   bytesToHex,
   decodedKey,
   requestKey,
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.40";
+const APP_VERSION = "1.41";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -97,6 +98,7 @@ const ui = {
   bidiToggle: $("#bidi-toggle"),
   liveBpmBox: $(".stage-bpm"),
   rigCurrentJump: $("#rig-current-jump"),
+  themeButtons: [...document.querySelectorAll("[data-theme-choice]")],
   tunerOverlay: $("#tuner-overlay"),
   tunerOverlayNote: $("#tuner-overlay-note"),
   tunerOverlayNeedle: $("#tuner-overlay-needle"),
@@ -338,6 +340,18 @@ function handleBankNames(decoded) {
   if (decoded.index === 0) list.bankName = decoded.text;
   else list.slots[decoded.index] = decoded.text;
   list.at = now;
+  // Risposta alla richiesta dei nomi fatta dall'app (v1.41): va alla Bank richiesta.
+  const asked = session.bankNameRequest;
+  if (asked && now - asked.at < 4000) {
+    if (decoded.index === 5) {
+      rememberBankList(asked.bank, list);
+      session.pendingBankList = null;
+      session.bankNameRequest = null;
+      session.bankNameRepliesComplete = (session.bankNameRepliesComplete ?? 0) + 1;
+      refreshRigControls();
+    }
+    return;
+  }
   // In modalità bidirezionale (invio iniziale) i nomi arrivano DOPO il Program Change
   // (prova sul Player del 26/09/2026): li si assegna alla Bank dell'ultimo Program Change.
   const program = session.lastProgramEvent;
@@ -346,6 +360,28 @@ function handleBankNames(decoded) {
     session.pendingBankList = null;
     refreshRigControls();
   }
+}
+
+function bankNamesComplete(bank) {
+  if (!session.bankNames.has(String(bank))) return false;
+  for (let slot = 1; slot <= 5; slot += 1) if (!session.slotNames.has(`${bank}:${slot}`)) return false;
+  return true;
+}
+
+// v1.41: cambiando Bank dall'app il Player invia solo il nome della Bank e di uno slot;
+// se mancano nomi, l'app li chiede (una richiesta per nome, sei in tutto).
+function requestBankNames(bank) {
+  if (!session.sysex || !profilerOutputs().length || window.__kemperDemoNoNames) return;
+  session.bankNameRequest = { bank, at: performance.now() };
+  session.bankNameRequestsSent = (session.bankNameRequestsSent ?? 0) + 1;
+  sendProfilerRequests(buildBankNamesRequests(), { record: false });
+}
+
+function scheduleBankNamesCheck(bank) {
+  window.clearTimeout(session.bankNamesTimer);
+  session.bankNamesTimer = window.setTimeout(() => {
+    if (session.rigSelectedBank === bank && !bankNamesComplete(bank)) requestBankNames(bank);
+  }, 1200);
 }
 
 function forgetAllNames() {
@@ -840,6 +876,7 @@ function trackProfilerRig(decoded) {
       rememberBankList(bank, list);
       session.pendingBankList = null;
     }
+    scheduleBankNamesCheck(bank);
     if (session.rigSelectPending !== null) {
       if (session.rigSelectPending.bank === bank && session.rigSelectPending.slot === slot) return;
       stopRigSelectionConfirmation();
@@ -1126,8 +1163,12 @@ function beginRevHoldProbe({ pendingTarget = null, record = true } = {}) {
     session.freezeRevRaw = null;
   }
   refreshFreezeControls();
-  requestRevHoldProbe({ record });
-  session.freezeProbePollTimer = window.setInterval(() => requestRevHoldProbe(), 400);
+  const startedAt = performance.now();
+  const commanded = pendingTarget !== null;
+  if (!commanded || confirmationPollAllowed(startedAt)) requestRevHoldProbe({ record });
+  session.freezeProbePollTimer = window.setInterval(() => {
+    if (!commanded || confirmationPollAllowed(startedAt)) requestRevHoldProbe();
+  }, 400);
   session.freezeProbeTimeout = window.setTimeout(() => {
     const wasCommand = session.freezeRevPending !== null;
     stopFreezeProbe();
@@ -1285,7 +1326,8 @@ function beginFixedFxConfirmation(effect, target) {
   stopFixedFxConfirmation(effect.key, { keepPending: true });
   session.fixedFxPending.set(effect.key, target);
   refreshFixedFxControls();
-  const poll = () => requestFixedFxState([effect]);
+  const startedAt = performance.now();
+  const poll = () => { if (confirmationPollAllowed(startedAt)) requestFixedFxState([effect]); };
   poll();
   const interval = window.setInterval(poll, 400);
   const timeout = window.setTimeout(() => {
@@ -1341,9 +1383,11 @@ function setLooperLocation(target) {
     `Looper Location ${target ? "OUTPUT" : "INPUT"}`)]);
   session.looperLocationPending = target;
   paintLooperLocation();
-  window.setTimeout(requestLooperLocation, 150);
+  const startedAt = performance.now();
+  const poll = () => { if (confirmationPollAllowed(startedAt)) requestLooperLocation(); };
+  window.setTimeout(poll, 150);
   session.looperLocationTimers = {
-    interval: window.setInterval(requestLooperLocation, 400),
+    interval: window.setInterval(poll, 400),
     timeout: window.setTimeout(() => {
       stopLooperLocationConfirmation();
       toast("Posizione Looper non confermata dal Kemper");
@@ -2349,8 +2393,10 @@ function setTempoRaw(targetRaw, command) {
   ]);
   refreshTempoControls();
 
-  window.setTimeout(requestTempoConfirmation, 150);
-  session.tempoConfirmPollTimer = window.setInterval(requestTempoConfirmation, 400);
+  const tempoStartedAt = performance.now();
+  const pollTempo = () => { if (confirmationPollAllowed(tempoStartedAt)) requestTempoConfirmation(); };
+  window.setTimeout(pollTempo, 150);
+  session.tempoConfirmPollTimer = window.setInterval(pollTempo, 400);
   session.tempoConfirmTimeout = window.setTimeout(() => {
     stopTempoConfirmation();
     ui.tempoStatus.textContent = "NON CONFERMATO";
@@ -2525,8 +2571,19 @@ function fillUnknownState() {
 }
 
 function syncAfterChange(delay = 240, options = { silent: true }) {
-  const bidi = session.bidi.state === "active";
-  return window.setTimeout(() => (bidi ? fillUnknownState() : requestProfilerState(options)), bidi ? 1000 : delay);
+  if (session.bidi.state === "active") {
+    // Un solo controllo dei valori mancanti anche se Program Change, nome Rig e conferma arrivano insieme (v1.41).
+    window.clearTimeout(session.gapFillTimer);
+    session.gapFillTimer = window.setTimeout(fillUnknownState, 1000);
+    return session.gapFillTimer;
+  }
+  return window.setTimeout(() => requestProfilerState(options), delay);
+}
+
+// v1.41: con la modalità bidirezionale il Player conferma da solo i comandi in circa 25 ms:
+// le letture di conferma partono solo se la conferma non è arrivata entro 700 ms.
+function confirmationPollAllowed(startedAt) {
+  return session.bidi.state !== "active" || performance.now() - startedAt >= 700;
 }
 
 function scheduleRigChangeSync() {
@@ -2601,7 +2658,10 @@ function toggleEffect(module) {
   session.effectLastCommands.push(command);
   session.effectLastCommands = session.effectLastCommands.slice(-20);
 
-  const requestConfirmation = () => sendProfilerRequests(buildEffectStateRequests([module.page]), { record: false });
+  const effectStartedAt = performance.now();
+  const requestConfirmation = () => {
+    if (confirmationPollAllowed(effectStartedAt)) sendProfilerRequests(buildEffectStateRequests([module.page]), { record: false });
+  };
   const pending = {
     key: module.key,
     target,
@@ -2653,7 +2713,10 @@ function sendMorphCommand(value) {
   refreshLiveMorphControls();
   ui.copy.disabled = false;
 
-  const requestConfirmation = () => sendProfilerRequests([buildMorphLevelRequest()], { record: false });
+  const morphStartedAt = performance.now();
+  const requestConfirmation = () => {
+    if (confirmationPollAllowed(morphStartedAt)) sendProfilerRequests([buildMorphLevelRequest()], { record: false });
+  };
   window.setTimeout(requestConfirmation, 180);
   session.morphConfirmPollTimer = window.setInterval(requestConfirmation, 450);
   session.morphConfirmTimeout = window.setTimeout(() => {
@@ -2706,7 +2769,10 @@ function sendTunerCommand(open) {
   ui.copy.disabled = false;
   paintTunerOverlay();
 
-  const requestConfirmation = () => sendProfilerRequests([buildTunerModeRequest()], { record: false });
+  const tunerStartedAt = performance.now();
+  const requestConfirmation = () => {
+    if (confirmationPollAllowed(tunerStartedAt)) sendProfilerRequests([buildTunerModeRequest()], { record: false });
+  };
   window.setTimeout(requestConfirmation, 180);
   session.tunerConfirmPollTimer = window.setInterval(requestConfirmation, 450);
   session.tunerConfirmTimeout = window.setTimeout(() => {
@@ -2750,7 +2816,9 @@ const LOOPER_LABELS = {
   stopped: "FERMO",
 };
 const LOOPER_HALF_KEY = "kemper-stage-view-looper-half";
-const looper = { state: "empty", since: 0, loopLength: null, stopPresses: 0, reverse: false, half: false, timer: null };
+const looper = { state: "empty", since: 0, loopLength: null, stopPresses: 0, reverse: false, half: false, timer: null,
+  // v1.41: posizione stimata nel giro (0…1) per il cerchio di avanzamento.
+  recordedHalf: false, phaseAt: 0, phaseTime: 0, phaseRate: 0, ringTimer: null };
 try { looper.half = localStorage.getItem(LOOPER_HALF_KEY) === "1"; } catch { /* facoltativo */ }
 const QUANTIZE_KEY = "kemper-stage-view-looper-quantize";
 const QUANTIZE_MODES = {
@@ -2841,8 +2909,43 @@ function setLooperHalf(value) {
   paintLooperState();
 }
 
+// ── Cerchio di avanzamento del Looper (v1.41) ─────────────────────────────
+// Stima: il giro parte quando si chiude la registrazione (o dopo STOP → PLAY / TRIGGER),
+// REVERSE lo fa girare all'indietro, ½ SPEED rispetto alla registrazione lo rallenta o lo accelera.
+function looperRate() {
+  if (!looper.loopLength || (looper.state !== "playing" && looper.state !== "overdub")) return 0;
+  const speed = looper.half === looper.recordedHalf ? 1 : looper.half ? 0.5 : 2;
+  return (looper.reverse ? -1 : 1) * speed / (looper.loopLength * 1000);
+}
+
+function looperPhase(now = performance.now()) {
+  const phase = looper.phaseAt + (now - looper.phaseTime) * looper.phaseRate;
+  return ((phase % 1) + 1) % 1;
+}
+
+function rebaseLooperPhase({ restart = false } = {}) {
+  const now = performance.now();
+  looper.phaseAt = restart ? (looper.reverse ? 1 : 0) : looperPhase(now);
+  looper.phaseTime = now;
+  looper.phaseRate = looperRate();
+  window.clearInterval(looper.ringTimer);
+  looper.ringTimer = looper.phaseRate ? window.setInterval(paintLooperRing, 50) : null;
+  paintLooperRing();
+}
+
+function paintLooperRing() {
+  const show = looper.loopLength !== null && looper.state !== "empty" && looper.state !== "recording";
+  const phase = show ? looperPhase() : 0;
+  for (const node of [ui.looperState, ui.stageLooper]) {
+    node.dataset.ring = String(show);
+    node.style.setProperty("--p", phase.toFixed(4));
+  }
+}
+
 function setLooperState(next) {
   const now = performance.now();
+  const previous = looper.state;
+  if (previous === "empty" && next === "recording") looper.recordedHalf = looper.half;
   if (looper.state === "recording" && next !== "recording") looper.loopLength = (now - looper.since) / 1000;
   // ½ SPEED resta attivo sul Player anche dopo la cancellazione (prova del 25/09/2026)
   if (next === "empty") { looper.loopLength = null; looper.reverse = false; }
@@ -2854,6 +2957,8 @@ function setLooperState(next) {
     window.clearTimeout(looper.pendingClose.timer);
     looper.pendingClose = null;
   }
+  // Il giro riparte da capo quando si chiude la registrazione o si riparte da FERMO.
+  rebaseLooperPhase({ restart: next === "playing" && (previous === "recording" || previous === "stopped") });
   paintLooperState();
 }
 
@@ -2926,10 +3031,18 @@ function trackLooperPress(key) {
       if (looper.state === "overdub") setLooperState("playing");
       break;
     case "reverse":
-      if (looper.state !== "empty") { looper.reverse = !looper.reverse; paintLooperState(); }
+      if (looper.state !== "empty") { looper.reverse = !looper.reverse; rebaseLooperPhase(); paintLooperState(); }
       break;
     case "half":
       setLooperHalf(!looper.half);
+      rebaseLooperPhase();
+      break;
+    case "trigger":
+      // TRIGGER fa ripartire il loop dall'inizio.
+      if (looper.loopLength !== null && looper.state !== "empty" && looper.state !== "recording") {
+        if (looper.state === "stopped") setLooperState("playing");
+        rebaseLooperPhase({ restart: true });
+      }
       break;
     case "erase":
       setLooperState("empty");
@@ -3245,6 +3358,8 @@ function buildDiagnostics() {
       },
     },
     bankNames: {
+      requestsSent: session.bankNameRequestsSent ?? 0,
+      requestRepliesComplete: session.bankNameRepliesComplete ?? 0,
       received: session.bankListsReceived,
       remembered: Object.fromEntries(session.bankNames),
       slots: Object.fromEntries(session.slotNames),
@@ -3476,6 +3591,20 @@ ui.clear.addEventListener("click", clearLog);
 ui.copy.addEventListener("click", copyDiagnostics);
 ui.saveDiagnostics.addEventListener("click", saveDiagnostics);
 ui.bidiToggle.addEventListener("click", toggleBidirectional);
+
+// v1.41: tema SCURO / SOLE (ricordato sul telefono)
+const THEME_KEY = "kemper-stage-view-theme";
+function applyTheme(theme, { remember = true } = {}) {
+  const next = theme === "sun" ? "sun" : "dark";
+  document.body.dataset.theme = next;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next === "sun" ? "#e9ede7" : "#07110d");
+  for (const button of ui.themeButtons) button.setAttribute("aria-pressed", String(button.dataset.themeChoice === next));
+  if (remember) {
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* facoltativo */ }
+  }
+}
+for (const button of ui.themeButtons) button.addEventListener("click", () => applyTheme(button.dataset.themeChoice));
+try { applyTheme(localStorage.getItem(THEME_KEY) ?? "dark", { remember: false }); } catch { applyTheme("dark", { remember: false }); }
 
 if ("requestMIDIAccess" in navigator) {
   ui.support.textContent = "Web MIDI disponibile. Collega il cavo e autorizza l’accesso.";

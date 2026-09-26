@@ -50,7 +50,7 @@ test('Parser distinguishes program change and effect state', () => {
 function looperContext(sent, channel = 2) {
   const output = { name: 'Profiler', manufacturer: 'Kemper', send: bytes => sent.push([...bytes]) };
   const session = { lastState: { channel }, transmitted: [], looperLastCommands: [] };
-  const node = () => ({ textContent: '', hidden: false, dataset: {} });
+  const node = () => ({ textContent: '', hidden: false, dataset: {}, style: { setProperty() {} } });
   const ui = { looperStatus: node(), copy: { disabled: true }, looperState: node(), looperStateLabel: node(),
     looperStateTime: node(), looperStateFlags: node(), stageLooper: node(),
     looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node(), quantizeButtons: [], quantizeNote: node() };
@@ -150,7 +150,8 @@ test('Morph slider sends the requested CC11 value and waits for a reply', () => 
   const context = { session, ui, profilerOutputs: () => [output], stopMorphConfirmation() {},
     describePort: () => 'Profiler · Kemper', bytesToHex: midi.bytesToHex,
     refreshLiveMorphControls() {}, buildMorphLevelRequest: midi.buildMorphLevelRequest,
-    sendProfilerRequests() {}, toast() {}, Date,
+    sendProfilerRequests() {}, toast() {}, Date, performance: { now: () => 0 },
+    confirmationPollAllowed: () => true,
     window: { setTimeout: () => 1, setInterval: () => 2 } };
   vm.runInNewContext(`${functionSnippet('function sendMorphCommand(value) {', 'function sendTunerCommand(open) {')}\nthis.sendMorphCommand = sendMorphCommand;`, context);
   context.sendMorphCommand(64);
@@ -261,4 +262,32 @@ test('Morph: il colore segue la percentuale (rosso BASE → blu MORPH, v1.40)', 
   assert.match(css, /--morph-color: color-mix\(in srgb, #4f8dff calc\(var\(--morph, 0\) \* 1%\), #ff5f55\)/);
   assert.match(css, /\.live-fixed-fx-doubleTracker \{ --fx: #ffd84d;/);
   assert.match(appSource, /ui\.liveMorph\.style\.setProperty\("--morph", String\(percent\)\)/);
+});
+
+test('Richiesta dei nomi della Bank in uso con stringhe estese 0x47 (v1.41)', () => {
+  const requests = midi.buildBankNamesRequests();
+  assert.equal(requests.length, 6);
+  assert.equal(midi.bytesToHex(requests[0].bytes), 'F0 00 20 33 02 7F 47 00 00 00 01 00 00 F7');
+  assert.equal(midi.bytesToHex(requests[5].bytes), 'F0 00 20 33 02 7F 47 00 00 00 01 00 05 F7');
+  assert.equal(midi.requestKey(requests[3].bytes), 'ext:0.0.1.0.3');
+});
+
+test('Cerchio del Looper: la posizione avanza, REVERSE la fa tornare indietro (v1.41)', () => {
+  const start = appSource.indexOf('function looperRate() {');
+  const end = appSource.indexOf('function setLooperState(next) {');
+  const clock = { now: 0 };
+  const looper = { state: 'playing', loopLength: 4, half: false, recordedHalf: false, reverse: false, phaseAt: 0, phaseTime: 0, phaseRate: 0, ringTimer: null };
+  const node = () => ({ dataset: {}, style: { setProperty() {} } });
+  const context = { looper, ui: { looperState: node(), stageLooper: node() }, performance: { now: () => clock.now },
+    window: { setInterval: () => 1, clearInterval() {} } };
+  vm.runInNewContext(`${appSource.slice(start, end)}\nthis.looperPhase = looperPhase; this.rebase = rebaseLooperPhase;`, context);
+  context.rebase({ restart: true });
+  clock.now = 1000;
+  assert.equal(Math.round(context.looperPhase() * 100), 25);
+  looper.reverse = true; context.rebase();
+  clock.now = 1500;
+  assert.equal(Math.round(context.looperPhase() * 1000), 125);
+  looper.reverse = false; looper.half = true; context.rebase();
+  clock.now = 3500; // metà velocità: 2 s = un quarto di giro
+  assert.equal(Math.round(context.looperPhase() * 1000), 375);
 });

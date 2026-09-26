@@ -158,3 +158,14 @@ L'app non si fida dell'elenco: considera "inviato dal Player" ogni parametro che
 - All'apertura del Tuner (dal Player o con CC31 dall'app) il Player invia `B0 2F 7F`, `B0 00 00`, `B0 20 00`, il Program Change **del Rig già in uso** e poi `127/126 = 1`. Alla chiusura invia solo `127/126 = 3`.
 - Con il Tuner aperto: nota 125/84 (0 senza segnale; alcuni valori spuri come 9830 o G1, scartati dal filtro dell'app) e intonazione 124/15 e 124/81, stessa scala (centro 8192, circa 82 unità per cent).
 - Dalla v1.39, con la modalità bidirezionale attiva, dopo un Program Change l'app non rifà la lettura completa: legge solo i valori ancora sconosciuti.
+
+
+## Nomi della Bank in uso (v1.41)
+
+Richiesta (stringa estesa, funzione `47`), una per nome:
+
+```
+F0 00 20 33 02 7F 47 00 00 00 01 00 <N> F7      N = 00 nome Bank, 01…05 nomi degli slot
+```
+
+Il Player risponde con la funzione `07` (lo stesso formato che invia da solo al cambio Bank dal Player). Indirizzi non documentati da Kemper, trovati dagli utenti del forum Kemper. Osservato il 26/09/2026: cambiando Bank dall'app il Player invia da solo solo il nome della Bank e quello dello slot 2; l'app ora chiede gli altri se mancano.

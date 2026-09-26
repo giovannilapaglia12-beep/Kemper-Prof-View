@@ -1,4 +1,25 @@
-# Verifiche hardware, test locali e problemi aperti — v1.40
+# Verifiche hardware, test locali e problemi aperti — v1.41
+
+## Da provare con la v1.41
+
+- [ ] Scheda RIG: passa con l'app a una Bank mai aperta dal Player e scegli un Rig; dopo circa 1 s compaiono tutti e 5 i nomi degli slot (in diagnostica `bankNames.requestsSent` e `requestRepliesComplete`).
+- [ ] Looper: registra un loop; l'anello si riempie una volta per giro, in tempo con il loop che senti. Prova REVERSE (torna indietro), ½ SPEED (più lento), STOP e poi PLAY (riparte da capo), TRIGGER.
+- [ ] Nuova icona: disinstalla e reinstalla l'app dalla pagina; l'icona sono quattro riquadri colorati.
+- [ ] ALTRO → Aspetto → SOLE: PALCO, RIG, LOOPER e accordatore leggibili all'aperto; torna a SCURO e la scelta resta dopo aver chiuso l'app.
+- [ ] Effetti, Fixed FX, Freeze, Morph, Tuner: i comandi dall'app vengono confermati come prima (con la modalità bidirezionale senza letture in più).
+
+## Prova lunga (prima della 2.0)
+
+Da fare durante una prova o un servizio intero (1–2 ore), con la modalità bidirezionale attiva:
+
+- [ ] Batteria: percentuale all'inizio e alla fine (con cavo OTG il telefono non si ricarica).
+- [ ] Lo schermo resta sempre acceso; l'app non si chiude da sola.
+- [ ] Almeno 20 cambi di Rig, dal Player e dall'app: nessun "collegamento perso", nessun effetto con stato sbagliato.
+- [ ] Stacca e riattacca il cavo una volta: l'app si ricollega da sola (IN ATTESA DEL PLAYER → ATTIVA).
+- [ ] Metti l'app in secondo piano per un minuto e torna: tutto si riallinea.
+- [ ] Ripetere una parte della prova con l'OPPO A9 2020.
+- [ ] Alla fine: Salva diagnostica e allegarla.
+
 
 ## Da provare con la v1.40 (comprende la v1.39)
 

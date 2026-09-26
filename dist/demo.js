@@ -67,6 +67,13 @@ export function installDemoKemper() {
       const b = Array.from(data);
       if (b[0] === 0xf0) {
         const fn = b[6]; const p = b[8]; const q = b[9];
+        if (fn === 0x47 && p === 0x00 && b[9] === 0x00 && b[10] === 0x01) {
+          // Nomi della Bank in uso (stringhe estese 00 00 01 00 n)
+          const bank = Math.floor(st.program / 5);
+          const names = [`Bank ${bank + 1}`, "Clean", "Edge", "Breakup", "Drive", "Swells"];
+          const index = b[12];
+          return emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(names[index] ?? ""), 0x00, 0xf7]);
+        }
         if (fn === 0x7e && p === 0x40) return window.__demoNoBidi ? undefined : startBidi(b[10], b[11]);
         if (fn === 0x43 && p === 0 && q === 1) return emit([...H, 0x03, 0x00, 0, 1, ...text(rigName()), 0x00, 0xf7]);
         if (fn === 0x41) {
@@ -98,7 +105,8 @@ export function installDemoKemper() {
         const newBank = Math.floor((b[1] % 50) / 5);
         if (newBank !== Math.floor(st.program / 5)) {
           const names = [`Bank ${newBank + 1}`, "Clean", "Edge", "Breakup", "Drive", "Swells"];
-          names.forEach((name, index) => emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(name), 0x00, 0xf7]));
+          // Come il Player reale quando la Bank cambia dall'app: solo nome Bank e slot 2.
+          [0, 2].forEach((index) => emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(names[index]), 0x00, 0xf7]));
         }
         st.program = b[1] % 50;
         st.fx = structuredClone(fxSets[st.program % 2]);

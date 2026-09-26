@@ -395,12 +395,23 @@ export function buildBeaconRequest({
   };
 }
 
-// Chiave "tipo:pagina/parametro" di una richiesta di lettura (0x41 parametro, 0x43/0x47 stringa).
+// Chiave "tipo:pagina/parametro" di una richiesta di lettura (0x41 parametro, 0x43 stringa, 0x47 stringa estesa).
 export function requestKey(bytes) {
   const functionCode = bytes[6];
   if (functionCode === 0x41) return `par:${bytes[8]}/${bytes[9]}`;
-  if (functionCode === 0x43 || functionCode === 0x47) return `str:${bytes[8]}/${bytes[9]}`;
+  if (functionCode === 0x43) return `str:${bytes[8]}/${bytes[9]}`;
+  if (functionCode === 0x47) return `ext:${bytes.slice(8, 13).join(".")}`;
   return null;
+}
+
+// Nomi della Bank in uso (v1.41): stringhe estese 00 00 01 00 <n>, n = 0 nome Bank, 1…5 slot.
+// Indirizzi non documentati da Kemper, trovati dagli utenti del forum Kemper; il Player risponde
+// con la funzione 0x07 (lo stesso messaggio che invia da solo al cambio Bank).
+export function buildBankNamesRequests() {
+  return [0, 1, 2, 3, 4, 5].map((index) => ({
+    label: index === 0 ? "Nome Bank (0x47)" : `Nome slot ${index} (0x47)`,
+    bytes: [...KEMPER_HEADER, 0x47, 0x00, 0x00, 0x00, 0x01, 0x00, index, 0xf7],
+  }));
 }
 
 // Stessa chiave per un messaggio ricevuto e decodificato.

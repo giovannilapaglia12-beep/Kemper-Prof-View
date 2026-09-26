@@ -1,6 +1,16 @@
-# Kemper Profiler View v1.40
+# Kemper Profiler View v1.41
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.41
+
+Prima tappa verso la 2.0 (vedi in fondo "Strada verso la 2.0").
+
+- **Nomi della Bank sempre completi**: cambiando Bank dall'app il Player inviava solo il nome della Bank e di uno slot (prova del 26/09/2026). Ora, se mancano nomi, l'app li chiede al Player (stringhe estese `F0 00 20 33 02 7F 47 00 00 00 01 00 0N F7`, N = 0 Bank, 1…5 slot; indirizzi trovati dagli utenti del forum Kemper) e li memorizza.
+- **Cerchio di avanzamento del Looper**: nella scheda LOOPER un anello mostra a che punto è il giro; sull'indicatore LOOP in PALCO c'è un piccolo anello. È una stima dell'app: parte quando chiudi la registrazione, riparte con STOP → PLAY e TRIGGER, gira all'indietro con REVERSE, rallenta o accelera con ½ SPEED.
+- **Nuova icona** (quattro riquadri colorati come la schermata PALCO) anche in PNG 192/512 e versione "maskable" per Android: per vederla sul telefono bisogna reinstallare l'app dalla pagina.
+- **Tema SOLE** (ALTRO → Aspetto): fondo chiaro, testo nero, bordi marcati; effetti spenti bianchi con bordo del loro colore, accesi pieni con bordo nero. Scelta memorizzata.
+- **Meno messaggi**: con la modalità bidirezionale le letture di conferma dopo un comando partono solo se il Player non conferma entro 700 ms (di solito conferma in 25 ms); dopo un cambio Rig la lettura dei valori mancanti parte una volta sola.
 
 ## Novità v1.40
 
@@ -135,3 +145,11 @@ Aprire <http://localhost:8000/> in un browser Web MIDI compatibile, con il Kempe
 ## Licenza
 
 Non è stata scelta una licenza open source. Prima di pubblicare il repository al pubblico, decidere se aggiungere `LICENSE`; in mancanza, i diritti sul codice restano riservati.
+
+
+## Strada verso la 2.0
+
+1. **v1.4x** – grafica completata (cerchio Looper, icona, tema SOLE: fatto nella v1.41), nomi Bank completi (v1.41), pulizia tecnica (v1.41).
+2. **Prova lunga** sul Player: una prova o un servizio intero (vedi `docs/TESTING.md`, "Prova lunga").
+3. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, codice diviso in moduli con più test, guida d'uso di una pagina.
+4. Dopo la 2.0: pedale MIDI Bluetooth.

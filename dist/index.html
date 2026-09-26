@@ -7,13 +7,14 @@
     <meta name="description" content="Kemper Profiler View: schermata da palco e controlli Web MIDI per Kemper Profiler Player." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="stylesheet" href="./styles.css" />
     <title>Kemper Profiler View</title>
   </head>
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.40</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.41</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -130,6 +131,7 @@
         <h2 id="looper-heading">Looper</h2>
         <div class="looper-state" id="looper-state" data-state="empty" role="status" aria-live="polite">
           <span class="looper-state-dot" aria-hidden="true"></span>
+          <span class="looper-ring" aria-hidden="true"></span>
           <strong id="looper-state-label">LOOP VUOTO</strong>
           <span class="looper-state-time" id="looper-state-time"></span>
           <span class="looper-state-flags" id="looper-state-flags"></span>
@@ -186,6 +188,16 @@
         <p class="bidi-note" id="bidi-note"></p>
         <p class="bidi-covered" id="bidi-covered"></p>
         <button class="secondary-button" id="bidi-toggle" type="button" aria-pressed="true">Bidirezionale: ON</button>
+      </section>
+
+      <section class="theme-panel" aria-labelledby="theme-heading">
+        <p class="section-kicker">ASPETTO</p>
+        <h2 id="theme-heading">Tema dello schermo</h2>
+        <div class="theme-options" role="group" aria-label="Tema dello schermo">
+          <button type="button" data-theme-choice="dark" aria-pressed="true">SCURO</button>
+          <button type="button" data-theme-choice="sun" aria-pressed="false">☀ SOLE</button>
+        </div>
+        <p>SOLE: fondo chiaro e contrasto alto, per suonare all’aperto o con molta luce. La scelta resta memorizzata.</p>
       </section>
 
       <section class="hero-panel" aria-labelledby="rig-title">
