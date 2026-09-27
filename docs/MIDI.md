@@ -197,3 +197,16 @@ Prova del 26/09/2026: con il loop FERMO, TRIGGER (NRPN 125/90) fa suonare il loo
 - Documentazione MIDI Kemper: il cambio di parametro 0x01 può avere un secondo valore ("B value", valore Morph); 0x08 = Morphed Multi Parameter Change (`08 00 pagina param valore… morph…`); 0x42 = richiesta multipla → 0x02.
 - Le risposte del Player alle richieste 0x41 sono sempre 13 byte (nessun valore Morph) in tutte le diagnostiche finora.
 - La v1.49 prova 0x42 e 0x48 (probabile richiesta di 0x08, non documentata) sui moduli 50, 51, 52, 53, 56, 58, 60, 61.
+
+### Esito della prova del 27/09/2026 (v1.50, Rig "RT FIRESPIT 3", Morph in BASE)
+
+- **0x42 funziona**: per ogni modulo il Player risponde con un solo messaggio 0x02 di 231 byte = 110 valori (parametri 0…109 della pagina, 2 byte ciascuno). Param 0 = tipo, param 3 = acceso/spento (coincidono con i valori noti). Utile anche per leggere un modulo intero in un colpo.
+- **0x48 non ha risposta**: nessun messaggio 0x08. I valori Morph non arrivano per questa via.
+- I 110 valori non contengono un indicatore "ha Morph": D (Single Delay, senza pallini) e X (Single Delay, con pallini) differiscono solo nelle impostazioni.
+- In modalità bidirezionale il Player non invia da solo i parametri dei moduli quando si muove il Morph (nessuna diagnostica mostra invii oltre 0, 3 e 30).
+- Prossima prova: stesso Rig con Morph al 100% → se i valori dei moduli con pallini (B, X, MOD, DLY, REV) cambiano e quelli senza (A, C, D) no, l'app può riconoscere gli effetti con Morph confrontando le due letture.
+
+### Esito della prova 2 (27/09/2026, stesso Rig, Morph al 100%, morphRaw 16383)
+
+- I 110 valori di **tutti** gli 8 moduli sono **identici** a quelli letti in BASE, anche per gli effetti con i pallini in Rig Manager (B, X, MOD, DLY, REV). Le letture restituiscono i valori memorizzati del Rig, non quelli modificati dal Morph.
+- Conclusione: dal MIDI non si può sapere quali effetti sono legati al Morph (né leggendo i valori, né da 0x48, né dagli invii spontanei). Unica via possibile: indicarli a mano nell'app.

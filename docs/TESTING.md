@@ -1,4 +1,12 @@
-# Verifiche hardware, test locali e problemi aperti — v1.50
+# Verifiche hardware, test locali e problemi aperti — v1.52
+
+## Esito v1.48–v1.50 sul Player (27/09/2026)
+
+- 125 Bank: dall'app caricati Bank 14 Rig 1 (PC 66) e Bank 10 Rig 1 (PC 46), confermati dal Player; colori delle Bank giusti ("funzionano"). Bank Select > 0 (dalla Bank 26 Rig 4) non ancora provato.
+- AMP/CAB: nuovi Rig letti correttamente (66 AC30, Crunch Amp/Crunch Cab…).
+- Pallini Morph: non realizzabili via MIDI (valori identici in BASE e MORPH) → prova tolta nella v1.51.
+- TRIGGER a loop fermo (v1.44) **funziona**: il loop riparte dall'inizio (Giovanni). Nella diagnostica compariva come REC/PLAY → etichetta chiarita nella v1.52.
+- Un REVERSE è partito senza che Giovanni lo toccasse (tocco di 38 ms, 0,6 s dopo STOP) → v1.52: REVERSE, ½ SPEED e UNDO solo con tocco vero.
 
 ## Da provare con la v1.50 (comprende v1.48 e v1.49; nella v1.49 il pulsante della prova Morph era disattivato)
 

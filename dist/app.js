@@ -35,7 +35,7 @@ import {
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.50";
+const APP_VERSION = "1.52";
 const MAX_BANKS_KEY = "kemper-stage-view-max-bank";
 function readMaxBanks() {
   try {
@@ -117,7 +117,6 @@ const ui = {
   looperReverseFix: $("#looper-reverse-fix"),
   looperProbe: $("#looper-probe-button"),
   looperProbeResult: $("#looper-probe-result"),
-  morphDotsProbe: $("#morph-dots-probe-button"),
   locationButtons: [...document.querySelectorAll("[data-looper-location]")],
   locationNote: $("#looper-location-note"),
   forgetNames: $("#forget-names-button"),
@@ -1233,7 +1232,6 @@ function paintPorts() {
   ui.identity.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.auto.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.looperProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
-  ui.morphDotsProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
   paintLooperLocation();
   ui.morphProbe.disabled = profilerOutputs().length === 0 || session.morphPendingLevel !== null;
   refreshLiveMorphControls();
@@ -2155,7 +2153,6 @@ function attachInputs() {
       handleBankNames(decoded);
       handleRigStack(decoded);
       captureLooperProbe(decoded);
-      captureMorphDotsProbe(decoded);
       trackProfilerRig(decoded);
       refreshRigControlsOnBankNames(decoded);
       handlePerformanceControl(decoded, sourceName);
@@ -3315,8 +3312,11 @@ function refreshLooperControls() {
   }
 }
 
-function sendLooperSwitch(key, pressed) {
+function sendLooperSwitch(key, pressed, via = key) {
   const command = LOOPER_SWITCHES[key];
+  // v1.52: nella diagnostica si vede il pulsante toccato e il comando inviato (es. "TRIGGER → PLAY").
+  const shownLabel = via === "trigger" && key === "record" ? "TRIGGER → PLAY (loop fermo)"
+    : via !== key && LOOPER_SWITCHES[via] ? `${LOOPER_SWITCHES[via].label} → ${command?.label}` : command?.label;
   const outputs = profilerOutputs();
   if (!command || !outputs.length) return false;
   const channel = Math.max(1, Math.min(16, session.lastState?.channel ?? 1));
@@ -3329,15 +3329,15 @@ function sendLooperSwitch(key, pressed) {
     for (const bytes of messages) {
       output.send(bytes);
       session.transmitted.push({ time, output: describePort(output),
-        label: `Looper ${command.label} ${pressed ? "PRESS" : "RELEASE"}`, hex: bytesToHex(bytes) });
+        label: `Looper ${shownLabel} ${pressed ? "PRESS" : "RELEASE"}`, hex: bytesToHex(bytes) });
     }
   }
   session.transmitted = session.transmitted.slice(-100);
   if (pressed) {
     trackLooperPress(key);
-    session.looperLastCommands.push({ time, key, parameter: command.parameter, channel, estimatedState: looper.state });
+    session.looperLastCommands.push({ time, key, ...(via !== key ? { button: via } : {}), parameter: command.parameter, channel, estimatedState: looper.state });
     session.looperLastCommands = session.looperLastCommands.slice(-20);
-    ui.looperStatus.textContent = `${command.label} · comando inviato`;
+    ui.looperStatus.textContent = `${shownLabel} · comando inviato`;
     ui.copy.disabled = false;
   }
   return true;
@@ -3348,11 +3348,19 @@ function releaseAllLooperSwitches() {
   cancelLooperErase();
 }
 
+// v1.52: REVERSE, ½ SPEED e UNDO partono solo con un tocco vero (dito alzato senza trascinare):
+// il 27/09/2026 un REVERSE è partito senza volerlo (tocco di 38 ms subito dopo STOP, pulsante accanto a TRIGGER).
+// REC, STOP e TRIGGER restano immediati alla pressione, perché lì conta il tempo.
+const LOOPER_TAP_ONLY = new Set(["reverse", "half", "undo"]);
+const LOOPER_TAP_SLOP_PX = 12;
+
 function bindLooperSwitch(button) {
   const key = button.dataset.looperSwitch;
+  const tapOnly = LOOPER_TAP_ONLY.has(key);
   let held = false;
   let lastDirectAt = 0;
   let sentKey = key;
+  let tap = null;
   const note = () => {
     if (sentKey !== key) ui.looperStatus.textContent = "TRIGGER · loop fermo: riparte dall’inizio (inviato PLAY)";
   };
@@ -3360,7 +3368,7 @@ function bindLooperSwitch(button) {
     if (button.disabled || held) return;
     if (key === "record" && (looper.pendingClose || looper.state === "recording") && handleQuantizedRecord()) return;
     sentKey = looperSendKey(key);
-    if (!sendLooperSwitch(sentKey, true)) return;
+    if (!sendLooperSwitch(sentKey, true, key)) return;
     note();
     held = true;
     button.dataset.pressed = "true";
@@ -3371,37 +3379,66 @@ function bindLooperSwitch(button) {
     held = false;
     button.dataset.pressed = "false";
     looperSwitchReleases.delete(release);
-    sendLooperSwitch(sentKey, false);
+    sendLooperSwitch(sentKey, false, key);
+  };
+  const cancelTap = () => {
+    tap = null;
+    button.dataset.pressed = "false";
+  };
+  const fireTap = () => {
+    if (button.disabled) return;
+    if (sendLooperSwitch(key, true, key)) window.setTimeout(() => sendLooperSwitch(key, false, key), 90);
   };
   button.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
     lastDirectAt = Date.now();
+    if (tapOnly) {
+      if (button.disabled) return;
+      tap = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      button.dataset.pressed = "true";
+      return;
+    }
     press();
     if (held) button.setPointerCapture(event.pointerId);
   });
-  button.addEventListener("pointerup", () => { lastDirectAt = Date.now(); release(); });
-  button.addEventListener("pointercancel", release);
-  button.addEventListener("lostpointercapture", release);
+  button.addEventListener("pointermove", (event) => {
+    if (!tap || event.pointerId !== tap.id) return;
+    if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > LOOPER_TAP_SLOP_PX) cancelTap();
+  });
+  button.addEventListener("pointerup", (event) => {
+    lastDirectAt = Date.now();
+    if (tapOnly) {
+      const valid = tap && event.pointerId === tap.id
+        && Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= LOOPER_TAP_SLOP_PX;
+      cancelTap();
+      if (valid) fireTap();
+      return;
+    }
+    release();
+  });
+  button.addEventListener("pointercancel", () => { if (tapOnly) cancelTap(); else release(); });
+  button.addEventListener("pointerleave", () => { if (tapOnly) cancelTap(); });
+  button.addEventListener("lostpointercapture", () => { if (!tapOnly) release(); });
   button.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     lastDirectAt = Date.now();
-    if (!event.repeat) press();
+    if (!event.repeat && !tapOnly) press();
   });
   button.addEventListener("keyup", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     lastDirectAt = Date.now();
-    release();
+    if (tapOnly) fireTap(); else release();
   });
-  button.addEventListener("blur", release);
+  button.addEventListener("blur", () => { if (tapOnly) cancelTap(); else release(); });
   button.addEventListener("click", () => {
     if (button.disabled || Date.now() - lastDirectAt < 600) return;
     if (key === "record" && (looper.pendingClose || looper.state === "recording") && handleQuantizedRecord()) return;
     const clickKey = looperSendKey(key);
-    if (sendLooperSwitch(clickKey, true)) {
+    if (sendLooperSwitch(clickKey, true, key)) {
       if (clickKey !== key) ui.looperStatus.textContent = "TRIGGER · loop fermo: riparte dall’inizio (inviato PLAY)";
-      window.setTimeout(() => sendLooperSwitch(clickKey, false), 90);
+      window.setTimeout(() => sendLooperSwitch(clickKey, false, key), 90);
     }
   });
 }
@@ -3627,7 +3664,6 @@ function buildDiagnostics() {
       remembered: Object.fromEntries(session.bankNames),
       slots: Object.fromEntries(session.slotNames),
     },
-    morphProbe: session.morphDotsProbeResults ?? [],
     rigStack: {
       rig: session.rigStack.rig,
       values: session.rigStack.values,
@@ -3824,50 +3860,9 @@ ui.looperProbe.addEventListener("click", () => {
   sendProfilerRequests(reads);
   toast("Lettura parametri Looper inviata · poi salva la diagnostica");
 });
-// ── Prova pallini Morph (v1.49, sola lettura) ─────────────────────────────
-// Rig Manager mostra due pallini (rosso/blu) sugli effetti che cambiano con il Morph. Le risposte 0x01 del Player
-// non contengono il valore Morph ("B value"); la documentazione MIDI Kemper descrive la risposta multipla 0x02
-// (richiesta 0x42) e la variante con valori Morph 0x08 (richiesta probabile 0x48, non documentata).
-// La prova chiede entrambe per gli 8 moduli effetto e registra le risposte grezze nella diagnostica.
-const MORPH_PROBE_PAGES = [0x32, 0x33, 0x34, 0x35, 0x38, 0x3a, 0x3c, 0x3d];
-session.morphDotsProbe = null;
-function captureMorphDotsProbe(decoded) {
-  const probe = session.morphDotsProbe;
-  const bytes = decoded?.bytes;
-  if (!probe || !bytes || bytes[0] !== 0xf0 || bytes[1] !== 0x00 || bytes[2] !== 0x20 || bytes[3] !== 0x33) return;
-  const fn = bytes[6];
-  const page = bytes[8];
-  const interesting = fn === 0x02 || fn === 0x08 || fn === 0x04 || fn === 0x06
-    || (fn === 0x01 && MORPH_PROBE_PAGES.includes(page));
-  if (!interesting) return;
-  probe.counts[`fn${fn.toString(16).padStart(2, "0")}`] = (probe.counts[`fn${fn.toString(16).padStart(2, "0")}`] ?? 0) + 1;
-  if (probe.replies.length < 400) {
-    probe.replies.push({ t: Math.round(performance.now() - probe.startedAt), fn, page, length: bytes.length, hex: bytesToHex(bytes) });
-  }
-}
-ui.morphDotsProbe.addEventListener("click", () => {
-  if (session.morphDotsProbe) return;
-  const header = [0xf0, 0x00, 0x20, 0x33, 0x02, 0x7f];
-  session.morphDotsProbe = { at: new Date().toISOString(), rig: session.lastState?.rigName ?? null,
-    morphRaw: session.morphConfirmedRaw ?? null, startedAt: performance.now(), counts: {}, replies: [] };
-  ui.looperProbeResult.textContent = "Prova Morph in corso (6 s)…";
-  // 1) richiesta multipla documentata (0x42 → 0x02)
-  sendProfilerRequests(MORPH_PROBE_PAGES.map((page) => ({ label: `Morph probe 0x42 ${page}/0`, bytes: [...header, 0x42, 0x00, page, 0x00, 0xf7] })));
-  // 2) richiesta dei valori Morph (0x48 → 0x08?), dopo 2 s
-  window.setTimeout(() => {
-    session.morphDotsProbe?.replies.push({ t: Math.round(performance.now() - session.morphDotsProbe.startedAt), marker: "--- invio 0x48 ---" });
-    sendProfilerRequests(MORPH_PROBE_PAGES.map((page) => ({ label: `Morph probe 0x48 ${page}/0`, bytes: [...header, 0x48, 0x00, page, 0x00, 0xf7] })));
-  }, 2000);
-  window.setTimeout(() => {
-    const probe = session.morphDotsProbe;
-    if (!probe) return;
-    session.morphDotsProbeResults = [...(session.morphDotsProbeResults ?? []), probe].slice(-4);
-    session.morphDotsProbe = null;
-    const counts = Object.entries(probe.counts).map(([key, value]) => `${key}: ${value}`).join(" · ") || "nessuna risposta";
-    ui.looperProbeResult.textContent = `Prova Morph finita (${probe.rig ?? "Rig ?"}): ${counts}. Ora salva la diagnostica.`;
-    toast("Prova Morph finita · salva la diagnostica");
-  }, 6000);
-});
+// v1.51: tolta la prova dei pallini Morph (v1.49–1.50). Esito sul Player il 27/09/2026: i valori dei moduli
+// letti con 0x42 sono identici in BASE e MORPH e 0x48 non esiste, quindi dal MIDI non si sa quali effetti
+// hanno il Morph (vedi docs/MIDI.md).
 
 ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();

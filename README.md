@@ -1,6 +1,16 @@
-# Kemper Profiler View v1.50
+# Kemper Profiler View v1.52
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.52 (versione per la prova lunga)
+
+- **REVERSE, ½ SPEED e UNDO partono solo con un tocco vero**: il comando parte quando alzi il dito, e solo se non l'hai trascinato. Il 27/09/2026 un REVERSE è partito senza volerlo (tocco di 38 ms subito dopo STOP; il pulsante è accanto a TRIGGER). Uno sfioramento o una scrollata che parte sopra il pulsante non inviano più nulla. REC, STOP e TRIGGER restano immediati alla pressione, perché lì conta il tempo.
+- **Diagnostica più chiara**: TRIGGER a loop fermo compare come "Looper TRIGGER → PLAY (loop fermo)" (prima "REC / PLAY / OVERDUB", che sembrava un tocco su REC).
+
+## Novità v1.51
+
+- Tolto da ALTRO il pulsante "Prova pallini Morph": la prova è conclusa. Sul Player i valori degli effetti letti in BASE e in MORPH sono identici, quindi dal MIDI non si può sapere quali effetti sono legati al Morph (dettagli in `docs/MIDI.md`). Il comando del Morph dall'app resta com'era.
+- Nessun'altra modifica: è la versione da usare per la prova lunga.
 
 ## Novità v1.50
 
