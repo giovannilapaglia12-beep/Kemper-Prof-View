@@ -1,6 +1,10 @@
-# Kemper Profiler View v1.49
+# Kemper Profiler View v1.50
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.50
+
+- Corretto: il pulsante "Prova pallini Morph" della v1.49 restava sempre disattivato. Aveva lo stesso identificativo del pulsante Morph già presente in ALTRO, per cui la prova partiva anche toccando quel pulsante. Ora ha un identificativo suo; un nuovo test controlla che nella pagina non ci siano identificativi ripetuti.
 
 ## Novità v1.49
 

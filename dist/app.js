@@ -35,7 +35,7 @@ import {
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.49";
+const APP_VERSION = "1.50";
 const MAX_BANKS_KEY = "kemper-stage-view-max-bank";
 function readMaxBanks() {
   try {
@@ -117,7 +117,7 @@ const ui = {
   looperReverseFix: $("#looper-reverse-fix"),
   looperProbe: $("#looper-probe-button"),
   looperProbeResult: $("#looper-probe-result"),
-  morphProbe: $("#morph-probe-button"),
+  morphDotsProbe: $("#morph-dots-probe-button"),
   locationButtons: [...document.querySelectorAll("[data-looper-location]")],
   locationNote: $("#looper-location-note"),
   forgetNames: $("#forget-names-button"),
@@ -1233,7 +1233,7 @@ function paintPorts() {
   ui.identity.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.auto.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.looperProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
-  ui.morphProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
+  ui.morphDotsProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
   paintLooperLocation();
   ui.morphProbe.disabled = profilerOutputs().length === 0 || session.morphPendingLevel !== null;
   refreshLiveMorphControls();
@@ -2155,7 +2155,7 @@ function attachInputs() {
       handleBankNames(decoded);
       handleRigStack(decoded);
       captureLooperProbe(decoded);
-      captureMorphProbe(decoded);
+      captureMorphDotsProbe(decoded);
       trackProfilerRig(decoded);
       refreshRigControlsOnBankNames(decoded);
       handlePerformanceControl(decoded, sourceName);
@@ -3627,7 +3627,7 @@ function buildDiagnostics() {
       remembered: Object.fromEntries(session.bankNames),
       slots: Object.fromEntries(session.slotNames),
     },
-    morphProbe: session.morphProbeResults ?? [],
+    morphProbe: session.morphDotsProbeResults ?? [],
     rigStack: {
       rig: session.rigStack.rig,
       values: session.rigStack.values,
@@ -3830,9 +3830,9 @@ ui.looperProbe.addEventListener("click", () => {
 // (richiesta 0x42) e la variante con valori Morph 0x08 (richiesta probabile 0x48, non documentata).
 // La prova chiede entrambe per gli 8 moduli effetto e registra le risposte grezze nella diagnostica.
 const MORPH_PROBE_PAGES = [0x32, 0x33, 0x34, 0x35, 0x38, 0x3a, 0x3c, 0x3d];
-session.morphProbe = null;
-function captureMorphProbe(decoded) {
-  const probe = session.morphProbe;
+session.morphDotsProbe = null;
+function captureMorphDotsProbe(decoded) {
+  const probe = session.morphDotsProbe;
   const bytes = decoded?.bytes;
   if (!probe || !bytes || bytes[0] !== 0xf0 || bytes[1] !== 0x00 || bytes[2] !== 0x20 || bytes[3] !== 0x33) return;
   const fn = bytes[6];
@@ -3845,24 +3845,24 @@ function captureMorphProbe(decoded) {
     probe.replies.push({ t: Math.round(performance.now() - probe.startedAt), fn, page, length: bytes.length, hex: bytesToHex(bytes) });
   }
 }
-ui.morphProbe.addEventListener("click", () => {
-  if (session.morphProbe) return;
+ui.morphDotsProbe.addEventListener("click", () => {
+  if (session.morphDotsProbe) return;
   const header = [0xf0, 0x00, 0x20, 0x33, 0x02, 0x7f];
-  session.morphProbe = { at: new Date().toISOString(), rig: session.lastState?.rigName ?? null,
+  session.morphDotsProbe = { at: new Date().toISOString(), rig: session.lastState?.rigName ?? null,
     morphRaw: session.morphConfirmedRaw ?? null, startedAt: performance.now(), counts: {}, replies: [] };
   ui.looperProbeResult.textContent = "Prova Morph in corso (6 s)…";
   // 1) richiesta multipla documentata (0x42 → 0x02)
   sendProfilerRequests(MORPH_PROBE_PAGES.map((page) => ({ label: `Morph probe 0x42 ${page}/0`, bytes: [...header, 0x42, 0x00, page, 0x00, 0xf7] })));
   // 2) richiesta dei valori Morph (0x48 → 0x08?), dopo 2 s
   window.setTimeout(() => {
-    session.morphProbe?.replies.push({ t: Math.round(performance.now() - session.morphProbe.startedAt), marker: "--- invio 0x48 ---" });
+    session.morphDotsProbe?.replies.push({ t: Math.round(performance.now() - session.morphDotsProbe.startedAt), marker: "--- invio 0x48 ---" });
     sendProfilerRequests(MORPH_PROBE_PAGES.map((page) => ({ label: `Morph probe 0x48 ${page}/0`, bytes: [...header, 0x48, 0x00, page, 0x00, 0xf7] })));
   }, 2000);
   window.setTimeout(() => {
-    const probe = session.morphProbe;
+    const probe = session.morphDotsProbe;
     if (!probe) return;
-    session.morphProbeResults = [...(session.morphProbeResults ?? []), probe].slice(-4);
-    session.morphProbe = null;
+    session.morphDotsProbeResults = [...(session.morphDotsProbeResults ?? []), probe].slice(-4);
+    session.morphDotsProbe = null;
     const counts = Object.entries(probe.counts).map(([key, value]) => `${key}: ${value}`).join(" · ") || "nessuna risposta";
     ui.looperProbeResult.textContent = `Prova Morph finita (${probe.rig ?? "Rig ?"}): ${counts}. Ora salva la diagnostica.`;
     toast("Prova Morph finita · salva la diagnostica");

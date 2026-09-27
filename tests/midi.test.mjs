@@ -185,7 +185,7 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
-    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {}, captureMorphProbe() {},
+    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {}, captureMorphDotsProbe() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {}, handleLooperLocation() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},
@@ -365,4 +365,19 @@ test('125 Bank: Bank Select CC 32 + Program Change e colori delle Bank (v1.48)',
   // Colori: 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, 6 di nuovo blu
   assert.deepEqual([1, 2, 3, 4, 5, 6, 12, 125].map(b => midi.bankColor(b).key),
     ['blue', 'yellow', 'red', 'green', 'violet', 'blue', 'yellow', 'violet']);
+});
+
+test('Nessun id ripetuto nella pagina (v1.50: il pulsante Prova Morph aveva lo stesso id del pulsante Morph)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
+  const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+  const seen = new Set(); const dup = [];
+  for (const id of ids) { if (seen.has(id)) dup.push(id); seen.add(id); }
+  assert.deepEqual(dup, []);
+  const app = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
+  const uiBlock = app.slice(app.indexOf('const ui = {'), app.indexOf('};', app.indexOf('const ui = {')));
+  const keys = [...uiBlock.matchAll(/^\s{2}(\w+):/gm)].map(m => m[1]);
+  const seenKeys = new Set(); const dupKeys = [];
+  for (const key of keys) { if (seenKeys.has(key)) dupKeys.push(key); seenKeys.add(key); }
+  assert.deepEqual(dupKeys, []);
 });

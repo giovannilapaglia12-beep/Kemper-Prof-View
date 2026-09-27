@@ -1,6 +1,6 @@
-# Verifiche hardware, test locali e problemi aperti — v1.49
+# Verifiche hardware, test locali e problemi aperti — v1.50
 
-## Da provare con la v1.49 (comprende la v1.48)
+## Da provare con la v1.50 (comprende v1.48 e v1.49; nella v1.49 il pulsante della prova Morph era disattivato)
 
 - [ ] Carica un Rig che in Rig Manager ha i pallini rosso/blu su qualche effetto (annota quali). Morph in BASE. ALTRO → "Prova pallini Morph", aspetta 6 s, poi salva la diagnostica. Se puoi, ripeti con un Rig senza Morph.
 
