@@ -24,13 +24,26 @@ import {
   buildRigStackRequests,
   rigStackField,
   rigStackLabel,
+  rigStackMissing,
+  PLAYER_MAX_BANKS,
+  rigIndexToBankSlot,
+  buildRigSelectMessages,
+  bankColor,
   bytesToHex,
   decodedKey,
   requestKey,
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.45";
+const APP_VERSION = "1.49";
+const MAX_BANKS_KEY = "kemper-stage-view-max-bank";
+function readMaxBanks() {
+  try {
+    const value = Number(localStorage.getItem(MAX_BANKS_KEY));
+    if (Number.isInteger(value) && value >= 5 && value <= PLAYER_MAX_BANKS) return value;
+  } catch { /* facoltativo */ }
+  return PLAYER_MAX_BANKS;
+}
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -72,6 +85,13 @@ const ui = {
   rigSlots: [...document.querySelectorAll("[data-rig-slot]")],
   liveBankDown: $("#live-bank-down"),
   liveBankUp: $("#live-bank-up"),
+  liveBankPick: $("#live-bank-pick"),
+  bankPicker: $("#bank-picker"),
+  bankPickerGrid: $("#bank-picker-grid"),
+  bankPickerClose: $("#bank-picker-close"),
+  bankPickerMax: $("#bank-picker-max"),
+  bankPickerLess: $("#bank-picker-less"),
+  bankPickerMore: $("#bank-picker-more"),
   liveBankValue: $("#live-bank-value"),
   liveBankName: $("#live-bank-name"),
   liveRigStatus: $("#live-rig-status"),
@@ -97,6 +117,7 @@ const ui = {
   looperReverseFix: $("#looper-reverse-fix"),
   looperProbe: $("#looper-probe-button"),
   looperProbeResult: $("#looper-probe-result"),
+  morphProbe: $("#morph-probe-button"),
   locationButtons: [...document.querySelectorAll("[data-looper-location]")],
   locationNote: $("#looper-location-note"),
   forgetNames: $("#forget-names-button"),
@@ -210,6 +231,8 @@ const session = {
   rigSelectedBank: null,
   rigSelectedSlot: null,
   rigNames: new Map(),
+  // v1.48: il Level III ha fino a 125 Bank; l'utente può limitare quelle mostrate (come "Max Bank" sul Player).
+  maxBanks: readMaxBanks(),
   // v1.45: ampli e cabinet del Rig in uso (letti dal Player dopo ogni cambio Rig).
   rigStack: { rig: null, values: {}, timer: null, retryTimer: null, requestsSent: 0, replies: 0, cache: new Map(), log: [] },
   slotNames: new Map(),
@@ -435,9 +458,9 @@ function handleRigStack(decoded) {
   stack.replies += 1;
   stack.values[field.key] = field.value;
   if (stack.rig) stack.cache.set(stack.rig, { ...stack.values });
-  if (stack.log.length < 40) {
-    stack.log.push({ time: new Date().toISOString(), rig: stack.rig, key: field.key, value: field.raw ?? field.value });
-  }
+  // v1.46: si tengono le ultime 80 risposte (prima le prime 40: i Rig provati per ultimi mancavano).
+  stack.log.push({ time: new Date().toISOString(), rig: stack.rig, key: field.key, value: field.raw ?? field.value });
+  if (stack.log.length > 80) stack.log.splice(0, stack.log.length - 80);
   paintRigStack();
 }
 
@@ -450,8 +473,16 @@ function paintRigStack() {
   for (const [prefix, node, nameNode] of [["amp", ui.rigStackAmp, ui.rigStackAmpName], ["cab", ui.rigStackCab, ui.rigStackCabName]]) {
     const on = values[`${prefix}On`];
     const label = rigStackLabel(values, prefix);
-    node.dataset.on = on === undefined ? "unknown" : String(on);
-    nameNode.textContent = on === false ? (label ? `OFF · ${label}` : "OFF") : (label || "—");
+    const missing = rigStackMissing(values, prefix);
+    node.dataset.on = missing ? "none" : on === undefined ? "unknown" : String(on);
+    // Acceso ma senza nome (prova del 27/09/2026, Rig RT FIRESPIT): di solito un cabinet importato senza nome.
+    const unnamed = !label && [`${prefix}Name`, `${prefix}Maker`, `${prefix}Model`].every((key) => key in values);
+    // v1.47: tre casi distinti — NON PRESENTE (N/A), SPENTO (OFF · nome), ACCESO (nome).
+    nameNode.textContent = missing
+      ? "NON PRESENTE"
+      : on === false
+        ? `SPENTO · ${label || "senza nome"}`
+        : (label || (unnamed ? "senza nome" : "—"));
     node.title = label;
   }
 }
@@ -882,9 +913,10 @@ function refreshRigControls() {
   ui.liveBankValue.textContent = String(session.rigTargetBank);
   ui.liveBankName.textContent = session.bankNames.get(String(session.rigTargetBank)) ?? "";
   ui.rigBankDown.disabled = pending || session.rigTargetBank <= 1;
-  ui.rigBankUp.disabled = pending || session.rigTargetBank >= 10;
+  ui.rigBankUp.disabled = pending || session.rigTargetBank >= session.maxBanks;
   ui.liveBankDown.disabled = pending || session.rigTargetBank <= 1;
-  ui.liveBankUp.disabled = pending || session.rigTargetBank >= 10;
+  ui.liveBankUp.disabled = pending || session.rigTargetBank >= session.maxBanks;
+  paintBankColors();
   for (const button of ui.rigSlots) {
     const slot = Number(button.dataset.rigSlot);
     const active = session.rigSelectedBank === session.rigTargetBank && session.rigSelectedSlot === slot;
@@ -935,6 +967,59 @@ function refreshRigControls() {
       : "BANK — · RIG —";
 }
 
+// ── Colori delle Bank e scelta rapida (v1.48) ─────────────────────────────
+function paintBankColors() {
+  const target = bankColor(session.rigTargetBank);
+  for (const row of document.querySelectorAll(".live-bank-row, .rig-bank-control")) {
+    if (target) row.dataset.bankColor = target.key;
+  }
+  const inUse = bankColor(session.rigSelectPending?.bank ?? session.rigSelectedBank);
+  if (inUse) ui.liveRigPosition.dataset.bankColor = inUse.key;
+  else delete ui.liveRigPosition.dataset.bankColor;
+  if (!ui.bankPicker.hidden) paintBankPicker();
+}
+
+function paintBankPicker() {
+  ui.bankPickerMax.textContent = String(session.maxBanks);
+  ui.bankPickerLess.disabled = session.maxBanks <= 5;
+  ui.bankPickerMore.disabled = session.maxBanks >= PLAYER_MAX_BANKS;
+  const cells = [];
+  for (let bank = 1; bank <= session.maxBanks; bank += 1) {
+    const color = bankColor(bank);
+    const name = session.bankNames.get(String(bank)) ?? "";
+    const current = bank === session.rigSelectedBank;
+    const chosen = bank === session.rigTargetBank;
+    cells.push(`<button type="button" data-pick-bank="${bank}" data-bank-color="${color.key}" data-current="${current}" data-chosen="${chosen}"`
+      + ` aria-label="Bank ${bank}${name ? `, ${escapeHtml(name)}` : ""}${current ? ", in uso" : ""}">`
+      + `<strong>${bank}</strong><small>${escapeHtml(name)}</small></button>`);
+  }
+  ui.bankPickerGrid.innerHTML = cells.join("");
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+function openBankPicker() {
+  if (session.rigSelectPending !== null) return;
+  ui.bankPicker.hidden = false;
+  paintBankPicker();
+  const chosen = ui.bankPickerGrid.querySelector('[data-chosen="true"]');
+  chosen?.scrollIntoView({ block: "center" });
+}
+
+function closeBankPicker() {
+  ui.bankPicker.hidden = true;
+}
+
+function setMaxBanks(value) {
+  session.maxBanks = Math.max(5, Math.min(PLAYER_MAX_BANKS, value));
+  try { localStorage.setItem(MAX_BANKS_KEY, String(session.maxBanks)); } catch { /* facoltativo */ }
+  if (session.rigTargetBank > session.maxBanks) session.rigTargetBank = session.maxBanks;
+  refreshRigControls();
+  paintBankPicker();
+}
+
 function stopRigSelectionConfirmation() {
   window.clearInterval(session.rigSelectPollTimer);
   window.clearTimeout(session.rigSelectTimeout);
@@ -974,9 +1059,10 @@ function handleRigSelectionState(decoded) {
 
 function trackProfilerRig(decoded) {
   if (decoded?.type === "Program Change") {
-    if (!Number.isInteger(decoded.program) || decoded.program < 0 || decoded.program >= 50) return;
-    const bank = Math.floor(decoded.program / 5) + 1;
-    const slot = decoded.program % 5 + 1;
+    // v1.48: tutte le 125 Bank (con Bank Select CC 32), non più solo le prime 10.
+    const position = rigIndexToBankSlot(decoded.rigIndex ?? decoded.program);
+    if (!position) return;
+    const { bank, slot } = position;
     const list = session.pendingBankList;
     if (list && performance.now() - list.at < 1500) {
       rememberBankList(bank, list);
@@ -1147,6 +1233,7 @@ function paintPorts() {
   ui.identity.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.auto.disabled = profilerOutputs().length === 0 || !session.sysex;
   ui.looperProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
+  ui.morphProbe.disabled = profilerOutputs().length === 0 || !session.sysex;
   paintLooperLocation();
   ui.morphProbe.disabled = profilerOutputs().length === 0 || session.morphPendingLevel !== null;
   refreshLiveMorphControls();
@@ -2068,6 +2155,7 @@ function attachInputs() {
       handleBankNames(decoded);
       handleRigStack(decoded);
       captureLooperProbe(decoded);
+      captureMorphProbe(decoded);
       trackProfilerRig(decoded);
       refreshRigControlsOnBankNames(decoded);
       handlePerformanceControl(decoded, sourceName);
@@ -2586,7 +2674,7 @@ function tapTempo() {
 
 function changeRigTargetBank(delta) {
   if (session.rigSelectPending !== null) return;
-  session.rigTargetBank = Math.max(1, Math.min(10, session.rigTargetBank + delta));
+  session.rigTargetBank = Math.max(1, Math.min(session.maxBanks, session.rigTargetBank + delta));
   refreshRigControls();
 }
 
@@ -2602,21 +2690,23 @@ function selectRigSlot(slot) {
   resetFreezeState();
   resetFixedFxState();
   const bank = session.rigTargetBank;
-  const program = (bank - 1) * 5 + (slot - 1);
   const channel = Math.max(1, Math.min(16, session.lastState?.channel ?? 1));
-  const bytes = [0xc0 | (channel - 1), program];
+  // v1.48: CC 0 + CC 32 (Bank Select) + Program Change, come li invia il Player: servono dalla Bank 26 in su.
+  const { program, bankSelect, messages } = buildRigSelectMessages(bank, slot, channel);
   const time = new Date().toISOString();
-  const command = { time, bank, slot, channel, program, displayedProgram: program + 1 };
+  const command = { time, bank, slot, channel, program, bankSelect, displayedProgram: program + 1 };
   session.rigSelectPending = command;
   session.rigSelectLastCommand = command;
   for (const output of outputs) {
-    output.send(bytes);
-    session.transmitted.push({
-      time,
-      output: describePort(output),
-      label: `Bank ${bank} · Rig ${slot} (PC ${program + 1})`,
-      hex: bytesToHex(bytes),
-    });
+    for (const bytes of messages) {
+      output.send(bytes);
+      session.transmitted.push({
+        time,
+        output: describePort(output),
+        label: `Bank ${bank} · Rig ${slot} (Bank Select ${bankSelect} · PC ${program + 1})`,
+        hex: bytesToHex(bytes),
+      });
+    }
   }
   session.transmitted = session.transmitted.slice(-100);
   refreshRigControls();
@@ -3537,6 +3627,7 @@ function buildDiagnostics() {
       remembered: Object.fromEntries(session.bankNames),
       slots: Object.fromEntries(session.slotNames),
     },
+    morphProbe: session.morphProbeResults ?? [],
     rigStack: {
       rig: session.rigStack.rig,
       values: session.rigStack.values,
@@ -3546,6 +3637,7 @@ function buildDiagnostics() {
       addresses: "stringhe 0/16 0/21 0/24 (ampli), 0/32 0/37 0/42 (cabinet); On/Off 10/2 e 12/2",
     },
     rigControl: {
+      maxBanks: session.maxBanks,
       targetBank: session.rigTargetBank,
       selectedBank: session.rigSelectedBank,
       selectedSlot: session.rigSelectedSlot,
@@ -3732,6 +3824,51 @@ ui.looperProbe.addEventListener("click", () => {
   sendProfilerRequests(reads);
   toast("Lettura parametri Looper inviata · poi salva la diagnostica");
 });
+// ── Prova pallini Morph (v1.49, sola lettura) ─────────────────────────────
+// Rig Manager mostra due pallini (rosso/blu) sugli effetti che cambiano con il Morph. Le risposte 0x01 del Player
+// non contengono il valore Morph ("B value"); la documentazione MIDI Kemper descrive la risposta multipla 0x02
+// (richiesta 0x42) e la variante con valori Morph 0x08 (richiesta probabile 0x48, non documentata).
+// La prova chiede entrambe per gli 8 moduli effetto e registra le risposte grezze nella diagnostica.
+const MORPH_PROBE_PAGES = [0x32, 0x33, 0x34, 0x35, 0x38, 0x3a, 0x3c, 0x3d];
+session.morphProbe = null;
+function captureMorphProbe(decoded) {
+  const probe = session.morphProbe;
+  const bytes = decoded?.bytes;
+  if (!probe || !bytes || bytes[0] !== 0xf0 || bytes[1] !== 0x00 || bytes[2] !== 0x20 || bytes[3] !== 0x33) return;
+  const fn = bytes[6];
+  const page = bytes[8];
+  const interesting = fn === 0x02 || fn === 0x08 || fn === 0x04 || fn === 0x06
+    || (fn === 0x01 && MORPH_PROBE_PAGES.includes(page));
+  if (!interesting) return;
+  probe.counts[`fn${fn.toString(16).padStart(2, "0")}`] = (probe.counts[`fn${fn.toString(16).padStart(2, "0")}`] ?? 0) + 1;
+  if (probe.replies.length < 400) {
+    probe.replies.push({ t: Math.round(performance.now() - probe.startedAt), fn, page, length: bytes.length, hex: bytesToHex(bytes) });
+  }
+}
+ui.morphProbe.addEventListener("click", () => {
+  if (session.morphProbe) return;
+  const header = [0xf0, 0x00, 0x20, 0x33, 0x02, 0x7f];
+  session.morphProbe = { at: new Date().toISOString(), rig: session.lastState?.rigName ?? null,
+    morphRaw: session.morphConfirmedRaw ?? null, startedAt: performance.now(), counts: {}, replies: [] };
+  ui.looperProbeResult.textContent = "Prova Morph in corso (6 s)…";
+  // 1) richiesta multipla documentata (0x42 → 0x02)
+  sendProfilerRequests(MORPH_PROBE_PAGES.map((page) => ({ label: `Morph probe 0x42 ${page}/0`, bytes: [...header, 0x42, 0x00, page, 0x00, 0xf7] })));
+  // 2) richiesta dei valori Morph (0x48 → 0x08?), dopo 2 s
+  window.setTimeout(() => {
+    session.morphProbe?.replies.push({ t: Math.round(performance.now() - session.morphProbe.startedAt), marker: "--- invio 0x48 ---" });
+    sendProfilerRequests(MORPH_PROBE_PAGES.map((page) => ({ label: `Morph probe 0x48 ${page}/0`, bytes: [...header, 0x48, 0x00, page, 0x00, 0xf7] })));
+  }, 2000);
+  window.setTimeout(() => {
+    const probe = session.morphProbe;
+    if (!probe) return;
+    session.morphProbeResults = [...(session.morphProbeResults ?? []), probe].slice(-4);
+    session.morphProbe = null;
+    const counts = Object.entries(probe.counts).map(([key, value]) => `${key}: ${value}`).join(" · ") || "nessuna risposta";
+    ui.looperProbeResult.textContent = `Prova Morph finita (${probe.rig ?? "Rig ?"}): ${counts}. Ora salva la diagnostica.`;
+    toast("Prova Morph finita · salva la diagnostica");
+  }, 6000);
+});
+
 ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();
 window.addEventListener("blur", releaseAllLooperSwitches);
@@ -3752,6 +3889,20 @@ ui.rigBankDown.addEventListener("click", () => changeRigTargetBank(-1));
 ui.rigBankUp.addEventListener("click", () => changeRigTargetBank(1));
 ui.liveBankDown.addEventListener("click", () => changeRigTargetBank(-1));
 ui.liveBankUp.addEventListener("click", () => changeRigTargetBank(1));
+ui.liveBankPick.addEventListener("click", openBankPicker);
+ui.liveBankPick.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openBankPicker(); }
+});
+ui.bankPickerClose.addEventListener("click", closeBankPicker);
+ui.bankPickerLess.addEventListener("click", () => setMaxBanks(session.maxBanks - 5));
+ui.bankPickerMore.addEventListener("click", () => setMaxBanks(session.maxBanks + 5));
+ui.bankPickerGrid.addEventListener("click", (event) => {
+  const cell = event.target.closest("[data-pick-bank]");
+  if (!cell || session.rigSelectPending !== null) return;
+  session.rigTargetBank = Number(cell.dataset.pickBank);
+  closeBankPicker();
+  refreshRigControls();
+});
 ui.rigCurrentJump.addEventListener("click", () => {
   if (session.rigSelectedBank === null || session.rigSelectPending !== null) return;
   session.rigTargetBank = session.rigSelectedBank;

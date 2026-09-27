@@ -98,14 +98,20 @@ export class KemperMidiState {
       decoded = this.decodeSysex(bytes);
     } else if (family === 0xc0) {
       const program = bytes[1] ?? 0;
+      // v1.48: oltre il 128° Rig (Bank 26 Rig 3) il Player usa il Bank Select LSB (CC 32) inviato prima del Program Change.
+      const bankSelect = this.bankSelectLsb ?? 0;
+      const rigIndex = bankSelect * 128 + program;
       this.state.program = program;
+      this.state.rigIndex = rigIndex;
       this.state.channel = channel;
-      decoded = { type: "Program Change", detail: `CH ${channel} · Program ${program}`, channel, program };
+      decoded = { type: "Program Change", detail: `CH ${channel} · Program ${program}${bankSelect ? ` · Bank Select ${bankSelect}` : ""}`,
+        channel, program, bankSelect, rigIndex };
     } else if (family === 0xb0) {
       const controller = bytes[1] ?? 0;
       const value = bytes[2] ?? 0;
       this.state.channel = channel;
       this.state.controls.set(controller, value);
+      if (controller === 32) this.bankSelectLsb = value;
       this.applyEffectCc(controller, value);
       const nrpn = this.trackNrpn(channel, controller, value);
       decoded = nrpn ?? { type: "Control Change", detail: `CH ${channel} · CC ${controller} = ${value}`, channel, controller, value };
@@ -473,8 +479,54 @@ export function rigStackField(decoded) {
 }
 
 // Testo da mostrare: il nome, altrimenti marca + modello.
+// v1.46: il Player scrive "N/A" nei Rig senza cabinet (prova del 27/09/2026 con i Rig acustici): vale come vuoto.
+function stackText(value) {
+  const text = (value ?? "").trim();
+  return /^n\/?a$/i.test(text) ? "" : text;
+}
+
+// v1.47: "N/A" in nome, marca e modello = nel Rig quel blocco NON C'È (profilo diretto/DI senza cabinet),
+// diverso da un cabinet presente ma spento (nomi presenti, interruttore a 0).
+export function rigStackMissing(values, prefix) {
+  const parts = [values[`${prefix}Name`], values[`${prefix}Maker`], values[`${prefix}Model`]];
+  return parts.some((part) => part !== undefined)
+    && parts.every((part) => part === undefined || /^n\/?a$/i.test((part ?? "").trim()));
+}
+
 export function rigStackLabel(values, prefix) {
-  const name = (values[`${prefix}Name`] ?? "").trim();
+  const name = stackText(values[`${prefix}Name`]);
   if (name) return name;
-  return [values[`${prefix}Maker`], values[`${prefix}Model`]].map((part) => (part ?? "").trim()).filter(Boolean).join(" ");
+  return [values[`${prefix}Maker`], values[`${prefix}Model`]].map(stackText).filter(Boolean).join(" ");
+}
+
+// ── Bank del Player (v1.48) ───────────────────────────────────────────────
+// Level III: 125 Bank × 5 Rig = 625 Rig (FAQ Kemper). Indice Rig = (Bank−1)·5 + (Rig−1);
+// Program Change = indice % 128 e Bank Select LSB (CC 32) = indice / 128 (forum Kemper: fino a Bank 26 Rig 3 il CC 32 vale 0).
+export const PLAYER_MAX_BANKS = 125;
+
+export function rigIndexToBankSlot(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= PLAYER_MAX_BANKS * 5) return null;
+  return { bank: Math.floor(index / 5) + 1, slot: (index % 5) + 1 };
+}
+
+export function buildRigSelectMessages(bank, slot, channel = 1) {
+  const index = (bank - 1) * 5 + (slot - 1);
+  const ch = (Math.max(1, Math.min(16, channel)) - 1) & 0x0f;
+  // Come fa il Player stesso: CC 0 = 0, CC 32 = gruppo di 128 Rig, poi il Program Change.
+  return { index, program: index % 128, bankSelect: Math.floor(index / 128),
+    messages: [[0xb0 | ch, 0, 0], [0xb0 | ch, 32, Math.floor(index / 128)], [0xc0 | ch, index % 128]] };
+}
+
+// Colori delle Bank sul Player (manuale del Player): Bank 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete.
+export const BANK_COLORS = [
+  { key: "blue", label: "BLU" },
+  { key: "yellow", label: "GIALLO" },
+  { key: "red", label: "ROSSO" },
+  { key: "green", label: "VERDE" },
+  { key: "violet", label: "VIOLA" },
+];
+
+export function bankColor(bank) {
+  if (!Number.isInteger(bank) || bank < 1) return null;
+  return BANK_COLORS[(bank - 1) % 5];
 }

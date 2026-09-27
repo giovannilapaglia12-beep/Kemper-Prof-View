@@ -185,7 +185,7 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
-    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
+    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {}, captureMorphProbe() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {}, handleLooperLocation() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},
@@ -335,4 +335,34 @@ test('Ampli e cabinet: richieste, risposte e testo mostrato (v1.45)', () => {
   assert.equal(midi.rigStackLabel({ cabName: '', cabMaker: 'Celestion', cabModel: 'G12M' }, 'cab'), 'Celestion G12M');
   assert.equal(midi.rigStackLabel({ ampName: ' Vox AC30 ', ampMaker: 'Vox' }, 'amp'), 'Vox AC30');
   assert.equal(midi.rigStackLabel({}, 'amp'), '');
+  // Rig acustico reale (27/09/2026): cabinet "N/A" → vuoto
+  assert.equal(midi.rigStackLabel({ cabName: 'N/A', cabMaker: 'N/A', cabModel: 'N/A' }, 'cab'), '');
+  assert.equal(midi.rigStackLabel({ ampName: 'L+R Brick Venice DI' }, 'amp'), 'L+R Brick Venice DI');
+  // v1.47: N/A = blocco non presente; nomi presenti = presente (acceso o spento); niente dati = non si sa
+  assert.equal(midi.rigStackMissing({ cabName: 'N/A', cabMaker: 'N/A', cabModel: 'N/A' }, 'cab'), true);
+  assert.equal(midi.rigStackMissing({ cabName: '4x12', cabMaker: 'Celestion', cabModel: 'G12M' }, 'cab'), false);
+  assert.equal(midi.rigStackMissing({ cabName: '', cabMaker: '', cabModel: '' }, 'cab'), false);
+  assert.equal(midi.rigStackMissing({}, 'cab'), false);
+});
+
+test('125 Bank: Bank Select CC 32 + Program Change e colori delle Bank (v1.48)', () => {
+  assert.equal(midi.PLAYER_MAX_BANKS, 125);
+  // Bank 1 Rig 1 → CC32 0, PC 0; Bank 26 Rig 3 → indice 127 (ultimo del primo gruppo); Bank 26 Rig 4 → CC32 1, PC 0
+  assert.deepEqual(midi.buildRigSelectMessages(1, 1, 1).messages, [[0xb0, 0, 0], [0xb0, 32, 0], [0xc0, 0]]);
+  assert.deepEqual(midi.buildRigSelectMessages(26, 3, 1).messages, [[0xb0, 0, 0], [0xb0, 32, 0], [0xc0, 127]]);
+  assert.deepEqual(midi.buildRigSelectMessages(26, 4, 1).messages, [[0xb0, 0, 0], [0xb0, 32, 1], [0xc0, 0]]);
+  assert.deepEqual(midi.buildRigSelectMessages(125, 5, 2).messages, [[0xb1, 0, 0], [0xb1, 32, 4], [0xc1, 624 % 128]]);
+  // Il Player invia CC 32 prima del Program Change: l'indice tiene conto del gruppo di 128
+  const parser = new midi.KemperMidiState();
+  parser.ingest({ data: Uint8Array.from([0xb0, 0, 0]) });
+  parser.ingest({ data: Uint8Array.from([0xb0, 32, 2]) });
+  const pc = parser.ingest({ data: Uint8Array.from([0xc0, 10]) });
+  assert.equal(pc.rigIndex, 266);
+  assert.deepEqual(midi.rigIndexToBankSlot(pc.rigIndex), { bank: 54, slot: 2 });
+  parser.ingest({ data: Uint8Array.from([0xb0, 32, 0]) });
+  assert.deepEqual(midi.rigIndexToBankSlot(parser.ingest({ data: Uint8Array.from([0xc0, 44]) }).rigIndex), { bank: 9, slot: 5 });
+  assert.equal(midi.rigIndexToBankSlot(625), null);
+  // Colori: 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, 6 di nuovo blu
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 12, 125].map(b => midi.bankColor(b).key),
+    ['blue', 'yellow', 'red', 'green', 'violet', 'blue', 'yellow', 'violet']);
 });

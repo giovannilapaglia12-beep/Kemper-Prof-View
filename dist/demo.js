@@ -12,11 +12,17 @@ export function installDemoKemper() {
   const st = { program: 5, tempo: 4288, morph: 0, tuner: 3, tunerAt: 0, freeze: 0, fx: structuredClone(fxSets[1]),
     fixed: { 0x10: 0, 0x1a: 1, 0x01: 0, 0x29: 0 }, location: 1 };
   const rigName = () => rigs[Math.floor(st.program / 5) % 2][st.program % 5];
+  // v1.48: come il Player, CC 0 e CC 32 (Bank Select) prima del Program Change: 625 Rig in 125 Bank.
+  let bankSelect = 0;
+  const emitProgram = () => { emit([0xb0, 0, 0]); emit([0xb0, 32, Math.floor(st.program / 128)]); emit([0xc0, st.program % 128]); };
   // v1.45: ampli e cabinet simulati (il primo Rig di ogni Bank ha il cabinet spento, come un Rig acustico).
   const amps = [["Fender", "Deluxe Reverb"], ["Vox", "AC30"], ["Marshall", "JCM800"], ["Matchless", "DC-30"], ["Mesa", "Mark IV"]];
   const stackStrings = () => {
     const [maker, model] = amps[st.program % 5];
-    return { 0x10: `${maker} ${model}`, 0x15: maker, 0x18: model, 0x20: st.program % 5 === 0 ? "" : "4x12 Greenback", 0x25: "Celestion", 0x2a: "G12M" };
+    // Come sul Player (27/09/2026): Rig acustico con cabinet "N/A", Rig 5 con cabinet acceso ma senza nome.
+    const slot = st.program % 5;
+    const cab = slot === 0 ? ["N/A", "N/A", "N/A"] : slot === 4 ? ["", "", ""] : ["4x12 Greenback", "Celestion", "G12M"];
+    return { 0x10: `${maker} ${model}`, 0x15: maker, 0x18: model, 0x20: cab[0], 0x25: cab[1], 0x2a: cab[2] };
   };
   const ccPage = { 17: 0x32, 18: 0x33, 19: 0x34, 20: 0x35, 22: 0x38, 24: 0x3a, 26: 0x3c, 27: 0x3c, 28: 0x3d, 29: 0x3d };
   const input = { id: "demo-in", name: "Profiler Player DEMO", manufacturer: "Kemper", state: "connected", type: "input", onmidimessage: null };
@@ -60,7 +66,7 @@ export function installDemoKemper() {
       // Come sul Player reale: stato completo, poi Program Change e SOLO DOPO i nomi della Bank.
       pushRig(); param(0x7f, 0x7e, st.tuner);
       setTimeout(() => {
-        emit([0xc0, st.program]);
+        emitProgram();
         const bank = Math.floor(st.program / 5);
         [`Bank ${bank + 1}`, "Clean", "Edge", "Breakup", "Drive", "Swells"]
           .forEach((name, index) => emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(name), 0x00, 0xf7]));
@@ -85,7 +91,7 @@ export function installDemoKemper() {
         if (fn === 0x43 && p === 0 && q in stackStrings()) return emit([...H, 0x03, 0x00, 0, q, ...text(stackStrings()[q]), 0x00, 0xf7]);
         if (fn === 0x41) {
           if (p === 0x0a && q === 2) return param(0x0a, 2, 1);
-          if (p === 0x0c && q === 2) return param(0x0c, 2, st.program % 5 === 0 ? 0 : 1);
+          if (p === 0x0c && q === 2) return param(0x0c, 2, st.program % 5 === 0 || st.program % 5 === 1 ? 0 : 1);
           if (p === 4 && q === 0) return param(4, 0, st.tempo);
           if (p === 0 && q === 0x0b) return param(0, 0x0b, st.morph);
           if (p === 0x7f && q === 0x7e) return param(0x7f, 0x7e, st.tuner);
@@ -111,19 +117,21 @@ export function installDemoKemper() {
       }
       const family = b[0] & 0xf0;
       if (family === 0xc0) {
-        const newBank = Math.floor((b[1] % 50) / 5);
+        const index = Math.min(624, bankSelect * 128 + b[1]);
+        const newBank = Math.floor(index / 5);
         if (newBank !== Math.floor(st.program / 5)) {
           const names = [`Bank ${newBank + 1}`, "Clean", "Edge", "Breakup", "Drive", "Swells"];
           // Come il Player reale quando la Bank cambia dall'app: solo nome Bank e slot 2.
           [0, 2].forEach((index) => emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(names[index]), 0x00, 0xf7]));
         }
-        st.program = b[1] % 50;
+        st.program = index;
         st.fx = structuredClone(fxSets[st.program % 2]);
         st.morph = 0; st.freeze = 0;
-        emit([0xc0, b[1]]);
+        emitProgram();
         if (bidiOn()) setTimeout(pushRig, 30);
       }
       if (family === 0xb0) {
+        if (b[1] === 32) bankSelect = b[2];
         if (ccPage[b[1]]) st.fx[ccPage[b[1]]][1] = b[2] ? 1 : 0;
         if (b[1] === 11) st.morph = Math.round(b[2] / 127 * 16383);
         if (b[1] === 31) {

@@ -1,4 +1,30 @@
-# Verifiche hardware, test locali e problemi aperti — v1.45
+# Verifiche hardware, test locali e problemi aperti — v1.49
+
+## Da provare con la v1.49 (comprende la v1.48)
+
+- [ ] Carica un Rig che in Rig Manager ha i pallini rosso/blu su qualche effetto (annota quali). Morph in BASE. ALTRO → "Prova pallini Morph", aspetta 6 s, poi salva la diagnostica. Se puoi, ripeti con un Rig senza Morph.
+
+## Da provare con la v1.48 (comprende la v1.47)
+
+- [ ] Scheda RIG → tocca "BANK ▾": compare la griglia; scegli una Bank oltre la 10 e carica un Rig: il Player cambia davvero.
+- [ ] Se hai Bank oltre la 26: carica un Rig lì dall'app (serve il Bank Select CC 32) e poi cambialo dal Player: l'app mostra Bank e Rig giusti.
+- [ ] Colori: il colore della Bank nell'app corrisponde al LED del Player (anche oltre la Bank 10 — il manuale descrive solo le prime 10).
+- [ ] "BANK MOSTRATE": riduci al numero di Bank che usi; − e + si fermano lì.
+
+## Da provare con la v1.47
+
+- [ ] Rig acustico "TT - 10/11": CAB mostra NON PRESENTE (pallino vuoto).
+- [ ] Se hai un Rig con cabinet spento: CAB mostra SPENTO · nome (pallino grigio).
+- [ ] Rig RT FIRESPIT: CAB mostra "senza nome"; controlla in Rig Manager che cabinet (o IR) usa.
+- [ ] TRIGGER dopo STOP (non provato il 27/09: dopo STOP è stato usato REC/PLAY).
+
+## Esito v1.45 sul Player (27/09/2026)
+
+- Il Player risponde a tutte le richieste AMP/CAB (stringhe 0/16, 0/21, 0/24, 0/32, 0/37, 0/42 e interruttori 10/2, 12/2), in circa 0,1 s.
+- Basso "WD - Metalbass clean": High Watt Two Hundred · custom made 2*15, entrambi accesi. Elettriche: Vox AC30/6 TB, Stu G's 62 AC (Vox 62 AC30 Coppertop), Bogie Dual Recto 3ch 6L6, Matchless Spitfire. Acustiche "TT - 10/11": L+R Brick Venice DI, cabinet "N/A" e spento.
+- RT FIRESPIT (Blue): cabinet acceso ma nome, marca e modello vuoti.
+- Modalità bidirezionale: 7 minuti, nessuna caduta, 65 richieste/min, 74 ridisegni su 13.805 messaggi.
+- Nomi Bank: le Bank 1, 2 e 3 sul Player si chiamano tutte "Bank 6" e hanno quasi gli stessi slot (probabilmente copie della stessa Performance).
 
 ## Da provare con la v1.45 (comprende la v1.44)
 

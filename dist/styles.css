@@ -2049,3 +2049,76 @@ body[data-theme="sun"] .midi-log time { color: var(--muted); }
 body[data-theme="sun"] .rig-stack-item { background: #ffffff; border-color: rgba(7, 16, 11, 0.35); }
 body[data-theme="sun"] .rig-stack-item[data-on="true"] i { box-shadow: none; }
 body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] strong { color: #5fe05a; }
+/* v1.47: blocco non presente nel Rig (es. profilo DI senza cabinet): pallino vuoto, testo attenuato. */
+.rig-stack-item[data-on="none"] i { background: transparent; border: 1.5px solid var(--muted); opacity: 0.8; box-shadow: none; }
+.rig-stack-item[data-on="none"] > span { color: var(--muted); letter-spacing: 0.04em; }
+
+/* ───────── v1.48 · Colori delle Bank (come i LED del Player) e scelta rapida ─────────
+   Bank 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete. */
+:root { --bank-blue: #5b95ff; --bank-yellow: #ffd84d; --bank-red: #ff5f55; --bank-green: #5fdc5a; --bank-violet: #b98cff; }
+body[data-theme="sun"] { --bank-blue: #1f5fd6; --bank-yellow: #9a6f00; --bank-red: #c62e28; --bank-green: #1d8a18; --bank-violet: #7440c4; }
+[data-bank-color="blue"] { --bank-color: var(--bank-blue); }
+[data-bank-color="yellow"] { --bank-color: var(--bank-yellow); }
+[data-bank-color="red"] { --bank-color: var(--bank-red); }
+[data-bank-color="green"] { --bank-color: var(--bank-green); }
+[data-bank-color="violet"] { --bank-color: var(--bank-violet); }
+
+.live-bank-row[data-bank-color] > span strong,
+.rig-panel .live-bank-row[data-bank-color] > span strong,
+.live-rig-selector[data-other-bank="true"] .live-bank-row[data-bank-color] > span strong,
+.rig-bank-control[data-bank-color] strong { color: var(--bank-color); }
+.rig-panel .live-bank-row[data-bank-color] > span strong {
+  min-width: 2.2em; padding: 2px 10px 4px; border-radius: 12px; text-align: center;
+  background: color-mix(in srgb, var(--bank-color) 16%, transparent);
+  box-shadow: inset 0 0 0 2px var(--bank-color);
+}
+.live-bank-pick { cursor: pointer; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
+.live-bank-pick:active { background: rgba(255, 255, 255, 0.05); }
+
+/* PALCO: pallino del colore della Bank prima di "BANK x · RIG y" */
+.stage-rig-position[data-bank-color]::before {
+  content: ""; display: inline-block; width: 0.72em; height: 0.72em; margin-right: 0.4em; border-radius: 50%;
+  background: var(--bank-color); vertical-align: -0.06em;
+}
+
+/* Scelta rapida della Bank: griglia 5 colonne, ogni riga è un giro di colori */
+.bank-picker {
+  position: fixed; z-index: 55; inset: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px;
+  padding: max(14px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
+  background: #030604; color: var(--text);
+}
+.bank-picker[hidden] { display: none; }
+.bank-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bank-picker-head strong { color: var(--green); font-size: 0.95rem; letter-spacing: 0.1em; }
+.bank-picker-close, .bank-picker-max button {
+  min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04); color: var(--text); font-weight: 900; letter-spacing: 0.06em; cursor: pointer;
+}
+.bank-picker-max button:disabled { opacity: 0.4; cursor: default; }
+.bank-picker-grid {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: 68px; gap: 6px;
+  overflow-y: auto; overscroll-behavior: contain; align-content: start;
+}
+.bank-picker-grid button {
+  display: grid; align-content: center; justify-items: center; gap: 2px; min-width: 0; padding: 4px;
+  border: 2px solid color-mix(in srgb, var(--bank-color) 55%, transparent); border-radius: 11px;
+  background: color-mix(in srgb, var(--bank-color) 10%, transparent); color: var(--text); cursor: pointer;
+}
+.bank-picker-grid button strong { color: var(--bank-color); font-size: 1.45rem; line-height: 1; }
+.bank-picker-grid button small {
+  max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font-size: 0.6rem; font-weight: 800;
+}
+.bank-picker-grid button[data-chosen="true"] { border-color: var(--bank-color); box-shadow: 0 0 0 2px var(--bank-color); }
+.bank-picker-grid button[data-current="true"] { background: var(--bank-color); }
+.bank-picker-grid button[data-current="true"] strong,
+.bank-picker-grid button[data-current="true"] small { color: #050806; }
+.bank-picker-max { display: flex; align-items: center; gap: 8px; }
+.bank-picker-max span { flex: 1; color: var(--muted); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; }
+.bank-picker-max span strong { color: var(--text); }
+body[data-theme="sun"] .bank-picker { background: #f4f6f2; }
+body[data-theme="sun"] .bank-picker-grid button { background: #ffffff; }
+body[data-theme="sun"] .bank-picker-grid button[data-current="true"] { background: var(--bank-color); }
+body[data-theme="sun"] .bank-picker-grid button[data-current="true"] strong,
+body[data-theme="sun"] .bank-picker-grid button[data-current="true"] small { color: #ffffff; }
+.stage-rig-position[data-bank-color] { color: var(--bank-color); }

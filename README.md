@@ -1,6 +1,30 @@
-# Kemper Profiler View v1.45
+# Kemper Profiler View v1.49
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.49
+
+- **Prova pallini Morph** (ALTRO → "Prova pallini Morph (sola lettura)"). Rig Manager mostra due pallini rosso/blu sugli effetti che cambiano con il Morph; per mostrarli anche nell'app serve sapere quali parametri hanno un valore Morph diverso. Le risposte che l'app riceve oggi (funzione 0x01, 13 byte) non lo contengono. La prova chiede per gli 8 effetti la lettura multipla documentata (0x42 → 0x02) e la variante con i valori Morph (0x48 → 0x08, non documentata) e salva le risposte grezze nella diagnostica (`morphProbe`). Sola lettura: non cambia nulla sul Player.
+
+## Novità v1.48
+
+- **Tutte le 125 Bank del Level III** (prima solo le prime 10). Il cambio Rig ora invia, come fa il Player stesso, CC 0 = 0, **CC 32 (Bank Select)** e Program Change: dal Rig 129 (Bank 26 Rig 4) in su il CC 32 vale 1, 2, 3, 4. Anche i cambi fatti sul Player oltre la Bank 26 vengono riconosciuti.
+- **Scelta rapida della Bank**: nella scheda RIG tocca "BANK ▾" (il numero) → griglia di tutte le Bank, 5 per riga, con il colore e il nome se già noto; la Bank in uso è piena, quella scelta ha il bordo. In fondo "BANK MOSTRATE: 1 – N" con −5/+5 per mostrare solo le Bank che usi (anche i pulsanti −/+ si fermano lì; scelta memorizzata).
+- **Colori delle Bank come sul Player** (manuale del Player): Bank 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete (6 blu, 7 giallo…). Numero della Bank colorato nella scheda RIG e "BANK · RIG" colorato con pallino in PALCO. Nel tema SOLE i colori sono più scuri per restare leggibili.
+
+## Novità v1.47
+
+- **AMP/CAB: tre casi distinti** (richiesta di Giovanni: "OFF" da solo non diceva se il cabinet è spento o se non c'è):
+  - **NON PRESENTE** (pallino vuoto): il Rig non ha quel blocco — il Player scrive "N/A" in nome, marca e modello (profili diretti/DI, es. i Rig acustici "TT - 10/11").
+  - **SPENTO · nome** (pallino grigio): il cabinet c'è ma è disattivato.
+  - **nome** (pallino verde): presente e acceso; "senza nome" se il Player non ne dà il nome.
+
+## Novità v1.46 (dopo la prova della v1.45 del 27/09/2026)
+
+- AMP/CAB **funziona sul Player**: basso (High Watt Two Hundred · custom made 2*15), elettrica (Vox AC30/6 TB, Bogie Dual Recto…), acustica (L+R Brick Venice DI, cabinet spento).
+- Nei Rig senza cabinet il Player scrive "N/A" (dalla v1.47: NON PRESENTE).
+- Cabinet acceso ma senza nome (es. Rig RT FIRESPIT): ora si legge **"senza nome"** invece di "—". Di solito è un cabinet importato senza nome.
+- Diagnostica `rigStack.log`: tiene le ultime 80 risposte (prima le prime 40).
 
 ## Novità v1.45
 

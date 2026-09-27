@@ -180,8 +180,20 @@ Il Player risponde con la funzione `07` (lo stesso formato che invia da solo al 
 
 Prova del 26/09/2026: con il loop FERMO, TRIGGER (NRPN 125/90) fa suonare il loop solo finché il pulsante è tenuto premuto (valore 1 → suona, valore 0 → si ferma). Mentre il loop suona, TRIGGER lo fa ripartire dall'inizio. L'app, a loop FERMO stimato, invia REC/PLAY (125/88), che riparte dall'inizio e continua a suonare.
 
-## Ampli e cabinet del Rig in uso (v1.45, da verificare sul Player)
+## Ampli e cabinet del Rig in uso (v1.45, verificato sul Player il 27/09/2026)
 
 - Stringhe (richiesta `F0 00 20 33 02 7F 43 00 00 <n> F7`, risposta funzione 0x03): 0x10 Amp Name, 0x15 Amp Manufacturer, 0x18 Amp Model, 0x20 Cabinet Name, 0x25 Cabinet Manufacturer, 0x2A Cabinet Model. Indirizzi dal forum Kemper (thread "Profiler MIDI documentation - information missing on string parameter addresses").
 - Interruttori (Profiler MIDI Parameter Documentation): Amplifier On/Off pagina 10 parametro 2; Cabinet On/Off pagina 12 parametro 2.
-- Richiesti dall'app 0,9 s dopo ogni cambio Rig; in modalità bidirezionale il Player non li invia da solo (prova del 26/09/2026: pagine 10 e 12 mai ricevute).
+- Richiesti dall'app 0,9 s dopo ogni cambio Rig; il Player risponde in circa 0,1 s. Nei Rig senza cabinet (profili diretti/DI) le tre stringhe del cabinet valgono "N/A" e 12/2 = 0: l'app mostra NON PRESENTE (diverso da SPENTO, cabinet con nome e 12/2 = 0). Con un cabinet senza nome (Rig RT FIRESPIT) le stringhe sono vuote e 12/2 = 1.
+
+## 125 Bank e Bank Select (v1.48)
+
+- Level III: 125 Bank × 5 = 625 Rig (FAQ Kemper). Indice = (Bank−1)·5 + (Rig−1); Program Change = indice % 128; Bank Select LSB **CC 32** = indice / 128 (0…4). Fino a Bank 26 Rig 3 (indice 127) CC 32 = 0 (forum Kemper).
+- Il Player invia `B0 00 00`, `B0 20 nn` prima del Program Change; l'app fa lo stesso e ricorda l'ultimo CC 32 ricevuto per calcolare l'indice.
+- Colori delle Bank (manuale del Player, OS 11): 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola; 6–10 stessi colori sul LED destro. Oltre la 10 l'app ripete il ciclo (da verificare sul Player).
+
+## Valori Morph dei parametri (v1.49, in prova)
+
+- Documentazione MIDI Kemper: il cambio di parametro 0x01 può avere un secondo valore ("B value", valore Morph); 0x08 = Morphed Multi Parameter Change (`08 00 pagina param valore… morph…`); 0x42 = richiesta multipla → 0x02.
+- Le risposte del Player alle richieste 0x41 sono sempre 13 byte (nessun valore Morph) in tutte le diagnostiche finora.
+- La v1.49 prova 0x42 e 0x48 (probabile richiesta di 0x08, non documentata) sui moduli 50, 51, 52, 53, 56, 58, 60, 61.

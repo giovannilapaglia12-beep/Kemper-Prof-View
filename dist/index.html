@@ -14,7 +14,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.45</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.49</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -116,7 +116,7 @@
           </div>
           <div class="live-bank-row" aria-label="Selezione Bank">
             <button id="live-bank-down" type="button" aria-label="Bank precedente">−</button>
-            <span>BANK <strong id="live-bank-value">1</strong><em class="live-bank-name" id="live-bank-name"></em></span>
+            <span class="live-bank-pick" id="live-bank-pick" role="button" tabindex="0" aria-label="Scegli tra tutte le Bank">BANK ▾ <strong id="live-bank-value">1</strong><em class="live-bank-name" id="live-bank-name"></em></span>
             <button id="live-bank-up" type="button" aria-label="Bank successiva">+</button>
           </div>
           <div class="live-rig-slots" aria-label="Cinque Rig della Bank">
@@ -393,6 +393,7 @@
             Auto sync: ON
           </button>
           <button class="secondary-button" id="looper-probe-button" type="button" disabled>Leggi parametri Looper</button>
+          <button class="secondary-button" id="morph-probe-button" type="button" disabled>Prova pallini Morph (sola lettura)</button>
           <button class="secondary-button" id="forget-names-button" type="button">Cancella nomi Bank/Rig memorizzati</button>
           <button class="secondary-button" id="clear-button" type="button">
             Pulisci log
@@ -481,6 +482,19 @@
         </ol>
       </details>
     </main>
+
+    <div class="bank-picker" id="bank-picker" role="dialog" aria-modal="true" aria-labelledby="bank-picker-title" hidden>
+      <div class="bank-picker-head">
+        <strong id="bank-picker-title">SCEGLI LA BANK</strong>
+        <button class="bank-picker-close" id="bank-picker-close" type="button">CHIUDI</button>
+      </div>
+      <div class="bank-picker-grid" id="bank-picker-grid"></div>
+      <div class="bank-picker-max">
+        <span>BANK MOSTRATE: 1 – <strong id="bank-picker-max">125</strong></span>
+        <button id="bank-picker-less" type="button" aria-label="Mostra 5 Bank in meno">−5</button>
+        <button id="bank-picker-more" type="button" aria-label="Mostra 5 Bank in più">+5</button>
+      </div>
+    </div>
 
     <div class="tuner-overlay" id="tuner-overlay" data-zone="waiting" hidden>
       <p class="tuner-overlay-kicker">ACCORDATORE</p>
