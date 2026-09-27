@@ -21,13 +21,16 @@ import {
   buildRevHoldRequest,
   buildBeaconRequest,
   buildBankNamesRequests,
+  buildRigStackRequests,
+  rigStackField,
+  rigStackLabel,
   bytesToHex,
   decodedKey,
   requestKey,
 } from "./kemper-midi.js";
 
 const APP_NAME = "Kemper Profiler View";
-const APP_VERSION = "1.43";
+const APP_VERSION = "1.45";
 document.documentElement.lang = "it";
 const $ = (selector) => document.querySelector(selector);
 const AUTO_SYNC_INTERVAL = 1500;
@@ -72,6 +75,11 @@ const ui = {
   liveBankValue: $("#live-bank-value"),
   liveBankName: $("#live-bank-name"),
   liveRigStatus: $("#live-rig-status"),
+  rigStack: $("#rig-stack"),
+  rigStackAmp: $("#rig-stack-amp"),
+  rigStackAmpName: $("#rig-stack-amp-name"),
+  rigStackCab: $("#rig-stack-cab"),
+  rigStackCabName: $("#rig-stack-cab-name"),
   liveRigPosition: $("#live-rig-position"),
   stageLooper: $("#stage-looper"),
   looperState: $("#looper-state"),
@@ -202,6 +210,8 @@ const session = {
   rigSelectedBank: null,
   rigSelectedSlot: null,
   rigNames: new Map(),
+  // v1.45: ampli e cabinet del Rig in uso (letti dal Player dopo ogni cambio Rig).
+  rigStack: { rig: null, values: {}, timer: null, retryTimer: null, requestsSent: 0, replies: 0, cache: new Map(), log: [] },
   slotNames: new Map(),
   bankNames: new Map(),
   pendingBankList: null,
@@ -386,6 +396,64 @@ function scheduleBankNamesCheck(bank) {
   session.bankNamesTimer = window.setTimeout(() => {
     if (session.rigSelectedBank === bank && !bankNamesComplete(bank)) requestBankNames(bank);
   }, 1200);
+}
+
+// ── Ampli e cabinet del Rig in uso (v1.45) ─────────────────────────────────
+// Letti dopo ogni cambio Rig (0,9 s: il Rig ha finito di caricarsi). Solo informazione:
+// con la chitarra acustica AMP o CAB spenti possono essere normali, quindi nessun allarme.
+const RIG_STACK_DELAY_MS = 900;
+const RIG_STACK_RETRY_MS = 1500;
+
+function scheduleRigStackRequest(rigName) {
+  const stack = session.rigStack;
+  window.clearTimeout(stack.timer);
+  window.clearTimeout(stack.retryTimer);
+  stack.rig = rigName;
+  // Se il Rig è già stato visto in questa sessione si mostra subito l'ultimo dato, poi si rilegge.
+  stack.values = { ...(stack.cache.get(rigName) ?? {}) };
+  paintRigStack();
+  stack.timer = window.setTimeout(() => requestRigStack(rigName, true), RIG_STACK_DELAY_MS);
+}
+
+function requestRigStack(rigName, allowRetry) {
+  const stack = session.rigStack;
+  if (stack.rig !== rigName || !session.sysex || !profilerOutputs().length) return;
+  stack.repliesAtRequest = stack.replies;
+  stack.requestsSent += 1;
+  sendProfilerRequests(buildRigStackRequests(), { record: false });
+  if (allowRetry) {
+    stack.retryTimer = window.setTimeout(() => {
+      if (stack.rig === rigName && stack.replies === stack.repliesAtRequest) requestRigStack(rigName, false);
+    }, RIG_STACK_RETRY_MS);
+  }
+}
+
+function handleRigStack(decoded) {
+  const field = rigStackField(decoded);
+  if (!field) return;
+  const stack = session.rigStack;
+  stack.replies += 1;
+  stack.values[field.key] = field.value;
+  if (stack.rig) stack.cache.set(stack.rig, { ...stack.values });
+  if (stack.log.length < 40) {
+    stack.log.push({ time: new Date().toISOString(), rig: stack.rig, key: field.key, value: field.raw ?? field.value });
+  }
+  paintRigStack();
+}
+
+function paintRigStack() {
+  if (!ui.rigStack) return;
+  const values = session.rigStack.values;
+  const known = Object.keys(values).length > 0;
+  ui.rigStack.hidden = !known;
+  if (!known) return;
+  for (const [prefix, node, nameNode] of [["amp", ui.rigStackAmp, ui.rigStackAmpName], ["cab", ui.rigStackCab, ui.rigStackCabName]]) {
+    const on = values[`${prefix}On`];
+    const label = rigStackLabel(values, prefix);
+    node.dataset.on = on === undefined ? "unknown" : String(on);
+    nameNode.textContent = on === false ? (label ? `OFF · ${label}` : "OFF") : (label || "—");
+    node.title = label;
+  }
 }
 
 function forgetAllNames() {
@@ -682,7 +750,9 @@ const kemper = new KemperMidiState((state) => {
   }
   if (state.rigName && session.lastRigName === null) {
     session.lastRigName = state.rigName;
+    scheduleRigStackRequest(state.rigName);
   } else if (state.rigName && state.rigName !== session.lastRigName) {
+    scheduleRigStackRequest(state.rigName);
     stopTempoConfirmation();
     stopTempoTapPolling();
     stopAllEffectConfirmations();
@@ -1996,6 +2066,7 @@ function attachInputs() {
       const decoded = kemper.ingest(event);
       handleBidirectional(decoded);
       handleBankNames(decoded);
+      handleRigStack(decoded);
       captureLooperProbe(decoded);
       trackProfilerRig(decoded);
       refreshRigControlsOnBankNames(decoded);
@@ -3122,9 +3193,9 @@ function trackLooperPress(key) {
       rebaseLooperPhase();
       break;
     case "trigger":
-      // TRIGGER fa ripartire il loop dall'inizio.
-      if (looper.loopLength !== null && looper.state !== "empty" && looper.state !== "recording") {
-        if (looper.state === "stopped") setLooperState("playing");
+      // TRIGGER fa ripartire dall'inizio il loop che sta suonando. Da FERMO il Player suona solo
+      // finché è tenuto premuto: l'app lì invia PLAY (vedi looperSendKey), quindi lo stato non cambia.
+      if (looper.loopLength !== null && (looper.state === "playing" || looper.state === "overdub")) {
         rebaseLooperPhase({ restart: true });
       }
       break;
@@ -3134,6 +3205,13 @@ function trackLooperPress(key) {
     default:
       break;
   }
+}
+// v1.44: con il loop FERMO il Player fa suonare TRIGGER solo finché è tenuto premuto
+// (prova del 26/09/2026: tocchi di 80 ms, nessun suono). Da FERMO l'app invia quindi PLAY,
+// che fa ripartire il loop dall'inizio con un solo tocco; mentre suona TRIGGER resta TRIGGER.
+function looperSendKey(key) {
+  if (key === "trigger" && looper.state === "stopped" && looper.loopLength !== null) return "record";
+  return key;
 }
 let cancelLooperErase = () => {};
 
@@ -3184,10 +3262,16 @@ function bindLooperSwitch(button) {
   const key = button.dataset.looperSwitch;
   let held = false;
   let lastDirectAt = 0;
+  let sentKey = key;
+  const note = () => {
+    if (sentKey !== key) ui.looperStatus.textContent = "TRIGGER · loop fermo: riparte dall’inizio (inviato PLAY)";
+  };
   const press = () => {
     if (button.disabled || held) return;
     if (key === "record" && (looper.pendingClose || looper.state === "recording") && handleQuantizedRecord()) return;
-    if (!sendLooperSwitch(key, true)) return;
+    sentKey = looperSendKey(key);
+    if (!sendLooperSwitch(sentKey, true)) return;
+    note();
     held = true;
     button.dataset.pressed = "true";
     looperSwitchReleases.add(release);
@@ -3197,7 +3281,7 @@ function bindLooperSwitch(button) {
     held = false;
     button.dataset.pressed = "false";
     looperSwitchReleases.delete(release);
-    sendLooperSwitch(key, false);
+    sendLooperSwitch(sentKey, false);
   };
   button.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
@@ -3224,7 +3308,11 @@ function bindLooperSwitch(button) {
   button.addEventListener("click", () => {
     if (button.disabled || Date.now() - lastDirectAt < 600) return;
     if (key === "record" && (looper.pendingClose || looper.state === "recording") && handleQuantizedRecord()) return;
-    if (sendLooperSwitch(key, true)) window.setTimeout(() => sendLooperSwitch(key, false), 90);
+    const clickKey = looperSendKey(key);
+    if (sendLooperSwitch(clickKey, true)) {
+      if (clickKey !== key) ui.looperStatus.textContent = "TRIGGER · loop fermo: riparte dall’inizio (inviato PLAY)";
+      window.setTimeout(() => sendLooperSwitch(clickKey, false), 90);
+    }
   });
 }
 
@@ -3448,6 +3536,14 @@ function buildDiagnostics() {
       received: session.bankListsReceived,
       remembered: Object.fromEntries(session.bankNames),
       slots: Object.fromEntries(session.slotNames),
+    },
+    rigStack: {
+      rig: session.rigStack.rig,
+      values: session.rigStack.values,
+      requestsSent: session.rigStack.requestsSent,
+      replies: session.rigStack.replies,
+      log: session.rigStack.log,
+      addresses: "stringhe 0/16 0/21 0/24 (ampli), 0/32 0/37 0/42 (cabinet); On/Off 10/2 e 12/2",
     },
     rigControl: {
       targetBank: session.rigTargetBank,

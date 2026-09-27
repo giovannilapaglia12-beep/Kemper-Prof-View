@@ -175,3 +175,13 @@ Il Player risponde con la funzione `07` (lo stesso formato che invia da solo al 
 - ½ SPEED (25/09/2026) e REVERSE (26/09/2026) restano attivi anche dopo la cancellazione del loop.
 - Tre pressioni di STOP **non** cancellano il loop (26/09/2026). La cancellazione avviene con Erase (125/94) e/o STOP tenuto premuto circa 2 s.
 - Lo stato del Looper non è leggibile via MIDI: l'app lo stima dai comandi inviati.
+
+## Looper: TRIGGER a loop fermo (v1.44)
+
+Prova del 26/09/2026: con il loop FERMO, TRIGGER (NRPN 125/90) fa suonare il loop solo finché il pulsante è tenuto premuto (valore 1 → suona, valore 0 → si ferma). Mentre il loop suona, TRIGGER lo fa ripartire dall'inizio. L'app, a loop FERMO stimato, invia REC/PLAY (125/88), che riparte dall'inizio e continua a suonare.
+
+## Ampli e cabinet del Rig in uso (v1.45, da verificare sul Player)
+
+- Stringhe (richiesta `F0 00 20 33 02 7F 43 00 00 <n> F7`, risposta funzione 0x03): 0x10 Amp Name, 0x15 Amp Manufacturer, 0x18 Amp Model, 0x20 Cabinet Name, 0x25 Cabinet Manufacturer, 0x2A Cabinet Model. Indirizzi dal forum Kemper (thread "Profiler MIDI documentation - information missing on string parameter addresses").
+- Interruttori (Profiler MIDI Parameter Documentation): Amplifier On/Off pagina 10 parametro 2; Cabinet On/Off pagina 12 parametro 2.
+- Richiesti dall'app 0,9 s dopo ogni cambio Rig; in modalità bidirezionale il Player non li invia da solo (prova del 26/09/2026: pagine 10 e 12 mai ricevute).

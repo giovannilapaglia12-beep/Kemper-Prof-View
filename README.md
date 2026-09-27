@@ -1,6 +1,15 @@
-# Kemper Profiler View v1.43
+# Kemper Profiler View v1.45
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.45
+
+- **Ampli e cabinet del Rig in uso** (scheda RIG, sotto "IN USO"): due righe AMP e CAB con il nome e un pallino verde se sono accesi, grigio con "OFF" se sono spenti. Dopo ogni cambio Rig l'app li chiede al Player (0,9 s dopo, con un secondo tentativo se non risponde): nomi con le stringhe 0x43 pagina 0 (0x10 nome ampli, 0x15 marca, 0x18 modello; 0x20 nome cabinet, 0x25 marca, 0x2A modello; indirizzi trovati dagli utenti del forum Kemper) e interruttori Amp On/Off 10/2 e Cabinet On/Off 12/2. Se manca il nome si mostrano marca e modello. Nessun allarme: con la chitarra acustica AMP o CAB spenti possono essere normali. Se il Player non risponde le righe non compaiono. Diagnostica: sezione `rigStack`.
+- Tema SOLE: il numero del Rig in uso (cerchio nero nel riquadro verde) ora è leggibile.
+
+## Novità v1.44 (dopo la prova della v1.43 del 26/09/2026)
+
+- **TRIGGER con il loop fermo**: sul Player, a loop FERMO, TRIGGER fa suonare il loop solo finché è tenuto premuto (con un tocco breve non si sentiva nulla, ma l'app faceva ripartire il cerchio). Ora, se l'app sa che il loop è FERMO, il tocco su TRIGGER invia PLAY: il loop riparte dall'inizio con un solo tocco. Mentre il loop suona, TRIGGER resta TRIGGER (ripartenza dall'inizio). Nella scheda LOOPER compare "TRIGGER · loop fermo: riparte dall'inizio (inviato PLAY)".
 
 ## Novità v1.43
 

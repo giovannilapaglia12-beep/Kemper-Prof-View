@@ -2029,3 +2029,23 @@ body:not([data-view="full"]) .theme-panel { display: none; }
 body[data-theme="sun"] .midi-log code,
 body[data-theme="sun"] .midi-log .message-type { color: var(--text); }
 body[data-theme="sun"] .midi-log time { color: var(--muted); }
+
+/* ───────── v1.45 · Ampli e cabinet del Rig in uso (scheda RIG) ───────── */
+.rig-stack { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 8px 0 2px; }
+.rig-stack[hidden] { display: none; }
+.rig-stack-item {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 9px;
+  font-size: 0.82rem; line-height: 1.2;
+}
+.rig-stack-item b { flex: 0 0 34px; color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; }
+.rig-stack-item i {
+  flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--muted); opacity: 0.5;
+}
+.rig-stack-item > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
+.rig-stack-item[data-on="true"] i { background: var(--green); opacity: 1; box-shadow: 0 0 6px var(--green); }
+.rig-stack-item[data-on="false"] > span { color: var(--muted); }
+body[data-theme="sun"] .rig-stack-item { background: #ffffff; border-color: rgba(7, 16, 11, 0.35); }
+body[data-theme="sun"] .rig-stack-item[data-on="true"] i { box-shadow: none; }
+body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] strong { color: #5fe05a; }

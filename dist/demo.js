@@ -12,6 +12,12 @@ export function installDemoKemper() {
   const st = { program: 5, tempo: 4288, morph: 0, tuner: 3, tunerAt: 0, freeze: 0, fx: structuredClone(fxSets[1]),
     fixed: { 0x10: 0, 0x1a: 1, 0x01: 0, 0x29: 0 }, location: 1 };
   const rigName = () => rigs[Math.floor(st.program / 5) % 2][st.program % 5];
+  // v1.45: ampli e cabinet simulati (il primo Rig di ogni Bank ha il cabinet spento, come un Rig acustico).
+  const amps = [["Fender", "Deluxe Reverb"], ["Vox", "AC30"], ["Marshall", "JCM800"], ["Matchless", "DC-30"], ["Mesa", "Mark IV"]];
+  const stackStrings = () => {
+    const [maker, model] = amps[st.program % 5];
+    return { 0x10: `${maker} ${model}`, 0x15: maker, 0x18: model, 0x20: st.program % 5 === 0 ? "" : "4x12 Greenback", 0x25: "Celestion", 0x2a: "G12M" };
+  };
   const ccPage = { 17: 0x32, 18: 0x33, 19: 0x34, 20: 0x35, 22: 0x38, 24: 0x3a, 26: 0x3c, 27: 0x3c, 28: 0x3d, 29: 0x3d };
   const input = { id: "demo-in", name: "Profiler Player DEMO", manufacturer: "Kemper", state: "connected", type: "input", onmidimessage: null };
   const emit = (bytes) => setTimeout(() => input.onmidimessage?.({ data: new Uint8Array(bytes), receivedTime: performance.now() }), 12);
@@ -76,7 +82,10 @@ export function installDemoKemper() {
         }
         if (fn === 0x7e && p === 0x40) return window.__demoNoBidi ? undefined : startBidi(b[10], b[11]);
         if (fn === 0x43 && p === 0 && q === 1) return emit([...H, 0x03, 0x00, 0, 1, ...text(rigName()), 0x00, 0xf7]);
+        if (fn === 0x43 && p === 0 && q in stackStrings()) return emit([...H, 0x03, 0x00, 0, q, ...text(stackStrings()[q]), 0x00, 0xf7]);
         if (fn === 0x41) {
+          if (p === 0x0a && q === 2) return param(0x0a, 2, 1);
+          if (p === 0x0c && q === 2) return param(0x0c, 2, st.program % 5 === 0 ? 0 : 1);
           if (p === 4 && q === 0) return param(4, 0, st.tempo);
           if (p === 0 && q === 0x0b) return param(0, 0x0b, st.morph);
           if (p === 0x7f && q === 0x7e) return param(0x7f, 0x7e, st.tuner);

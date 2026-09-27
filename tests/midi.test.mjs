@@ -64,7 +64,7 @@ function looperContext(sent, channel = 2) {
     window: { setInterval: () => 1, clearInterval() {}, clearTimeout() {},
       setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; } } };
   vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;
-this.handleQuantizedRecord = handleQuantizedRecord; this.setQuantizeMode = setQuantizeMode;`, context);
+this.handleQuantizedRecord = handleQuantizedRecord; this.looperSendKey = looperSendKey; this.setQuantizeMode = setQuantizeMode;`, context);
   context.clock = clock;
   context.timers = timers;
   return context;
@@ -185,7 +185,7 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
-    handleBidirectional() {}, handleBankNames() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
+    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {}, handleLooperLocation() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},
@@ -298,4 +298,41 @@ test('Cerchio del Looper: la posizione avanza, REVERSE la fa tornare indietro (v
   looper.reverse = false; looper.half = true; context.rebase();
   clock.now = 3500; // metà velocità: 2 s = un quarto di giro
   assert.equal(Math.round(context.looperPhase() * 1000), 375);
+});
+
+test('TRIGGER da loop FERMO invia PLAY (il Player suonerebbe solo tenendolo premuto, v1.44)', () => {
+  const sent = [];
+  const context = looperContext(sent);
+  assert.equal(context.looperSendKey('trigger'), 'trigger');
+  context.sendLooperSwitch('record', true); context.sendLooperSwitch('record', false);
+  context.sendLooperSwitch('record', true); context.sendLooperSwitch('record', false);
+  assert.equal(context.looper.state, 'playing');
+  assert.equal(context.looperSendKey('trigger'), 'trigger');
+  context.sendLooperSwitch('stop', true); context.sendLooperSwitch('stop', false);
+  assert.equal(context.looper.state, 'stopped');
+  const key = context.looperSendKey('trigger');
+  assert.equal(key, 'record');
+  const start = sent.length;
+  context.sendLooperSwitch(key, true);
+  assert.deepEqual(sent.slice(start, start + 2), [[0xb1, 99, 125], [0xb1, 98, 88]]);
+  assert.equal(context.looper.state, 'playing');
+  assert.equal(context.looperSendKey('trigger'), 'trigger');
+});
+
+test('Ampli e cabinet: richieste, risposte e testo mostrato (v1.45)', () => {
+  const requests = midi.buildRigStackRequests().map(r => midi.bytesToHex(r.bytes));
+  assert.deepEqual(requests, [
+    'F0 00 20 33 02 7F 43 00 00 10 F7', 'F0 00 20 33 02 7F 43 00 00 15 F7', 'F0 00 20 33 02 7F 43 00 00 18 F7',
+    'F0 00 20 33 02 7F 43 00 00 20 F7', 'F0 00 20 33 02 7F 43 00 00 25 F7', 'F0 00 20 33 02 7F 43 00 00 2A F7',
+    'F0 00 20 33 02 7F 41 00 0A 02 F7', 'F0 00 20 33 02 7F 41 00 0C 02 F7']);
+  const parser = new midi.KemperMidiState();
+  const text = s => [...s].map(c => c.charCodeAt(0));
+  const amp = parser.ingest({ data: Uint8Array.from([0xf0, 0, 0x20, 0x33, 0, 0, 0x03, 0, 0, 0x10, ...text('Marshall JCM800'), 0, 0xf7]) });
+  assert.deepEqual(midi.rigStackField(amp), { key: 'ampName', value: 'Marshall JCM800' });
+  assert.equal(parser.state.rigName ?? null, null, 'il nome ampli non diventa nome del Rig');
+  assert.deepEqual(midi.rigStackField(parser.ingest({ data: playerReply(0x0c, 2, 0) })), { key: 'cabOn', value: false, raw: 0 });
+  assert.equal(midi.rigStackField(parser.ingest({ data: playerReply(0x32, 3, 1) })), null);
+  assert.equal(midi.rigStackLabel({ cabName: '', cabMaker: 'Celestion', cabModel: 'G12M' }, 'cab'), 'Celestion G12M');
+  assert.equal(midi.rigStackLabel({ ampName: ' Vox AC30 ', ampMaker: 'Vox' }, 'amp'), 'Vox AC30');
+  assert.equal(midi.rigStackLabel({}, 'amp'), '');
 });

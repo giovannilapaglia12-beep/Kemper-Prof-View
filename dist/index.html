@@ -14,7 +14,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.43</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.45</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -109,6 +109,10 @@
             <strong id="rig-panel-heading">SCEGLI IL RIG</strong>
             <span id="live-rig-status" aria-live="polite">Collega il Kemper</span>
             <button class="rig-current-jump" id="rig-current-jump" type="button" hidden>TORNA ALLA BANK IN USO</button>
+          </div>
+          <div class="rig-stack" id="rig-stack" aria-label="Ampli e cabinet del Rig in uso" hidden>
+            <span class="rig-stack-item" id="rig-stack-amp" data-on="unknown"><b>AMP</b><i aria-hidden="true"></i><span id="rig-stack-amp-name">—</span></span>
+            <span class="rig-stack-item" id="rig-stack-cab" data-on="unknown"><b>CAB</b><i aria-hidden="true"></i><span id="rig-stack-cab-name">—</span></span>
           </div>
           <div class="live-bank-row" aria-label="Selezione Bank">
             <button id="live-bank-down" type="button" aria-label="Bank precedente">−</button>

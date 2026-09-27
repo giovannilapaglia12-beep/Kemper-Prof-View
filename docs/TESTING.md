@@ -1,4 +1,24 @@
-# Verifiche hardware, test locali e problemi aperti — v1.43
+# Verifiche hardware, test locali e problemi aperti — v1.45
+
+## Da provare con la v1.45 (comprende la v1.44)
+
+- [ ] Scheda RIG, Rig di chitarra elettrica: AMP e CAB con il nome giusto e il pallino verde; confronta con Rig Manager.
+- [ ] Rig di basso e Rig acustico: controlla cosa compare (nome, OFF) e se corrisponde a Rig Manager.
+- [ ] Un Rig con un IR importato come cabinet: il nome dell'IR compare nella riga CAB?
+- [ ] Cambia Rig più volte: le righe si aggiornano entro circa un secondo.
+- [ ] Salva la diagnostica: sezione `rigStack` (valori letti e registro delle risposte).
+
+## Da provare con la v1.44
+
+- [ ] Registra un loop, STOP, poi un solo tocco su TRIGGER: il loop riparte dall'inizio e continua a suonare; l'anello riparte insieme.
+- [ ] Mentre il loop suona, TRIGGER lo fa ripartire dall'inizio (come prima).
+
+## Esito v1.43 sul Player (26/09/2026, sera)
+
+- "Tutto funziona meglio": nessun rallentamento durante il loop. Diagnostica: 67 ridisegni su 40.736 messaggi del Player in 16 minuti; 46 richieste/min; nessuna caduta della modalità bidirezionale.
+- Nomi Bank via 0x47 **funzionano**: passando alla Bank 8 dall'app il Player ha mandato solo lo slot 2, l'app ha chiesto il resto e in 0,1 s aveva tutti e 5 i nomi.
+- Nuova icona, cerchio del Looper (a tempo con il loop) e tema SOLE: approvati da Giovanni (27/09/2026).
+- Unico problema: TRIGGER a loop fermo suona solo tenendolo premuto (comportamento del Player) → corretto nella v1.44.
 
 ## Da provare con la v1.43 (comprende la v1.42)
 

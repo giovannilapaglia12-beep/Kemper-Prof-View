@@ -429,3 +429,52 @@ export function buildRenderedValueRequest(page, parameter, value) {
     bytes: [...KEMPER_HEADER, 0x7c, 0x00, page, parameter, valueMsb, valueLsb, 0xf7],
   };
 }
+
+// v1.45: ampli e cabinet del Rig in uso. Stringhe 0x43 pagina 0 (indirizzi dal forum Kemper:
+// 0x10 nome ampli, 0x15 marca, 0x18 modello; 0x20 nome cabinet, 0x25 marca, 0x2A modello)
+// e interruttori Amp On/Off (pagina 10, parametro 2) e Cabinet On/Off (pagina 12, parametro 2).
+export const RIG_STACK = {
+  strings: [
+    { key: "ampName", parameter: 0x10, label: "Amp Name" },
+    { key: "ampMaker", parameter: 0x15, label: "Amp Manufacturer" },
+    { key: "ampModel", parameter: 0x18, label: "Amp Model" },
+    { key: "cabName", parameter: 0x20, label: "Cabinet Name" },
+    { key: "cabMaker", parameter: 0x25, label: "Cabinet Manufacturer" },
+    { key: "cabModel", parameter: 0x2a, label: "Cabinet Model" },
+  ],
+  switches: [
+    { key: "ampOn", page: 0x0a, parameter: 0x02, label: "Amp On/Off 10/2" },
+    { key: "cabOn", page: 0x0c, parameter: 0x02, label: "Cabinet On/Off 12/2" },
+  ],
+};
+
+export function buildStringRequest(page, parameter, label = `Read string ${page}/${parameter}`) {
+  return { label, bytes: [...KEMPER_HEADER, 0x43, 0x00, page & 0x7f, parameter & 0x7f, 0xf7] };
+}
+
+export function buildRigStackRequests() {
+  return [
+    ...RIG_STACK.strings.map((item) => buildStringRequest(0x00, item.parameter, item.label)),
+    ...RIG_STACK.switches.map((item) => buildParameterRequest(item.page, item.parameter, item.label)),
+  ];
+}
+
+// Chiave del dato ampli/cabinet contenuto in un messaggio decodificato, oppure null.
+export function rigStackField(decoded) {
+  if (decoded?.type === "Kemper String" && decoded.page === 0x00) {
+    const item = RIG_STACK.strings.find((entry) => entry.parameter === decoded.parameter);
+    return item ? { key: item.key, value: decoded.text ?? "" } : null;
+  }
+  if (decoded?.type === "Kemper Parameter") {
+    const item = RIG_STACK.switches.find((entry) => entry.page === decoded.page && entry.parameter === decoded.parameter);
+    return item ? { key: item.key, value: decoded.value > 0, raw: decoded.value } : null;
+  }
+  return null;
+}
+
+// Testo da mostrare: il nome, altrimenti marca + modello.
+export function rigStackLabel(values, prefix) {
+  const name = (values[`${prefix}Name`] ?? "").trim();
+  if (name) return name;
+  return [values[`${prefix}Maker`], values[`${prefix}Model`]].map((part) => (part ?? "").trim()).filter(Boolean).join(" ");
+}
