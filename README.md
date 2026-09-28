@@ -1,6 +1,12 @@
-# Kemper Profiler View v1.61
+# Kemper Profiler View v1.62
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.62 — due correzioni dopo la prova lunga del 28/09/2026
+
+- **Niente falso "collegamento bidirezionale perso" tornando all'app.** Nella prova lunga, dopo una chiamata WhatsApp, l'app ha segnalato due volte la modalità bidirezionale come persa, ed è rientrata in pochi millesimi di secondo. Il motivo: in secondo piano Chrome trattiene i messaggi del Player, e al ritorno l'app vedeva più di 4 s senza sensing prima di leggerli. Ora, quando l'app torna in primo piano (o dopo che il telefono l'ha sospesa), per 2 s non dichiara la modalità persa. Se il Player tace davvero, dopo i 2 s la segnala come prima. La diagnostica conta questi ritorni (`resumesFromBackground`).
+- **REVERSE e ½ SPEED ripartono da OFF quando il Player è stato spento.** L'app li ricorda perché il Player li tiene attivi anche dopo aver cancellato il loop, ma spegnendolo tornano OFF, e il Player non comunica lo stato del Looper. Nella prova lunga l'app diceva REVERSE ON mentre il Player registrava normale. Ora, se l'app non sente il Player da più di 10 minuti, all'apertura riparte da OFF e lo dice (messaggio breve e nota nella scheda LOOPER). "NON CORRISPONDE? INVERTI" resta per i casi dubbi. Il Player DEMO non conta come contatto.
+- Il resto non cambia: nella prova registrata messaggi MIDI, memoria del telefono e schede sono identici alla v1.61. Test: 40.
 
 ## Novità v1.61 — ALTRO più corta, prova del Transpose
 
@@ -257,6 +263,6 @@ Non è stata scelta una licenza open source. Prima di pubblicare il repository a
 
 1. **v1.4x** – grafica completata (cerchio Looper, icona, tema SOLE: fatto nella v1.41), nomi Bank completi (v1.41), pulizia tecnica (v1.41).
 2. **Prova lunga** sul Player: una prova o un servizio intero (vedi `docs/TESTING.md`, "Prova lunga").
-3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 `styles.css` riordinato per schermata. Poi Transpose −2…+2 in PALCO, dopo la prova di lettura sul Player.
+3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata. Poi Transpose −2…+2 in PALCO, dopo la prova di lettura sul Player.
 4. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, guida d'uso di una pagina.
 5. Dopo la 2.0: pedale MIDI Bluetooth.

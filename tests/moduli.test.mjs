@@ -277,3 +277,56 @@ test('Leggi Transpose: senza risposta alla lettura multipla usa le letture singo
   const changes = probe.changed({ single: { 1: 1, 3: 64 } }, { single: { 1: 1, 3: 62, 9: 5 } });
   assert.equal(JSON.stringify(changes), JSON.stringify([{ parameter: 3, from: 64, to: 62 }]));
 });
+
+// ── v1.62: ritorno in primo piano e REVERSE/½ SPEED dopo il Player spento ──
+test('Bidirezionale: tornando all\'app dopo un\'altra app (o una chiamata) niente falso "persa" (v1.62)', () => {
+  const { context, session, clock, toasts, tickUntil } = bidiContext();
+  context.bidiTick();
+  clock.now = T0 + 100;
+  context.handleBidirectional({ type: 'Kemper Heartbeat' });
+  tickUntil(5000, { sensing: true });
+  assert.equal(session.bidi.state, 'active');
+  // Chiamata WhatsApp: l'app va in secondo piano 20 s; i messaggi del Player arrivano solo al ritorno.
+  context.document.visibilityState = 'hidden';
+  tickUntil(25000);
+  context.document.visibilityState = 'visible';
+  const toastsBefore = toasts.length;
+  clock.now += 250;
+  context.bidiTick(); // primo controllo al ritorno: sensing vecchio di 20 s, ma c'è la tolleranza
+  assert.equal(session.bidi.state, 'active');
+  clock.now += 15;
+  context.handleBidirectional({ type: 'Kemper Heartbeat' }); // messaggi arretrati
+  tickUntil(30000, { sensing: true });
+  assert.equal(session.bidi.state, 'active');
+  assert.equal(session.bidi.drops, 0);
+  assert.equal(toasts.length, toastsBefore, 'nessun avviso');
+  assert.equal(session.bidi.resumes, 1);
+});
+
+test('Bidirezionale: timer fermi (telefono che sospende l\'app) → stessa tolleranza; se il Player tace davvero, "persa" dopo 2 s', () => {
+  const { context, session, clock, toasts, tickUntil } = bidiContext();
+  context.bidiTick();
+  clock.now = T0 + 100;
+  context.handleBidirectional({ type: 'Kemper Heartbeat' });
+  tickUntil(5000, { sensing: true });
+  clock.now += 20000; // nessun controllo per 20 s
+  context.bidiTick();
+  assert.equal(session.bidi.state, 'active', 'tolleranza al ritorno');
+  const resumedAt = clock.now;
+  while (clock.now < resumedAt + 2250) { clock.now += 250; context.bidiTick(); }
+  assert.equal(session.bidi.state, 'lost', 'il Player non ha più mandato sensing: collegamento davvero perso');
+  assert.equal(toasts.at(-1).kind, 'warn');
+});
+
+test('Looper: REVERSE e ½ SPEED ricordati ripartono da OFF se il Player non si sente da più di 10 minuti (v1.62)', () => {
+  const context = {};
+  vm.runInNewContext(`${snippet('js/looper.js', 'const PLAYER_RESTART_PAUSE_MS', 'let looperFlagsReset')}
+this.needReset = looperFlagsNeedReset;`, context);
+  const now = Date.parse('2026-09-28T10:00:00Z');
+  const minutes = (m) => now - m * 60 * 1000;
+  assert.equal(context.needReset({ reverse: true, half: false, seenAt: minutes(2), now }), false, 'app riaperta subito: resta ON');
+  assert.equal(context.needReset({ reverse: true, half: false, seenAt: minutes(11), now }), true, 'Player spento da ieri: OFF');
+  assert.equal(context.needReset({ reverse: false, half: true, seenAt: minutes(60 * 14), now }), true);
+  assert.equal(context.needReset({ reverse: true, half: true, seenAt: 0, now }), true, 'contatto sconosciuto: OFF');
+  assert.equal(context.needReset({ reverse: false, half: false, seenAt: 0, now }), false, 'niente da azzerare');
+});

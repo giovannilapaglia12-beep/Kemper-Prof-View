@@ -4,7 +4,7 @@
 // "kemper-stage-view-bank-names" e "kemper-stage-view-names-reset-v135" (rig-names.js).
 
 export const APP_NAME = "Kemper Profiler View";
-export const APP_VERSION = "1.61";
+export const APP_VERSION = "1.62";
 export const MAX_BANKS_KEY = "kemper-stage-view-max-bank";
 export const AUTO_SYNC_INTERVAL = 1500;
 export const FIXED_FX_SYNC_INTERVAL = 4500;
@@ -18,4 +18,5 @@ export const BIDI_KEY = "kemper-stage-view-bidi"; // le chiavi di memoria restan
 export const LOOPER_HALF_KEY = "kemper-stage-view-looper-half";
 export const LOOPER_REVERSE_KEY = "kemper-stage-view-looper-reverse";
 export const QUANTIZE_KEY = "kemper-stage-view-looper-quantize";
+export const PLAYER_SEEN_KEY = "kemper-stage-view-player-seen";
 export const THEME_KEY = "kemper-stage-view-theme";
