@@ -1,5 +1,5 @@
-const CACHE = "kemper-profiler-view-v1520";
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./kemper-midi.js", "./demo.js", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
+const CACHE = "kemper-profiler-view-v1610";
+const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./js/config.js", "./js/dom.js", "./js/text.js", "./js/state.js", "./js/views.js", "./js/diagnostics.js", "./js/tempo.js", "./js/morph.js", "./js/tuner.js", "./js/effects.js", "./js/fixed-fx.js", "./js/rig-names.js", "./js/rig.js", "./js/screen.js", "./js/connection.js", "./js/bidi.js", "./js/sync.js", "./js/looper.js", "./js/looper-touch.js", "./js/transpose-probe.js", "./kemper-midi.js", "./demo.js", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

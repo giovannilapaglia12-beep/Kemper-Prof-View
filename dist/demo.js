@@ -86,6 +86,12 @@ export function installDemoKemper() {
           const index = b[12];
           return emit([...H, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, index, ...text(names[index] ?? ""), 0x00, 0xf7]);
         }
+        // v1.61: lettura multipla della pagina 5 (Fixed FX): valori On/Off noti, gli altri 0.
+        if (fn === 0x42 && p === 5) {
+          const values = Array.from({ length: 64 }, (_, index) => st.fixed[index] ?? 0);
+          return emit([...H, 0x02, 0x00, 5, 0, ...values.flatMap((v) => [(v >> 7) & 0x7f, v & 0x7f]), 0xf7]);
+        }
+        if (fn === 0x7c && p === 5) return emit([...H, 0x3c, 0x00, 5, q, b[10], b[11], ...text(String((b[10] << 7) | b[11])), 0x00, 0xf7]);
         if (fn === 0x7e && p === 0x40) return window.__demoNoBidi ? undefined : startBidi(b[10], b[11]);
         if (fn === 0x43 && p === 0 && q === 1) return emit([...H, 0x03, 0x00, 0, 1, ...text(rigName()), 0x00, 0xf7]);
         if (fn === 0x43 && p === 0 && q in stackStrings()) return emit([...H, 0x03, 0x00, 0, q, ...text(stackStrings()[q]), 0x00, 0xf7]);

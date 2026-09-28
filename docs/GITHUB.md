@@ -27,9 +27,11 @@ Creare lo stesso repository vuoto, scegliere **Add file → Upload files**, quin
 ## Continuazione dello sviluppo
 
 ```bash
-node --test tests/midi.test.mjs
+node --test
 python3 -m http.server 8000 --directory dist
 ```
+
+Dalla v1.60 il codice è diviso in più file nella cartella `dist/js/`. Caricando dal browser (**Add file → Upload files**) trascina anche la cartella `js` dentro `dist/`, così i percorsi restano `dist/js/…`. Se manca anche un solo file, l'app non parte. Ogni nuovo file va aggiunto all'elenco `ASSETS` di `dist/sw.js`; il test `tests/struttura.test.mjs` lo controlla.
 
 Aprire <http://localhost:8000/> e, prima di modificare o pubblicare comandi Looper, testare col Player Level III le azioni press/release e la cancellazione. Aggiornare `docs/TESTING.md` con i risultati reali. Cambiare la stringa `CACHE` in `dist/sw.js` a ogni successiva release per invalidare la cache PWA.
 

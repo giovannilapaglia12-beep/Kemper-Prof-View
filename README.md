@@ -1,6 +1,31 @@
-# Kemper Profiler View v1.52
+# Kemper Profiler View v1.61
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.61 — ALTRO più corta, prova del Transpose
+
+- **ALTRO senza controlli doppi**: tolti RIG ATTUALE con i BPM, Selezione diretta Player, Morph e Accordatore, Effetti del Rig, Effetti rapidi (Fixed FX) e Freeze. Sono già tutti in PALCO e RIG. La pagina passa da circa 5.200 a 2.900 pixel.
+- **Cosa resta in ALTRO, nell'ordine**:
+  1. modalità bidirezionale;
+  2. Collega il Player, con una riga "RIG IN USO: nome · Bank/Program · Canale";
+  3. Prove sul Player;
+  4. Tema;
+  5. messaggi e diagnostica (Salva, Copia, Pulisci log);
+  6. guida, riscritta.
+- **Nuova prova "Leggi Transpose" (sola lettura)**. Serve a scoprire l'indirizzo MIDI dei semitoni del Fixed FX Transpose, che Kemper non ha pubblicato: è il primo passo per scegliere da −2 a +2 dall'app. Ogni tocco legge tutta la pagina 5 dei Fixed FX e il Rig Transpose (pagina 4, parametro 4). Dalla seconda lettura l'app mostra quali valori sono cambiati, con il testo del Player (per esempio «+2»). Le letture sono nella diagnostica (`transposeProbe`). Come farla: `docs/TESTING.md`.
+- **Tolta "Leggi parametri Looper"**: la prova si è conclusa il 26/09 (lo stato del Looper non è leggibile).
+- **Corretto**: nel registro dei messaggi la scritta "Cambia Rig o premi un footswitch…" restava sempre visibile, anche con i messaggi presenti (anche nella v1.52).
+- **Accessibilità**: il riquadro REV in PALCO non dice più "pressione lunga per cambiare Freeze" (la pressione lunga c'era solo nella griglia di ALTRO).
+- **PALCO, RIG e LOOPER non cambiano.** Nella prova registrata le tre schede, i messaggi MIDI e la memoria del telefono sono identici alla versione precedente in tutti i passi, a parte la frase REV qui sopra.
+- Test: 37 (36 più uno nuovo: ogni `ui.<nome>` usato nel codice esiste in `js/dom.js`).
+
+## Novità v1.60 — codice riordinato, nessuna modifica visibile
+
+- **`app.js` (3.961 righe) è stato diviso in 19 file per argomento** nella nuova cartella `dist/js/` (elenco in "Struttura completa"). `app.js` ora contiene solo l'accensione: collega i pulsanti e avvia l'app (circa 190 righe).
+- **Il comportamento non cambia.** Il codice è stato spostato, non riscritto: nessuna funzione modificata, nessun nome cambiato. Lo dimostra una **prova registrata** (`tools/prova-registrata/`): in Chrome automatico, con il Player demo e un orologio controllato, 88 passi in 4 situazioni (con e senza bidirezionale, Player che non risponde al beacon, telefono in orizzontale). Tocchi su tutte le funzioni, compresi Rig nella Bank 30 con Bank Select, Looper completo e diagnostica. Il risultato è identico alla v1.52 byte per byte: circa 1.700 messaggi MIDI, pagina e memoria del telefono dopo ogni passo.
+- **Nomi e impostazioni restano**: le chiavi di memoria `kemper-stage-view-…` sono le stesse, ora raccolte in `js/config.js`.
+- **Test**: da 22 a 33. Tre controllano la struttura (ogni file è nella cache offline, ogni import esiste, ogni pulsante cercato è nella pagina); otto sono nuovi e riguardano modalità bidirezionale, conferma del cambio Rig e cent del Tuner. I test che prima ritagliavano `app.js` come testo ora leggono i moduli.
+- Sul Player basta una verifica breve (circa 15 minuti, checklist in `docs/TESTING.md`), da fare dopo la prova lunga sulla v1.52.
 
 ## Novità v1.52 (versione per la prova lunga)
 
@@ -172,22 +197,46 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 
 | File | Ruolo |
 | --- | --- |
-| `dist/index.html` | Tre viste e controlli |
-| `dist/styles.css` | Layout responsive |
-| `dist/app.js` | UI, gestione porte, azioni MIDI, modalità bidirezionale, polling, diagnostica |
+| `dist/index.html` | Schede PALCO, RIG, LOOPER, ALTRO e controlli |
+| `dist/styles.css` | Grafica (temi SCURO e SOLE) |
+| `dist/app.js` | Accensione: collega i pulsanti alle funzioni dei moduli e avvia l'app |
+| `dist/kemper-midi.js` | Protocollo: parser MIDI/SysEx, mapping effetti, costruttori di messaggi (anche beacon bidirezionale) |
 | `dist/demo.js` | Kemper simulato per la modalità demo |
-| `dist/kemper-midi.js` | Parser MIDI/SysEx, mapping effetti, costruttori di messaggi (anche beacon bidirezionale) |
+| `dist/js/config.js` | Nome, versione, tempi e chiavi di memoria del telefono |
+| `dist/js/dom.js` | Riferimenti agli elementi della pagina, messaggi brevi |
+| `dist/js/text.js` | Funzioni di solo calcolo: sillabazione, colori delle categorie, note, mediana |
+| `dist/js/state.js` | Stato condiviso (ciò che l'app sa del Player e dei comandi in corso) |
+| `dist/js/views.js` | Schede e tema |
+| `dist/js/screen.js` | Messaggi del Player → stato → schermata; stato del collegamento |
+| `dist/js/connection.js` | Porte MIDI, accesso Web MIDI, invio delle richieste, schermo sempre acceso |
+| `dist/js/bidi.js` | Modalità bidirezionale |
+| `dist/js/sync.js` | Letture dal Player: completa, auto sync, dopo un cambio, conferme |
+| `dist/js/rig.js` | Scelta di Bank e Rig, 125 Bank, griglia, colori, conferma del cambio |
+| `dist/js/rig-names.js` | Nomi di Bank e Rig ricordati; AMP/CAB del Rig in uso |
+| `dist/js/effects.js` | Gli 8 effetti del Rig |
+| `dist/js/fixed-fx.js` | Fixed FX e Freeze del riverbero |
+| `dist/js/tempo.js` | BPM, TAP, BPM INTERO |
+| `dist/js/morph.js` | Morph |
+| `dist/js/tuner.js` | Accordatore |
+| `dist/js/looper.js` | Looper: comandi, stato stimato, aggancio al tempo, cerchio, posizione |
+| `dist/js/looper-touch.js` | Pulsanti del Looper: pressione/rilascio, tocco vero, CANCELLA LOOP |
+| `dist/js/diagnostics.js` | Registro dei messaggi e diagnostica |
+| `dist/js/transpose-probe.js` | Prova "Leggi Transpose" (v1.61, sola lettura) |
 | `dist/manifest.webmanifest` | PWA |
-| `dist/sw.js` | Service worker e cache offline |
-| `dist/icon.svg` | Icona SVG |
+| `dist/sw.js` | Service worker e cache offline (elenco di **tutti** i file: un test lo controlla) |
+| `dist/icon*.svg`, `dist/icon*.png` | Icone |
+| `tests/midi.test.mjs` | Prove di protocollo, Looper, Morph, tempo, colori, 125 Bank |
+| `tests/moduli.test.mjs` | Prove di bidirezionale, conferma cambio Rig, Tuner (v1.60) |
+| `tests/struttura.test.mjs` | Cache offline, import, id della pagina (v1.60) |
+| `tests/moduli.mjs` | Aiuti per i test (lettura dei moduli) |
+| `tools/prova-registrata/` | Prova registrata prima/dopo (richiede Playwright; vedi il suo README) |
 | `configurazione-sites/hosting.json` | Copia visibile della configurazione Site originale (directory `dist`) |
 | `gitignore.txt` | Regole Git visibili; per usarle come esclusioni Git, rinominare in `.gitignore` |
-| `tests/midi.test.mjs` | Prove locali per parser, Morph, Looper, tempo e Program Change |
 | `docs/MIDI.md` | Tabella dei comandi e codici esadecimali |
 | `docs/TESTING.md` | Prove hardware, limiti e problemi aperti |
 | `docs/GITHUB.md` | Guida all'importazione su GitHub, cambio nome del repository e ripristino dei nomi tecnici |
 
-Non ci sono dipendenze npm, backend, chiavi né file generati da una build. Nessun file sorgente è abbreviato.
+Nessun backend, chiave o build: i file in `dist/` sono pubblicati così come sono. I moduli in `dist/js/` sono moduli JavaScript standard caricati direttamente dal browser.
 
 ## Avvio locale
 
@@ -195,7 +244,7 @@ Non ci sono dipendenze npm, backend, chiavi né file generati da una build. Ness
 python3 -m http.server 8000 --directory dist
 ```
 
-Aprire <http://localhost:8000/> in un browser Web MIDI compatibile, con il Kemper connesso e permesso SysEx autorizzato. Usare `localhost` o HTTPS; non `file://`. Per eseguire i test: `node --test tests/midi.test.mjs` (Node.js moderno).
+Aprire <http://localhost:8000/> in un browser Web MIDI compatibile, con il Kemper connesso e permesso SysEx autorizzato. Usare `localhost` o HTTPS; non `file://`. Per eseguire i test: `node --test` dalla cartella principale (Node.js 20 o successivo).
 
 **Controlli Looper:** i pulsanti sono momentanei, quindi inviano PRESS quando vengono premuti e RELEASE al rilascio, anche al cambio vista/perdita del focus. CANCELLA LOOP richiede un secondo di pressione; l'accessibilità via click richiede una conferma. Queste scelte d'interazione vanno provate con il Player prima dell'uso sul palco.
 
@@ -208,5 +257,6 @@ Non è stata scelta una licenza open source. Prima di pubblicare il repository a
 
 1. **v1.4x** – grafica completata (cerchio Looper, icona, tema SOLE: fatto nella v1.41), nomi Bank completi (v1.41), pulizia tecnica (v1.41).
 2. **Prova lunga** sul Player: una prova o un servizio intero (vedi `docs/TESTING.md`, "Prova lunga").
-3. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, codice diviso in moduli con più test, guida d'uso di una pagina.
-4. Dopo la 2.0: pedale MIDI Bluetooth.
+3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 `styles.css` riordinato per schermata. Poi Transpose −2…+2 in PALCO, dopo la prova di lettura sul Player.
+4. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, guida d'uso di una pagina.
+5. Dopo la 2.0: pedale MIDI Bluetooth.

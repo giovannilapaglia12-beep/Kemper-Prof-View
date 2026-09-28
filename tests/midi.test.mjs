@@ -2,17 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { importPure, snippet, source } from './moduli.mjs';
 
-const midiSource = fs.readFileSync(new URL('../dist/kemper-midi.js', import.meta.url), 'utf8');
-const midi = await import(`data:text/javascript,${encodeURIComponent(midiSource)}`);
-const appSource = fs.readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
-
-function functionSnippet(start, end) {
-  const from = appSource.indexOf(start);
-  const to = appSource.indexOf(end, from + start.length);
-  assert.ok(from >= 0 && to > from, `Function boundaries ${start} / ${end} found`);
-  return appSource.slice(from, to);
-}
+const midi = await importPure('kemper-midi.js');
+const text = await importPure('js/text.js');
 
 function playerReply(page, parameter, value) {
   return Uint8Array.from([0xf0, 0, 0x20, 0x33, 0, 0, 1, 0, page, parameter,
@@ -55,15 +48,16 @@ function looperContext(sent, channel = 2) {
     looperStateTime: node(), looperStateFlags: node(), stageLooper: node(),
     looperHalf: node(), looperHalfLabel: node(), looperHalfNote: node(), quantizeButtons: [], quantizeNote: node(),
     looperReverse: node(), looperReverseLabel: node(), looperReverseNote: node() };
-  const source = functionSnippet('const LOOPER_SWITCHES = {', 'function releaseAllLooperSwitches()');
+  const code = snippet('js/looper.js', 'const LOOPER_SWITCHES = {', 'function releaseAllLooperSwitches()');
   const clock = { now: 1000 };
   const timers = [];
   const context = { session, ui, profilerOutputs: () => [output], describePort: () => 'Profiler · Kemper',
     bytesToHex: midi.bytesToHex, Date, Set, TEMPO_UNITS_PER_BPM: 64, navigator: {},
+    cancelLooperErase() {}, setTextIfChanged: (node, value) => { if (node.textContent !== value) node.textContent = value; },
     performance: { now: () => clock.now }, document: { visibilityState: "visible" },
     window: { setInterval: () => 1, clearInterval() {}, clearTimeout() {},
       setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; } } };
-  vm.runInNewContext(`${source}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;
+  vm.runInNewContext(`${code}\nthis.sendLooperSwitch = sendLooperSwitch; this.looper = looper;
 this.handleQuantizedRecord = handleQuantizedRecord; this.looperSendKey = looperSendKey; this.setQuantizeMode = setQuantizeMode;`, context);
   context.clock = clock;
   context.timers = timers;
@@ -152,21 +146,19 @@ test('Morph slider sends the requested CC11 value and waits for a reply', () => 
   const output = { send: bytes => sent.push([...bytes]) };
   const session = { lastState: { channel: 1 }, transmitted: [], morphPendingLevel: null,
     morphConfirmedRaw: 0, liveMorphDraft: true };
-  const ui = { morphMode: { textContent: '' }, liveMorphMode: { textContent: '' },
-    morphSource: { textContent: '' }, morphProbe: { textContent: '', disabled: false },
-    copy: { disabled: true } };
+  const ui = { liveMorphMode: { textContent: '' }, copy: { disabled: true } };
   const context = { session, ui, profilerOutputs: () => [output], stopMorphConfirmation() {},
     describePort: () => 'Profiler · Kemper', bytesToHex: midi.bytesToHex,
     refreshLiveMorphControls() {}, buildMorphLevelRequest: midi.buildMorphLevelRequest,
     sendProfilerRequests() {}, toast() {}, Date, performance: { now: () => 0 },
     confirmationPollAllowed: () => true,
     window: { setTimeout: () => 1, setInterval: () => 2 } };
-  vm.runInNewContext(`${functionSnippet('function sendMorphCommand(value) {', 'function sendTunerCommand(open) {')}\nthis.sendMorphCommand = sendMorphCommand;`, context);
+  vm.runInNewContext(`${snippet('js/morph.js', 'function sendMorphCommand(value) {', 'function toggleMorphFromApp()')}\nthis.sendMorphCommand = sendMorphCommand;`, context);
   context.sendMorphCommand(64);
   assert.deepEqual(sent, [[0xb0, 11, 64]]);
   assert.equal(session.morphPendingLevel, 64);
   assert.equal(session.liveMorphDraft, false);
-  assert.equal(ui.morphMode.textContent, 'ATTENDO KEMPER');
+  assert.equal(ui.liveMorphMode.textContent, 'ATTENDO KEMPER');
 });
 
 test('Tempo conversion retains exact raw units and rounds 67.03125 to 67 BPM', () => {
@@ -185,14 +177,14 @@ test('Only the Kemper input can update live MIDI state', () => {
     isProfilerPort: input => input === profiler,
     describePort: input => input.name,
     kemper: { ingest: event => { seen.push([...event.data]); return { type: 'Control Change', controller: 10 }; } },
-    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {},
+    handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {}, captureTransposeProbe() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {}, handleLooperLocation() {},
     handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},
     shouldLog: () => false, addLog() {}, pulseTempo() {}, ui: { liveBpmBox: { dataset: {} } }, scheduleProfilerSync() {},
     sendProfilerRequests() {}, buildRenderedValueRequest() {},
   };
-  vm.runInNewContext(`${functionSnippet('function attachInputs() {', 'async function requestMidiAccess() {')}\nthis.attachInputs = attachInputs;`, context);
+  vm.runInNewContext(`${snippet('js/connection.js', 'function attachInputs() {', 'async function keepScreenOn() {')}\nthis.attachInputs = attachInputs;`, context);
   context.attachInputs();
   other.onmidimessage({ data: Uint8Array.from([0xc0, 42]) });
   assert.equal(seen.length, 0);
@@ -231,11 +223,7 @@ test('Chiavi di richiesta e risposta coincidono (per riconoscere gli invii spont
 });
 
 test('Sillabazione dei nomi effetto: mai spezzati a caso (v1.38)', () => {
-  const start = appSource.indexOf('const isVowel');
-  const end = appSource.indexOf('function effectTone');
-  const context = {};
-  vm.runInNewContext(`${appSource.slice(start, end)}\nthis.softHyphenate = softHyphenate;`, context);
-  const show = (name) => context.softHyphenate(name).replace(/­/g, '-');
+  const show = (name) => text.softHyphenate(name).replace(/­/g, '-');
   assert.equal(show('Compressor'), 'Com-pres-sor');
   assert.equal(show('Transpose'), 'Trans-pose');
   assert.equal(show('Double Tracker'), 'Double Tracker');
@@ -244,11 +232,7 @@ test('Sillabazione dei nomi effetto: mai spezzati a caso (v1.38)', () => {
 });
 
 test('Colori delle categorie come sul Kemper (v1.39)', () => {
-  const start = appSource.indexOf('function effectTone(type) {');
-  const end = appSource.indexOf('const STATE_PAINT_INTERVAL');
-  const context = {};
-  vm.runInNewContext(`${appSource.slice(start, end)}\nthis.effectTone = effectTone;`, context);
-  const tone = context.effectTone;
+  const tone = text.effectTone;
   assert.equal(tone(1), 'wah');          // Wah Wah → arancio
   assert.equal(tone(33), 'drive');       // Green Scream → rosso
   assert.equal(tone(115), 'drive');      // Pure Booster → rosso
@@ -269,7 +253,7 @@ test('Morph: il colore segue la percentuale (rosso BASE → blu MORPH, v1.40)', 
   const css = fs.readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8');
   assert.match(css, /--morph-color: color-mix\(in srgb, #4f8dff calc\(var\(--morph, 0\) \* 1%\), #ff5f55\)/);
   assert.match(css, /\.live-fixed-fx-doubleTracker \{ --fx: #ffd84d;/);
-  assert.match(appSource, /ui\.liveMorph\.style\.setProperty\("--morph", String\(percent\)\)/);
+  assert.match(source('js/morph.js'), /ui\.liveMorph\.style\.setProperty\("--morph", String\(percent\)\)/);
 });
 
 test('Richiesta dei nomi della Bank in uso con stringhe estese 0x47 (v1.41)', () => {
@@ -281,14 +265,12 @@ test('Richiesta dei nomi della Bank in uso con stringhe estese 0x47 (v1.41)', ()
 });
 
 test('Cerchio del Looper: la posizione avanza, REVERSE la fa tornare indietro (v1.41)', () => {
-  const start = appSource.indexOf('function looperRate() {');
-  const end = appSource.indexOf('function setLooperState(next) {');
   const clock = { now: 0 };
   const looper = { state: 'playing', loopLength: 4, half: false, recordedHalf: false, reverse: false, phaseAt: 0, phaseTime: 0, phaseRate: 0, ringTimer: null };
   const node = () => ({ dataset: {}, style: { setProperty() {} } });
   const context = { looper, ui: { looperState: node(), stageLooper: node() }, performance: { now: () => clock.now }, document: { visibilityState: "visible" },
     window: { setInterval: () => 1, clearInterval() {} } };
-  vm.runInNewContext(`${appSource.slice(start, end)}\nthis.looperPhase = looperPhase; this.rebase = rebaseLooperPhase;`, context);
+  vm.runInNewContext(`${snippet('js/looper.js', 'function looperRate() {', 'function setLooperState(next) {')}\nthis.looperPhase = looperPhase; this.rebase = rebaseLooperPhase;`, context);
   context.rebase({ restart: true });
   clock.now = 1000;
   assert.equal(Math.round(context.looperPhase() * 100), 25);
@@ -374,7 +356,7 @@ test('Nessun id ripetuto nella pagina (v1.50: il pulsante Prova Morph aveva lo s
   const seen = new Set(); const dup = [];
   for (const id of ids) { if (seen.has(id)) dup.push(id); seen.add(id); }
   assert.deepEqual(dup, []);
-  const app = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../dist/js/dom.js', import.meta.url), 'utf8');
   const uiBlock = app.slice(app.indexOf('const ui = {'), app.indexOf('};', app.indexOf('const ui = {')));
   const keys = [...uiBlock.matchAll(/^\s{2}(\w+):/gm)].map(m => m[1]);
   const seenKeys = new Set(); const dupKeys = [];

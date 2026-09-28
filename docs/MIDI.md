@@ -210,3 +210,12 @@ Prova del 26/09/2026: con il loop FERMO, TRIGGER (NRPN 125/90) fa suonare il loo
 
 - I 110 valori di **tutti** gli 8 moduli sono **identici** a quelli letti in BASE, anche per gli effetti con i pallini in Rig Manager (B, X, MOD, DLY, REV). Le letture restituiscono i valori memorizzati del Rig, non quelli modificati dal Morph.
 - Conclusione: dal MIDI non si può sapere quali effetti sono legati al Morph (né leggendo i valori, né da 0x48, né dagli invii spontanei). Unica via possibile: indicarli a mano nell'app.
+
+## Transpose del Fixed FX: semitoni (v1.61, prova di sola lettura)
+
+- Noto: Fixed Transpose **On/Off = pagina 5, parametro 1** (Burkhard, forum Kemper). L'indirizzo dei **semitoni** del Fixed FX non è pubblicato (forum Kemper: "la documentazione sarà aggiornata").
+- Noto: **Rig Transpose = pagina 4, parametro 4**, valori 28–100 (Burkhard, forum Kemper; usato da un utente con Morningstar MC8). Probabile 64 = 0 semitoni: da verificare.
+- La prova "Leggi Transpose" (ALTRO) invia `F0 00 20 33 02 7F 42 00 05 00 F7` (tutta la pagina 5 → risposta 0x02) e `F0 00 20 33 02 7F 41 00 04 04 F7` (Rig Transpose). Se non arriva lo 0x02 entro 1,2 s legge i parametri 5/0…5/63 uno per uno. Per ogni valore cambiato fra due letture chiede il testo al Player con 0x7C (`F0 00 20 33 02 7F 7C 00 05 <param> <MSB> <LSB> F7`).
+- Risposta 0x02: `F0 00 20 33 00 00 02 00 <pagina> <primo parametro> [MSB LSB]… F7`.
+- Esito: da compilare dopo la prova sul Player.
+

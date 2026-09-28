@@ -2122,3 +2122,21 @@ body[data-theme="sun"] .bank-picker-grid button[data-current="true"] { backgroun
 body[data-theme="sun"] .bank-picker-grid button[data-current="true"] strong,
 body[data-theme="sun"] .bank-picker-grid button[data-current="true"] small { color: #ffffff; }
 .stage-rig-position[data-bank-color] { color: var(--bank-color); }
+
+/* ───────── v1.61 · ALTRO senza controlli doppi ───────── */
+/* Prove sul Player (stesso aspetto del pannello Tema), solo in ALTRO */
+.tools-panel { padding: clamp(18px, 4vw, 26px); border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(15, 27, 20, 0.97), rgba(6, 13, 9, 0.97)); box-shadow: var(--shadow); }
+body:not([data-view="full"]) .tools-panel { display: none; }
+.tools-panel h2 { margin: 2px 0 12px; font-size: clamp(1.1rem, 4.4vw, 1.4rem); }
+.tools-panel > p { margin: 10px 0 0; color: var(--muted); font-size: 0.85rem; }
+.tools-panel .action-row { margin: 12px 0 0; }
+.tools-panel .looper-probe-result { color: var(--cyan); font-weight: 700; }
+.tools-panel .tools-subhead { margin-top: 22px; }
+body[data-theme="sun"] .tools-panel { background: #ffffff; border-color: var(--line); box-shadow: var(--shadow); }
+/* Riga "Rig in uso" nel pannello di collegamento (al posto del grande riquadro RIG ATTUALE) */
+.rig-in-use { margin: 0 0 18px; color: var(--muted); font-size: 0.9rem; font-weight: 700; line-height: 1.45; }
+.rig-in-use > span:first-child { margin-right: 6px; color: var(--green); font-size: 0.72rem; letter-spacing: 0.12em; }
+.rig-in-use strong { color: var(--text); }
+/* Registro: la scritta "Cambia Rig o premi un footswitch" sparisce quando arrivano messaggi
+   (display: grid copriva l'attributo hidden: si vedeva sempre, anche nella v1.52). */
+.log-empty[hidden] { display: none; }

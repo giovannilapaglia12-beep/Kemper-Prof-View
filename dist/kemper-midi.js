@@ -237,6 +237,24 @@ export class KemperMidiState {
         };
       }
 
+      if (functionCode === 0x02 && bytes.length >= 12) {
+        // v1.61: risposta alla lettura multipla 0x42 (tutti i valori di una pagina, 14 bit ciascuno).
+        // Formato: … 02 00 <pagina> <primo parametro> [MSB LSB]… F7 (27/09/2026: pagina intera = 110 valori).
+        const page = bytes[8];
+        const first = bytes[9];
+        const data = bytes.slice(10, bytes.length - 1);
+        const values = [];
+        for (let i = 0; i + 1 < data.length; i += 2) values.push((data[i] << 7) | data[i + 1]);
+        return {
+          type: "Kemper Multi Parameter",
+          detail: `Page ${page} · dal Param ${first} · ${values.length} valori`,
+          page,
+          first,
+          values,
+          hex: bytesToHex(bytes),
+        };
+      }
+
       return { type: "Kemper SysEx", detail: bytesToHex(bytes) };
     }
 
@@ -293,6 +311,14 @@ export function buildTempoChangeRequest(value, label = "Set Tempo") {
   return {
     label,
     bytes: [...KEMPER_HEADER, 0x01, 0x00, 0x04, 0x00, valueMsb, valueLsb, 0xf7],
+  };
+}
+
+// v1.61: lettura multipla di una pagina intera (0x42): il Player risponde con un solo 0x02.
+export function buildMultiParameterRequest(page, label = `Read page ${page} (multi)`) {
+  return {
+    label,
+    bytes: [...KEMPER_HEADER, 0x42, 0x00, page & 0x7f, 0x00, 0xf7],
   };
 }
 

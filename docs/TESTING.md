@@ -1,4 +1,39 @@
-# Verifiche hardware, test locali e problemi aperti — v1.52
+# Verifiche hardware, test locali e problemi aperti — v1.61
+
+## Da provare con la v1.61 (comprende la v1.60; circa 20 minuti, dopo la prova lunga sulla v1.52)
+
+Prima la checklist v1.60 qui sotto: controlla che il codice diviso in file funzioni sul Player. Nella voce **Aggiornamento** cerca **v1.61** invece di v1.60. Poi:
+
+- [ ] **ALTRO**: in ordine bidirezionale, Collega il Player (con la riga RIG IN USO), Prove sul Player, Tema, Messaggi ricevuti, guida. Nessun pannello doppio. Nel registro la scritta "Cambia Rig o premi un footswitch…" sparisce appena arrivano messaggi.
+- [ ] **Leggi Transpose**, sola lettura, circa 2 minuti:
+  1. Sul Player porta il Transpose (Fixed FX) a 0 → ALTRO → **Leggi Transpose**. Aspetta la riga "Lettura 1 · … valori salvati".
+  2. Sul Player imposta il Transpose a **+2** → tocca di nuovo. Annota cosa scrive l'app ("cambiati rispetto alla lettura 1: …").
+  3. Imposta **−2** → tocca di nuovo.
+  4. Lascia −2 e **cambia Rig**, poi torna al Rig di prima → tocca di nuovo. Così si vede se il Transpose resta o torna a 0.
+  5. **Salva diagnostica** e mandala a Claude, con una foto o il testo delle righe mostrate.
+  - Se il Transpose del Fixed FX è spento, prova anche con il Transpose **acceso** (e annota se il suono cambia).
+
+
+## Da provare con la v1.60 (circa 15 minuti, dopo la prova lunga sulla v1.52)
+
+La v1.60 non cambia nulla di visibile: il codice è solo diviso in più file. La prova registrata (`tools/prova-registrata/`) dà gli stessi messaggi MIDI della v1.52. Sul Player si controllano i punti in cui un riordino potrebbe sbagliare: file mancanti, avvio, collegamento.
+
+- [ ] **Aggiornamento**: apri l'app, chiudila e riaprila finché in ALTRO in alto compare **v1.60** (di solito alla 2ª–3ª riapertura: le prime mostrano ancora la v1.52 mentre il telefono scarica la nuova).
+- [ ] **Senza rete**: modalità aereo, chiudi e riapri l'app. Si apre normalmente, senza pagina bianca. Poi togli la modalità aereo.
+- [ ] **Nomi e impostazioni ricordati**: nomi delle Bank e dei Rig, tema, BANK MOSTRATE, ½ SPEED/REVERSE e aggancio al tempo sono come prima.
+- [ ] **Collegamento**: cavo → COLLEGATO ⇄ (bidirezionale) in pochi secondi.
+- [ ] **RIG**: cambia Rig 2–3 volte, anche cambiando Bank. Si carica; torna a PALCO; nome, AMP/CAB e colore della Bank sono giusti.
+- [ ] **PALCO**: accendi e spegni 2 effetti, un Fixed FX, Freeze; BPM +1, TAP; Morph on/off; apri e chiudi il Tuner.
+- [ ] **LOOPER**: REC → REC → STOP → TRIGGER (riparte); un tocco su REVERSE (parte) e una scrollata sopra REVERSE (non parte); CANCELLA LOOP.
+- [ ] **Cavo staccato e riattaccato**: l'app si ricollega come prima.
+- [ ] **ALTRO → Salva diagnostica**: il file si salva e contiene `"app": "Kemper Profiler View v1.60"`.
+
+Se qualcosa non va: salva la diagnostica e annota il passo. Per tornare alla v1.52 basta ricaricare su GitHub i file della v1.52.
+
+## Test automatici (v1.60)
+
+- `node --test` dalla cartella principale: 33 test (protocollo, Looper, Morph, tempo, colori, 125 Bank, bidirezionale, conferma cambio Rig, Tuner, struttura dei file).
+- Prova registrata prima/dopo: `tools/prova-registrata/README.md`.
 
 ## Esito v1.48–v1.50 sul Player (27/09/2026)
 
