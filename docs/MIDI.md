@@ -217,5 +217,35 @@ Prova del 26/09/2026: con il loop FERMO, TRIGGER (NRPN 125/90) fa suonare il loo
 - Noto: **Rig Transpose = pagina 4, parametro 4**, valori 28–100 (Burkhard, forum Kemper; usato da un utente con Morningstar MC8). Probabile 64 = 0 semitoni: da verificare.
 - La prova "Leggi Transpose" (ALTRO) invia `F0 00 20 33 02 7F 42 00 05 00 F7` (tutta la pagina 5 → risposta 0x02) e `F0 00 20 33 02 7F 41 00 04 04 F7` (Rig Transpose). Se non arriva lo 0x02 entro 1,2 s legge i parametri 5/0…5/63 uno per uno. Per ogni valore cambiato fra due letture chiede il testo al Player con 0x7C (`F0 00 20 33 02 7F 7C 00 05 <param> <MSB> <LSB> F7`).
 - Risposta 0x02: `F0 00 20 33 00 00 02 00 <pagina> <primo parametro> [MSB LSB]… F7`.
-- Esito: da compilare dopo la prova sul Player.
+- Esito (prova di Giovanni del 29/09/2026, Bank 9 Rig 3 "RT FIRESPIT 3", diagnostica 08:29):
+
+| Lettura | Transpose sul Player | 5/0 | 5/1 (On/Off) | 5/2 | **4/4** |
+|---|---|---|---|---|---|
+| 1 | 0 | 0 | 0 | 64 | **64** |
+| 2 | +2 | 1 («On») | 1 («On») | 64 | **66** |
+| 3 | −2 | 1 | 1 | 64 | **62** |
+| 4 | cambio Rig (Bank 9 Rig 2) | 0 | 0 | 64 | **64** |
+
+- **I semitoni del Fixed FX Transpose sono il Rig Transpose 4/4**: 64 = 0, un'unità = un semitono. Sulla pagina 5 cambiano solo 5/0 e 5/1 (0 → 1, testo del Player «Off»/«On»): l'On/Off si accende quando il valore non è 0.
+- La lettura multipla 0x42 della pagina 5 restituisce **solo 3 valori** (5/0…5/2), non 110 come le pagine dei moduli.
+- Nella prova non si è visto il Player inviare da solo 4/4 (in modalità bidirezionale invia 5/1): l'app lo legge. Durante la prova il collegamento è caduto e tornato da solo 3 volte ("Player non collegato" alle 08:25, 08:26 e 08:28).
+- Cambiando Rig il Player torna ai valori salvati nel Rig: dopo il cambio Transpose spento e 4/4 = 64; tornando al Rig 3 più tardi il Transpose era spento (Rig non salvato).
+- Dalla v1.64 l'app **scrive** i semitoni (vedi sotto). Da verificare sul Player: che il comando cambi davvero l'intonazione e che il display del Player mostri lo stesso valore.
+
+## Transpose −2…+2 da PALCO (v1.64)
+
+- Lettura: `F0 00 20 33 02 7F 41 00 04 04 F7` (semitoni) e `F0 00 20 33 02 7F 41 00 05 01 F7` (On/Off). Letti con i Fixed FX (lettura completa, valori mancanti dopo un cambio, ogni 4,5 s) e 1 s dopo ogni cambio Rig.
+- Comando, prima i semitoni e poi l'On/Off **solo se deve cambiare** (un Fixed FX riacceso interrompe il REV Freeze, bug Kemper del 28/09/2026):
+
+| Scelta | Semitoni 4/4 | On/Off 5/1 |
+|---|---|---|
+| +2 | `F0 00 20 33 02 7F 01 00 04 04 00 42 F7` | `F0 00 20 33 02 7F 01 00 05 01 00 01 F7` (se spento) |
+| +1 | `F0 00 20 33 02 7F 01 00 04 04 00 41 F7` | come sopra |
+| 0 | `F0 00 20 33 02 7F 01 00 04 04 00 40 F7` | `F0 00 20 33 02 7F 01 00 05 01 00 00 F7` (se acceso) |
+| −1 | `F0 00 20 33 02 7F 01 00 04 04 00 3F F7` | `F0 00 20 33 02 7F 01 00 05 01 00 01 F7` (se spento) |
+| −2 | `F0 00 20 33 02 7F 01 00 04 04 00 3E F7` | come sopra |
+
+- Conferma: l'app aspetta di rileggere 4/4 = 64 + semitoni e 5/1 giusto (letture ogni 400 ms, con il bidirezionale dopo 700 ms); senza conferma entro 2,8 s: "Transpose … non confermato dal Kemper".
+- Cambio Rig (nome diverso, oppure Program Change di un altro Rig; il Program Change dello stesso Rig, rimandato dal Player all'apertura del Tuner e dopo il beacon, non conta): se Giovanni ha scelto un valore con un tocco e il nuovo Rig, letto entro 8 s, ha un valore diverso, l'app rimanda il comando e scrive "Transpose +2 rimesso dopo il cambio Rig". Se il Transpose viene cambiato sul Player, da quel momento vale il valore del Player (spento = 0).
+- Diagnostica: `transposeControl`.
 

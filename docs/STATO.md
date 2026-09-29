@@ -2,7 +2,7 @@
 
 > Copia nel repository della scheda di stato del progetto, così ogni sessione di Claude (anche le sessioni cloud collegate a GitHub) parte informata. Da aggiornare a ogni versione.
 
-App web (PWA) per Kemper Profiler Player MK2 Level III, su telefono Android (OPPO Reno 12 Pro, OPPO A9 2020) via USB/OTG e Web MIDI in Chrome. Pubblicata con GitHub Pages da repository pubblico (cartella `dist`, workflow "Static HTML" con `path: 'dist'`). Versione attuale: **v1.63** (comprende v1.60 codice in moduli, v1.61 ALTRO senza doppioni + prova Leggi Transpose, v1.62 correzioni dopo la prova lunga, v1.63 grafica divisa per schermata). **Prova lunga sulla v1.52 fatta il 28/09/2026: stabile.** Prossimo passo di Giovanni: fare le checklist in `docs/TESTING.md`, con la prova Transpose.
+App web (PWA) per Kemper Profiler Player MK2 Level III, su telefono Android (OPPO Reno 12 Pro, OPPO A9 2020) via USB/OTG e Web MIDI in Chrome. Pubblicata con GitHub Pages da repository pubblico (cartella `dist`, workflow "Static HTML" con `path: 'dist'`). Versione attuale: **v1.64** (comprende v1.60 codice in moduli, v1.61 ALTRO senza doppioni + prova Leggi Transpose, v1.62 correzioni dopo la prova lunga, v1.63 grafica divisa per schermata, v1.64 Transpose −2…+2 in PALCO). **Prova lunga sulla v1.52 fatta il 28/09/2026: stabile.** **Prova Leggi Transpose fatta il 29/09/2026** (con l'app ancora v1.62). Prossimo passo di Giovanni: checklist v1.64 (Transpose, a volume basso) e v1.63 in `docs/TESTING.md`.
 
 Dalla v1.37 il nome è **Kemper Profiler View** (icona installata: "Profiler View"). Le chiavi di memoria del telefono restano `kemper-stage-view-…`, quindi nomi e impostazioni non si perdono. Rinominare il repository non è necessario; se lo si fa, cambia l'indirizzo Pages e l'app va reinstallata.
 
@@ -46,13 +46,16 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 - Giovanni vuole scegliere dall'app il transpose da −2 a +2 **del Fixed FX Transpose** (non il Rig Transpose).
 - Deciso: il valore **resta uguale cambiando Rig** finché non lo cambia lui (vale per il brano); scritto sempre in PALCO (es. TRANSPOSE +2), 0 raggiungibile al volo; se il Player lo riporta al valore del Rig a ogni cambio, l'app lo reimposta. In futuro salvato per brano nella scaletta v2.0.
 - Indirizzo dei semitoni del Fixed FX non pubblicato da Kemper (noto solo On/Off 5/1). Rig Transpose = 4/4, valori 28–100 (Burkhard, forum Kemper; probabile 64 = 0, da verificare).
-- Prova di sola lettura "Leggi Transpose" (ALTRO, dalla v1.61): lettura multipla pagina 5 + 4/4, differenze tra letture con testo del Player. Procedura: Transpose 0 → leggi; +2 → leggi; −2 → leggi; cambia Rig e torna → leggi; salva diagnostica e manda a Claude.
-- Dopo l'esito: comando −2…+2 nel riquadro Transpose di PALCO.
+- Prova di sola lettura "Leggi Transpose" (ALTRO, dalla v1.61): lettura multipla pagina 5 + 4/4, differenze tra letture con testo del Player.
+- **Esito (29/09/2026, Bank 9 Rig 3 "RT FIRESPIT 3", diagnostica 08:29)**: Transpose 0 → 4/4 = 64, 5/1 = 0; +2 → 66 e 5/1 = 1; −2 → 62 e 5/1 = 1; cambio Rig (Bank 9 Rig 2) → 64 e spento; tornando più tardi al Rig 3, spento (Rig non salvato). **I semitoni del Fixed FX sono il Rig Transpose 4/4, 64 = 0**. Pagina 5: cambiano solo 5/0 e 5/1 («Off»/«On»); la lettura multipla 0x42 della pagina 5 dà solo 3 valori. 4/4 non visto arrivare da solo: l'app lo legge. Dettagli in `docs/MIDI.md`.
+- **v1.64 – FATTO (da provare sul Player)**: riquadro Transpose di PALCO con il valore (es. "Transpose +2"); tocco → fila −2 −1 0 +1 +2 ✕; comando = 4/4 (64 + semitoni) poi 5/1 solo se deve cambiare (acceso se ≠ 0); conferma rileggendo 4/4 e 5/1 (2,8 s). Valore scelto con un tocco mantenuto: dopo un cambio Rig (nome diverso o Program Change di un altro Rig) l'app legge il nuovo Rig dopo 1 s e, se diverso e letto entro 8 s dal cambio, rimanda il comando ("Transpose +2 rimesso dopo il cambio Rig"). Cambiato sul Player → vale quello del Player (spento = 0). All'apertura nessuna scelta: nessun comando senza tocco. Il riquadro non fa più ON/OFF (0 = spento). Diagnostica `transposeControl`. Test: 48. Prova registrata senza errori (855 + 464 + 288 + 97 messaggi MIDI).
+- Da verificare sul Player: che il comando cambi davvero l'intonazione; cosa succede con REV Freeze attivo; cambio Rig dal footswitch.
 
 ## Funzioni verificate sul Player
 - Schermata PALCO senza scorrimento: nome Rig, Bank/Rig (colorato col colore della Bank), BPM (−1/+1/BPM INTERO/TAP), Morph, 8 effetti, Fixed FX, Freeze REV, Tuner. Schermo sempre acceso (anche nella prova lunga di ~1 h).
 - Scheda RIG (grafica v1.38, approvata): Bank e nome Bank grandi, Rig in uso verde "IN USO"; nomi di Bank e slot ricevuti dal Player (SysEx 0x07) e ricordati. Nomi mancanti chiesti con 0x47.
-- **125 Bank** (v1.48, provato 27/09 con Bank 10 e 14): cambio Rig con CC 0 = 0, CC 32 Bank Select = indice/128, Program Change = indice%128 (indice = (Bank−1)·5 + Rig−1). Scelta rapida con griglia ("BANK ▾"), "BANK MOSTRATE 1–N". Bank Select > 0 (dalla Bank 26 Rig 4) non ancora provato sul Player.
+- **125 Bank** (v1.48, provato 27/09 con Bank 10 e 14): cambio Rig con CC 0 = 0, CC 32 Bank Select = indice/128, Program Change = indice%128 (indice = (Bank−1)·5 + Rig−1). Scelta rapida con griglia ("BANK ▾"), "BANK MOSTRATE 1–N". **Bank Select 1 provato il 29/09/2026: Bank 27 Rig 1 e Rig 3, confermati dal Player** (CC 32 = 1, nome "Crunch").
+- Il 29/09/2026 (diagnostica 08:55): 11 cambi Rig di fila (Bank 3, 4, 9, 14, 27) senza problemi; nessuna perdita del bidirezionale; 55.796 messaggi e 130 ridisegni. A volte il Player rimanda due volte lo stesso Program Change dopo un cambio.
 - **Colori delle Bank** (v1.48, approvati): 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete.
 - **AMP e CAB del Rig in uso** (v1.45–1.47): nome + NON PRESENTE / SPENTO / acceso. Stringhe 0x43 pagina 0 (0x10/0x15/0x18 ampli, 0x20/0x25/0x2A cabinet) e On/Off 10/2, 12/2.
 - Riquadri effetti con i colori delle categorie come sul Kemper (v1.40, approvati). Fixed FX: Pure Booster rosso, Vintage Chorus blu, Transpose bianco, Double Tracker giallo.
@@ -71,14 +74,16 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 - Dal MIDI non si può sapere quali effetti hanno il Morph (valori identici in BASE e MORPH; 0x48 non esiste).
 
 ## Ancora da provare
-- Bank oltre la 26 (Bank Select 1–4).
-- Più cambi Rig di fila (nella prova lunga solo 6).
-- Checklist v1.61 + v1.62 in `docs/TESTING.md`, con la prova Leggi Transpose.
+- Checklist v1.64 (Transpose −2…+2) e v1.63 (solo guardare) in `docs/TESTING.md`.
+- Bank Select 2–4 (Bank 52 e oltre), se servono.
+- Checklist v1.61 + v1.62 in `docs/TESTING.md`, se non ancora fatte.
+- Durante la prova Transpose (29/09) il collegamento è caduto e tornato da solo 3 volte ("Player non collegato" 08:25, 08:26, 08:28): chiedere a Giovanni se aveva staccato il cavo; se no, tenerlo d'occhio.
 
 ## Uscita audio verso il mixer
 - Player → Behringer X32. Main Output XLR: dal firmware 12.1 può essere stereo (non bilanciata) con cavo a Y XLR → due canali dell'X32; in stereo non usare un solo canale mono. Alternativa bilanciata: uscite Monitor TRS.
 
 ## Scoperte sul Player
+- **Transpose del Fixed FX** (29/09/2026): semitoni = 4/4 (64 = 0), On/Off 5/1 acceso quando ≠ 0; cambiando Rig torna al valore salvato nel Rig.
 - Lo stato del Looper non è leggibile (125/88…94 rispondono sempre 0).
 - ½ SPEED e REVERSE restano attivi anche dopo la cancellazione del loop; **spegnendo il Player tornano OFF** (28/09). Tre STOP non cancellano il loop.
 - TRIGGER: a loop fermo suona solo tenuto premuto; mentre suona fa ripartire dall'inizio.
@@ -95,7 +100,7 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 ## Strada verso la 2.0 (concordata il 26/09/2026)
 1. v1.4x: grafica, nomi Bank, AMP/CAB, 125 Bank e colori, Looper più sicuro — fatto (v1.41–1.52).
 2. **Prova lunga** sulla v1.52 — **fatta 28/09/2026, stabile**; correzioni nella v1.62.
-3. **Riordino del codice**: v1.60 (JS), v1.61 (ALTRO + prova Transpose), v1.62 correzioni — fatti; v1.63 CSS. Poi Transpose −2…+2 dopo l'esito della prova sul Player.
+3. **Riordino del codice**: v1.60 (JS), v1.61 (ALTRO + prova Transpose), v1.62 correzioni, v1.63 CSS — fatti. **v1.64 Transpose −2…+2 — fatto, da provare sul Player.**
 4. **v2.0 "pronta per il servizio"**: scaletta del servizio (brani con Bank/Rig, BPM, note, transpose; avanti/indietro con un tocco; BPM impostato da solo; forse anche la base del brano), affidabilità dimostrata, guida d'uso di una pagina.
 5. Dopo la 2.0: pedale MIDI Bluetooth.
 

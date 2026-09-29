@@ -7,6 +7,7 @@ import { session } from "./state.js";
 import { refreshTempoControls, stopTempoConfirmation, stopTempoTapPolling } from "./tempo.js";
 import { liveEffectNodes, stopAllEffectConfirmations } from "./effects.js";
 import { resetFixedFxState, resetFreezeState } from "./fixed-fx.js";
+import { transposeRigChanged } from "./transpose.js";
 import { scheduleRigStackRequest } from "./rig-names.js";
 import { refreshRigControls } from "./rig.js";
 import { profilerOutputs } from "./connection.js";
@@ -98,6 +99,7 @@ export const kemper = new KemperMidiState((state) => {
     stopAllEffectConfirmations();
     resetFreezeState();
     resetFixedFxState();
+    transposeRigChanged();
     if (session.rigSelectPending === null && !session.profilerProgramAwaitsName) {
       session.rigSelectedBank = null;
       session.rigSelectedSlot = null;

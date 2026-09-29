@@ -4,6 +4,7 @@ import {
   buildBeaconRequest,
   buildFixedFxStateRequests,
   buildProfilerPollRequests,
+  buildTransposeValueRequest,
   decodedKey,
   EFFECT_MODULES,
   FIXED_FX,
@@ -48,6 +49,7 @@ const KEY_NAMES = new Map([
   ["par:4/0", "BPM"], ["par:0/11", "Morph"], ["par:125/115", "Freeze REV"], ["par:127/53", "Posizione Looper"],
   ...EFFECT_MODULES.flatMap((module) => [[`par:${module.page}/3`, module.key], [`par:${module.page}/0`, `${module.key} tipo`]]),
   ...FIXED_FX.map((effect) => [`par:${effect.page}/${effect.parameter}`, effect.label]),
+  ["par:4/4", "Transpose semitoni"],
 ]);
 export const keyName = (key) => KEY_NAMES.get(key) ?? key.replace(/^(par|str):/, "");
 
@@ -252,6 +254,7 @@ function pollRequestKeys() {
   return [
     ...buildProfilerPollRequests().map((request) => requestKey(request.bytes)),
     ...buildFixedFxStateRequests().map((request) => requestKey(request.bytes)),
+    requestKey(buildTransposeValueRequest().bytes),
   ].filter(Boolean);
 }
 
