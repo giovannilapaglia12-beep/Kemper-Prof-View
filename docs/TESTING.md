@@ -1,6 +1,6 @@
 # Verifiche hardware, test locali e problemi aperti — v1.66
 
-## Da provare con la v1.66 (circa 3 minuti, volume basso)
+## v1.66 — provata da Giovanni il 29/09/2026: funziona
 
 - [ ] **Aggiornamento**: in alto in ALTRO compare **v1.66**.
 - [ ] **±** → **+2**: la corda suona un tono sopra.

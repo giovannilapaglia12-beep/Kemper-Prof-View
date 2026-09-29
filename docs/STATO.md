@@ -2,7 +2,7 @@
 
 > Copia nel repository della scheda di stato del progetto, così ogni sessione di Claude (anche le sessioni cloud collegate a GitHub) parte informata. Da aggiornare a ogni versione.
 
-App web (PWA) per Kemper Profiler Player MK2 Level III, su telefono Android (OPPO Reno 12 Pro, OPPO A9 2020) via USB/OTG e Web MIDI in Chrome. Pubblicata con GitHub Pages da repository pubblico (cartella `dist`, workflow "Static HTML" con `path: 'dist'`). Versione attuale: **v1.66** (comprende v1.60 codice in moduli, v1.61 ALTRO senza doppioni + prova Leggi Transpose, v1.62 correzioni dopo la prova lunga, v1.63 grafica divisa per schermata, v1.64 Transpose −2…+2 in PALCO, v1.65 Transpose ON/OFF col tocco e cambio Rig più rapido, v1.66 niente Transpose automatico al cambio Rig). **Prova lunga sulla v1.52 fatta il 28/09/2026: stabile.** **Prova Leggi Transpose fatta il 29/09/2026** (con l'app ancora v1.62). Prossimo passo di Giovanni: checklist v1.66 in `docs/TESTING.md`.
+App web (PWA) per Kemper Profiler Player MK2 Level III, su telefono Android (OPPO Reno 12 Pro, OPPO A9 2020) via USB/OTG e Web MIDI in Chrome. Pubblicata con GitHub Pages da repository pubblico (cartella `dist`, workflow "Static HTML" con `path: 'dist'`). Versione attuale: **v1.66** (comprende v1.60 codice in moduli, v1.61 ALTRO senza doppioni + prova Leggi Transpose, v1.62 correzioni dopo la prova lunga, v1.63 grafica divisa per schermata, v1.64 Transpose −2…+2 in PALCO, v1.65 Transpose ON/OFF col tocco e cambio Rig più rapido, v1.66 niente Transpose automatico al cambio Rig). **Prova lunga sulla v1.52 fatta il 28/09/2026: stabile.** **Prova Leggi Transpose fatta il 29/09/2026** (con l'app ancora v1.62). Transpose −2…+2 completato (v1.66 provata il 29/09/2026). Prossimo passo: verso la v2.0 (scaletta).
 
 Dalla v1.37 il nome è **Kemper Profiler View** (icona installata: "Profiler View"). Le chiavi di memoria del telefono restano `kemper-stage-view-…`, quindi nomi e impostazioni non si perdono. Rinominare il repository non è necessario; se lo si fa, cambia l'indirizzo Pages e l'app va reinstallata.
 
@@ -53,7 +53,7 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 - **v1.65 – FATTO (da provare)**: tocco sul riquadro = ON/OFF (spegne con 4/4 = 64 e 5/1 = 0, riaccende con l'ultimo valore acceso, mostrato anche da spento); pulsante ± in basso a destra apre la scelta. Cambio Rig con Transpose acceso: comando subito all'annuncio del nuovo Rig (nome e Program Change), senza lettura prima; con Transpose spento lettura dopo 250 ms e correzione solo se il Rig era salvato trasposto (entro 8 s). Test: 49.
 - Il Player rimette comunque il valore del Rig caricandolo: un attimo a 0 potrebbe restare. Se dà ancora fastidio: salvare i Rig usati con il Transpose voluto, oppure scegliere il Transpose per brano nella scaletta v2.0 prima di cambiare Rig.
 - **Prova v1.65 (29/09/2026, diagnostica 13:39)**: comando partito 20 ms dopo il cambio Rig (e di nuovo al Program Change), ma il passaggio di tonalità si sente comunque: è il caricamento del Rig sul Player, non evitabile dall'app.
-- **Decisione di Giovanni (29/09/2026)**: meglio che il valore resti in memoria ma che cambiando Rig non si riattivi da solo. **v1.66 – FATTO (da provare)**: al cambio Rig solo lettura (250 ms); il riquadro mostra il valore ricordato con OFF; un tocco lo riaccende. Tolta la reimpostazione automatica (sostituisce la decisione del 28/09). Nessun comando senza tocco.
+- **Decisione di Giovanni (29/09/2026)**: meglio che il valore resti in memoria ma che cambiando Rig non si riattivi da solo. **v1.66 – FATTO, provata da Giovanni il 29/09/2026: funziona**: al cambio Rig solo lettura (250 ms); il riquadro mostra il valore ricordato con OFF; un tocco lo riaccende. Tolta la reimpostazione automatica (sostituisce la decisione del 28/09). Nessun comando senza tocco.
 - Da verificare sul Player: cosa succede con REV Freeze attivo.
 
 ## Funzioni verificate sul Player
@@ -79,7 +79,6 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 - Dal MIDI non si può sapere quali effetti hanno il Morph (valori identici in BASE e MORPH; 0x48 non esiste).
 
 ## Ancora da provare
-- Checklist v1.66 (Transpose al cambio Rig) in `docs/TESTING.md`.
 - Bank Select 2–4 (Bank 52 e oltre), se servono.
 - Checklist v1.61 + v1.62 in `docs/TESTING.md`, se non ancora fatte.
 - Durante la prova Transpose (29/09) il collegamento è caduto e tornato da solo 3 volte ("Player non collegato" 08:25, 08:26, 08:28): chiedere a Giovanni se aveva staccato il cavo; se no, tenerlo d'occhio.
@@ -105,7 +104,7 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 ## Strada verso la 2.0 (concordata il 26/09/2026)
 1. v1.4x: grafica, nomi Bank, AMP/CAB, 125 Bank e colori, Looper più sicuro — fatto (v1.41–1.52).
 2. **Prova lunga** sulla v1.52 — **fatta 28/09/2026, stabile**; correzioni nella v1.62.
-3. **Riordino del codice**: v1.60 (JS), v1.61 (ALTRO + prova Transpose), v1.62 correzioni, v1.63 CSS — fatti. **v1.64 Transpose −2…+2 — fatto, da provare sul Player.**
+3. **Riordino del codice**: v1.60 (JS), v1.61 (ALTRO + prova Transpose), v1.62 correzioni, v1.63 CSS — fatti. **v1.64–1.66 Transpose −2…+2 — fatto e provato sul Player (29/09/2026).**
 4. **v2.0 "pronta per il servizio"**: scaletta del servizio (brani con Bank/Rig, BPM, note, transpose; avanti/indietro con un tocco; BPM impostato da solo; forse anche la base del brano), affidabilità dimostrata, guida d'uso di una pagina.
 5. Dopo la 2.0: pedale MIDI Bluetooth.
 
