@@ -1,0 +1,175 @@
+/* altro.css — Scheda ALTRO: collegamento, bidirezionale, prove sul Player, tema, messaggi e diagnostica, guida. */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 2px 26px;
+}
+body[data-view="full"] .live-panel { display: none; }
+
+.control-panel,
+.monitor-panel { padding: clamp(20px, 4vw, 32px); }
+
+.panel-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.panel-heading h2 { margin-bottom: 0; font-size: clamp(1.35rem, 3vw, 1.9rem); letter-spacing: -0.035em; }
+.panel-heading > p { max-width: 430px; margin-bottom: 1px; color: var(--muted); line-height: 1.5; text-align: right; }
+
+.action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+
+.primary-button {
+  border: 1px solid transparent;
+  background: var(--green);
+  color: #071207;
+  box-shadow: 0 10px 28px rgba(80, 234, 69, 0.18);
+}
+
+.device-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+.device-card {
+  min-height: 155px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(17, 31, 23, 0.72);
+}
+
+.device-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.device-icon { color: var(--cyan); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.12em; }
+.count-badge { min-width: 28px; padding: 4px 8px; border-radius: 999px; background: var(--surface-3); color: var(--green); text-align: center; font-size: 0.75rem; font-weight: 850; }
+.device-card h3 { margin-bottom: 10px; font-size: 0.95rem; }
+.device-card p,
+.device-list { margin: 0; padding: 0; color: var(--muted); font-size: 0.84rem; line-height: 1.5; }
+.device-list { list-style: none; }
+.device-list li + li { margin-top: 5px; }
+.device-list .device-live { color: var(--text); }
+.capability-card[data-enabled="true"] { border-color: rgba(141, 255, 100, 0.28); }
+
+.monitor-panel { background: #070c09; }
+.monitor-heading { align-items: center; }
+
+.monitor-summary { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 14px; border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
+.monitor-summary > div { min-width: 0; padding: 14px 16px; }
+.monitor-summary > div + div { border-left: 1px solid var(--line); }
+.monitor-summary span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 0.72rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0.08em; }
+.monitor-summary strong { display: block; overflow: hidden; color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.log-shell {
+  position: relative;
+  min-height: 250px;
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #030604;
+}
+
+.log-empty { display: grid; min-height: 248px; place-items: center; padding: 30px; color: #607168; text-align: center; }
+.midi-log { margin: 0; padding: 0; list-style: none; counter-reset: midi; }
+.midi-log li { display: grid; grid-template-columns: 82px 118px minmax(0, 1fr); gap: 12px; padding: 11px 14px; border-bottom: 1px solid rgba(171, 255, 202, 0.08); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; line-height: 1.4; }
+.midi-log time { color: #638071; }
+.midi-log .message-type { color: var(--cyan); font-weight: 750; }
+.midi-log code { overflow-wrap: anywhere; color: #cce7d7; }
+
+.help-panel { box-shadow: none; }
+.help-panel summary { padding: 19px 22px; cursor: pointer; font-weight: 780; }
+.help-panel ol { margin: -2px 24px 22px 42px; padding: 0; color: var(--muted); line-height: 1.65; }
+.help-panel li + li { margin-top: 7px; }
+.help-panel strong { color: var(--text); }
+
+@media (max-width: 780px) {
+  .device-grid { grid-template-columns: 1fr; }
+  .device-card { min-height: 0; }
+  .device-card-top { margin-bottom: 16px; }
+  .panel-heading { align-items: start; flex-direction: column; gap: 8px; }
+  .panel-heading > p { text-align: left; }
+  .action-row > button { flex: 1 1 150px; }
+}
+
+@media (max-width: 520px) {
+  .topbar { align-items: flex-start; }
+}
+
+@media (max-width: 520px) {
+  .monitor-summary { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .monitor-summary > div + div { border-top: 1px solid var(--line); border-left: 0; }
+  .midi-log li { grid-template-columns: 68px 86px minmax(0, 1fr); gap: 8px; padding-inline: 10px; font-size: 0.7rem; }
+}
+
+/* Navigazione compatta fuori dalla vista ALTRO */
+body:not([data-view="full"]) .topbar { display: none; }
+
+.diagnostic-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.looper-probe-result { margin: 10px 0 0; color: var(--cyan); font-size: 0.85rem; font-weight: 700; }
+.looper-probe-result:empty { display: none; }
+
+/* v1.37 · Modalità bidirezionale */
+.bidi-panel {
+  padding: clamp(18px, 4vw, 26px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, rgba(15, 27, 20, 0.97), rgba(6, 13, 9, 0.97));
+  box-shadow: var(--shadow);
+}
+body:not([data-view="full"]) .bidi-panel { display: none; }
+.bidi-head { display: flex; align-items: center; gap: 14px; }
+.bidi-head > div { flex: 1 1 auto; min-width: 0; }
+.bidi-head h2 { margin: 2px 0 0; font-size: clamp(1.1rem, 4.4vw, 1.4rem); }
+.bidi-dot { flex: 0 0 auto; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); opacity: 0.5; }
+.bidi-state { flex: 0 0 auto; color: var(--muted); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-align: right; }
+.bidi-panel[data-state="active"] { border-color: rgba(141, 255, 100, 0.34); }
+.bidi-panel[data-state="active"] .bidi-dot { background: var(--green); opacity: 1; box-shadow: 0 0 12px rgba(141, 255, 100, 0.7); }
+.bidi-panel[data-state="active"] .bidi-state { color: var(--green); }
+.bidi-panel[data-state="starting"] .bidi-dot { background: var(--amber); opacity: 1; animation: bidi-blink 0.9s ease-in-out infinite; }
+.bidi-panel[data-state="starting"] .bidi-state,
+.bidi-panel[data-state="lost"] .bidi-state,
+.bidi-panel[data-state="unavailable"] .bidi-state { color: var(--amber); }
+.bidi-panel[data-state="lost"] .bidi-dot,
+.bidi-panel[data-state="unavailable"] .bidi-dot { background: var(--amber); opacity: 1; }
+.bidi-note { margin: 12px 0 0; color: var(--muted); line-height: 1.5; }
+.bidi-covered { margin: 10px 0 0; color: var(--cyan); font-size: 0.85rem; font-weight: 700; line-height: 1.55; white-space: pre-line; }
+.bidi-covered:empty { display: none; }
+.bidi-panel .secondary-button { margin-top: 14px; }
+@keyframes bidi-blink { 50% { opacity: 0.25; } }
+
+.live-connection[data-bidi="true"] { color: var(--green); text-shadow: 0 0 10px rgba(141, 255, 100, 0.35); }
+@media (prefers-reduced-motion: reduce) {
+  .bidi-panel[data-state="starting"] .bidi-dot { animation: none; }
+}
+
+/* Selettore del tema in ALTRO */
+.theme-panel { padding: clamp(18px, 4vw, 26px); border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(15, 27, 20, 0.97), rgba(6, 13, 9, 0.97)); box-shadow: var(--shadow); }
+body:not([data-view="full"]) .theme-panel { display: none; }
+.theme-panel h2 { margin: 2px 0 12px; font-size: clamp(1.1rem, 4.4vw, 1.4rem); }
+.theme-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.theme-options button { min-height: 52px; border: 2px solid var(--line); border-radius: 12px; background: transparent; color: var(--text); font-weight: 900; letter-spacing: 0.08em; cursor: pointer; }
+.theme-options button[aria-pressed="true"] { border-color: var(--green); color: var(--green); }
+.theme-panel p { margin: 10px 0 0; color: var(--muted); font-size: 0.85rem; }
+
+/* ───────── v1.61 · ALTRO senza controlli doppi ───────── */
+/* Prove sul Player (stesso aspetto del pannello Tema), solo in ALTRO */
+.tools-panel { padding: clamp(18px, 4vw, 26px); border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(15, 27, 20, 0.97), rgba(6, 13, 9, 0.97)); box-shadow: var(--shadow); }
+body:not([data-view="full"]) .tools-panel { display: none; }
+.tools-panel h2 { margin: 2px 0 12px; font-size: clamp(1.1rem, 4.4vw, 1.4rem); }
+.tools-panel > p { margin: 10px 0 0; color: var(--muted); font-size: 0.85rem; }
+.tools-panel .action-row { margin: 12px 0 0; }
+.tools-panel .looper-probe-result { color: var(--cyan); font-weight: 700; }
+.tools-panel .tools-subhead { margin-top: 22px; }
+/* Riga "Rig in uso" nel pannello di collegamento (al posto del grande riquadro RIG ATTUALE) */
+.rig-in-use { margin: 0 0 18px; color: var(--muted); font-size: 0.9rem; font-weight: 700; line-height: 1.45; }
+.rig-in-use > span:first-child { margin-right: 6px; color: var(--green); font-size: 0.72rem; letter-spacing: 0.12em; }
+.rig-in-use strong { color: var(--text); }
+/* Registro: la scritta "Cambia Rig o premi un footswitch" sparisce quando arrivano messaggi
+   (display: grid copriva l'attributo hidden: si vedeva sempre, anche nella v1.52). */
+.log-empty[hidden] { display: none; }

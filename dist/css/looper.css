@@ -1,0 +1,136 @@
+/* looper.css — Scheda LOOPER e indicatore del Looper in PALCO. */
+
+body[data-view="looper"] main > :not(.looper-panel) { display: none; }
+body[data-view="live"] .looper-panel,
+body[data-view="full"] .looper-panel { display: none; }
+
+.looper-panel { padding: clamp(20px, 4vw, 36px); }
+.looper-panel h2 { margin: 5px 0 8px; font-size: clamp(2rem, 5vw, 3.2rem); }
+.looper-info { max-width: 700px; margin: 0 0 24px; color: var(--muted); line-height: 1.5; }
+.looper-main-controls,
+.looper-extra-controls { display: grid; gap: 12px; }
+.looper-main-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.looper-extra-controls { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; }
+.looper-button { min-height: 76px; padding: 12px; border: 1px solid rgba(141, 255, 100, 0.28); border-radius: 14px; background: rgba(5, 15, 9, 0.86); color: var(--text); font-size: clamp(0.85rem, 2vw, 1.1rem); font-weight: 900; touch-action: manipulation; cursor: pointer; }
+.looper-button strong { display: block; font-size: 1.65rem; line-height: 1; }
+.looper-record { border-color: rgba(255, 106, 106, 0.62); }
+.looper-record strong { color: var(--red); }
+.looper-stop { border-color: rgba(255, 194, 92, 0.54); }
+.looper-stop strong { color: var(--amber); }
+.looper-button[data-pressed="true"] { background: rgba(114, 235, 220, 0.2); border-color: var(--cyan); }
+.looper-button:disabled { opacity: 0.42; cursor: not-allowed; }
+.looper-erase { width: 100%; min-height: 56px; margin-top: 22px; border-color: rgba(255, 106, 106, 0.38); color: var(--red); font-size: 0.85rem; }
+.looper-erase[data-arming="true"] { border-color: var(--red); background: rgba(255, 106, 106, 0.22); color: var(--text); }
+.looper-status { min-height: 32px; margin: 16px 2px 0; color: var(--cyan); font-size: 0.86rem; font-weight: 750; }
+
+@media (max-width: 520px) {
+  .looper-main-controls,
+  .looper-extra-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .looper-button { min-height: 86px; }
+}
+.looper-state {
+  --state: var(--muted);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "dot label time" "dot flags flags";
+  align-items: center;
+  column-gap: 12px;
+  margin: 6px 0 12px;
+  padding: 16px 18px;
+  border: 2px solid color-mix(in srgb, var(--state) 55%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--state) 10%, #050a07);
+}
+.looper-state[data-state="recording"] { --state: var(--red); }
+.looper-state[data-state="overdub"] { --state: var(--amber); }
+.looper-state[data-state="playing"] { --state: var(--green); }
+.looper-state[data-state="stopped"] { --state: var(--cyan); }
+.looper-state-dot { grid-area: dot; width: 18px; height: 18px; border-radius: 50%; background: var(--state); }
+.looper-state[data-state="recording"] .looper-state-dot,
+.looper-state[data-state="overdub"] .looper-state-dot { animation: looper-blink 0.9s steps(2, jump-none) infinite; box-shadow: 0 0 18px var(--state); }
+#looper-state-label { grid-area: label; min-width: 0; color: var(--state); font-size: clamp(1.05rem, 5.2vw, 1.8rem); font-weight: 900; letter-spacing: 0.02em; }
+.looper-state-time { grid-area: time; font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.looper-state-flags { grid-area: flags; color: var(--amber); font-size: 0.75rem; font-weight: 900; letter-spacing: 0.1em; }
+.looper-state-flags:empty { display: none; }
+.looper-state-reset {
+  margin-left: 4px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 7px;
+  background: transparent; color: var(--text); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.06em; cursor: pointer;
+}
+body:not([data-view="full"]) .looper-panel { padding: 16px; }
+body:not([data-view="full"]) .looper-panel h2 { font-size: 1.6rem; margin-bottom: 4px; }
+body:not([data-view="full"]) .looper-info { margin-bottom: 14px; font-size: 0.8rem; }
+@keyframes looper-blink { 50% { opacity: 0.25; } }
+
+/* Indicatore Looper sulla schermata PALCO */
+.stage-looper {
+  --state: var(--cyan);
+  flex: 0 0 auto; min-height: 26px; padding: 0 8px; border: 1px solid var(--state); border-radius: 7px;
+  background: color-mix(in srgb, var(--state) 16%, transparent); color: var(--state);
+  font-size: 0.7rem; font-weight: 900; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.stage-looper[hidden] { display: none; }
+.stage-looper[data-state="recording"] { --state: var(--red); animation: looper-blink 0.9s steps(2, jump-none) infinite; }
+.stage-looper[data-state="overdub"] { --state: var(--amber); }
+.stage-looper[data-state="playing"] { --state: var(--green); }
+
+@media (prefers-reduced-motion: reduce) {
+  .looper-state-dot, .stage-looper { animation: none !important; }
+}
+.stage-rig-meta:has(.stage-looper:not([hidden])) .live-connection { flex: 0 0 auto; width: 1.1em; }
+
+/* v1.33 · ½ SPEED sempre visibile */
+.looper-half { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: -4px 0 14px; }
+.looper-half > span { color: var(--muted); font-size: 0.85rem; font-weight: 900; letter-spacing: 0.08em; }
+.looper-half[data-active="true"] > span { color: var(--amber); }
+.looper-half small { flex-basis: 100%; color: var(--amber); font-size: 0.78rem; }
+.looper-half small:empty { display: none; }
+
+/* v1.34 · aggancio al tempo */
+.looper-quantize { display: grid; gap: 6px; margin: 0 0 12px; }
+.looper-quantize-title { color: var(--muted); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.12em; }
+.looper-quantize-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.looper-quantize-options button {
+  min-height: 40px; padding: 4px; border: 1px solid var(--line); border-radius: 9px;
+  background: transparent; color: var(--muted); font-size: 0.66rem; font-weight: 900; letter-spacing: 0.03em; cursor: pointer;
+}
+.looper-quantize-options button[aria-pressed="true"] { border-color: var(--cyan); background: rgba(114, 235, 220, 0.14); color: var(--cyan); }
+.looper-quantize small { color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
+.looper-state[data-beat="on"] .looper-state-dot { animation: none; opacity: 1; transform: scale(1.25); }
+.looper-state[data-beat="down"] .looper-state-dot { animation: none; opacity: 1; transform: scale(1.6); background: var(--text); }
+.looper-state[data-beat="off"][data-state="recording"] .looper-state-dot { animation: none; opacity: 0.35; }
+.looper-state-dot { transition: transform 60ms ease; }
+.looper-state { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "dot label" "dot time" "dot flags"; row-gap: 2px; }
+.looper-state-time { font-size: 1rem; }
+.looper-quantize-options button { font-size: 0.62rem; letter-spacing: 0; }
+.looper-location-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.looper-location-options button { font-size: 0.78rem; }
+.looper-location-options button[data-pending="true"] { border-color: var(--amber); color: var(--amber); }
+.looper-location-options button:disabled { opacity: 0.6; cursor: default; }
+.looper-location-options button[aria-pressed="true"]:disabled { opacity: 1; }
+.looper-settings { display: grid; gap: 4px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+
+/* ───────── v1.41 · Cerchio di avanzamento del Looper (posizione stimata nel giro) ───────── */
+.looper-ring {
+  grid-area: dot;
+  display: none;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: conic-gradient(var(--state) calc(var(--p, 0) * 1turn), rgba(255, 255, 255, 0.1) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+}
+.looper-state[data-ring="true"] .looper-ring { display: block; }
+.looper-state[data-ring="true"] .looper-state-dot { display: none; }
+.stage-looper[data-ring="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  vertical-align: -2px;
+  border-radius: 50%;
+  background: conic-gradient(var(--state) calc(var(--p, 0) * 1turn), rgba(255, 255, 255, 0.18) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+}

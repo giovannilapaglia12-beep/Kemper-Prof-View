@@ -1,0 +1,48 @@
+/* tuner.css — Accordatore a tutto schermo. */
+
+/* Accordatore a tutto schermo */
+.tuner-overlay {
+  position: fixed; z-index: 50; inset: 0;
+  display: grid; align-content: center; justify-items: center; gap: 18px;
+  padding: max(24px, env(safe-area-inset-top)) 22px max(24px, env(safe-area-inset-bottom));
+  background: #030604;
+  --zone: var(--muted);
+}
+.tuner-overlay[hidden] { display: none; }
+.tuner-overlay[data-zone="flat"] { --zone: var(--amber); }
+.tuner-overlay-kicker { margin: 0; color: var(--muted); font-size: 0.8rem; font-weight: 900; letter-spacing: 0.2em; }
+.tuner-overlay-note { color: var(--zone); font-size: clamp(5rem, 34vw, 11rem); font-weight: 900; line-height: 0.95; letter-spacing: -0.04em; }
+.tuner-overlay-gauge { position: relative; width: min(100%, 520px); height: 54px; border-radius: 12px; background: linear-gradient(90deg, rgba(255,194,92,0.25), rgba(141,255,100,0.25) 44%, rgba(141,255,100,0.25) 56%, rgba(255,106,106,0.25)); }
+.tuner-overlay-center { position: absolute; top: -6px; bottom: -6px; left: 50%; width: 2px; background: var(--text); }
+.tuner-overlay-needle { position: absolute; top: 4px; bottom: 4px; left: calc(var(--pos, 50) * 1%); width: 8px; margin-left: -4px; border-radius: 4px; background: var(--zone); box-shadow: 0 0 16px var(--zone); transition: left 90ms linear; }
+.tuner-overlay-labels { display: flex; justify-content: space-between; width: min(100%, 520px); color: var(--muted); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; }
+.tuner-overlay-labels strong { color: var(--zone); font-size: 1.2rem; }
+.tuner-overlay-close { min-width: 220px; min-height: 58px; margin-top: 10px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,0.05); color: var(--text); font-weight: 900; letter-spacing: 0.1em; cursor: pointer; }
+.tuner-overlay-close:disabled { opacity: 0.5; }
+body[data-tuner="true"] { overflow: hidden; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .tuner-overlay { gap: 8px; }
+  .tuner-overlay-close { min-height: 46px; margin-top: 4px; }
+}
+
+/* ───────── v1.39 · Proposta 5: accordatore leggibile da lontano ─────────
+   Corda centrata = tutto lo schermo verde con la nota nera; calante = sfondo ambra scuro;
+   crescente = sfondo rosso scuro. */
+.tuner-overlay { transition: background-color 160ms ease; }
+.tuner-overlay[data-zone="flat"] { background: radial-gradient(circle at 50% 45%, rgba(255, 194, 92, 0.22), transparent 75%), #0b0803; }
+.tuner-overlay[data-zone="sharp"] {
+  --zone: var(--red);
+  background: radial-gradient(circle at 50% 45%, rgba(255, 106, 106, 0.22), transparent 75%), #0b0404;
+}
+.tuner-overlay[data-zone="in-tune"] { --zone: #04100a; background: #45e04a; }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-kicker,
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-labels { color: rgba(4, 16, 10, 0.7); }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-gauge { background: rgba(4, 16, 10, 0.18); }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-center { background: #04100a; }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-needle { box-shadow: none; }
+.tuner-overlay[data-zone="in-tune"] .tuner-overlay-close { border-color: rgba(4, 16, 10, 0.4); background: rgba(4, 16, 10, 0.12); color: #04100a; }
+.tuner-overlay-note { font-size: clamp(6rem, 42vw, 13rem); }
+@media (orientation: landscape) and (max-height: 560px) {
+  .tuner-overlay-note { font-size: clamp(4rem, 30vh, 8rem); }
+}
+@media (prefers-reduced-motion: reduce) { .tuner-overlay { transition: none; } }

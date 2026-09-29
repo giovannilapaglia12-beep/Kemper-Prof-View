@@ -1,0 +1,140 @@
+/* tema-sole.css — Tema SOLE (alto contrasto per la luce del giorno): solo le differenze dal tema SCURO. Va caricato per ultimo. */
+
+/* ───────── v1.41 · Tema SOLE (alto contrasto per la luce del giorno) ─────────
+   Fondo chiaro, testo quasi nero, bordi più marcati. Gli effetti accesi restano pieni
+   con i colori del Kemper; quelli spenti diventano bianchi con il bordo del colore. */
+body[data-theme="sun"] {
+  color-scheme: light;
+  --bg: #e9ede7;
+  --surface: #ffffff;
+  --surface-2: #f3f5f1;
+  --surface-3: #e4e9e2;
+  --text: #07100b;
+  --muted: #3e4e44;
+  --line: rgba(7, 16, 11, 0.24);
+  --green: #1d8a18;
+  --green-strong: #1d8a18;
+  --cyan: #00747b;
+  --amber: #9a5a00;
+  --red: #c02820;
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  background: var(--bg);
+  color: var(--text);
+}
+body[data-theme="sun"],
+html:has(body[data-theme="sun"]) { background: var(--bg); }
+
+/* Pannelli e barre */
+body[data-theme="sun"] .view-switcher,
+body[data-theme="sun"] .live-panel,
+body[data-theme="sun"] .looper-panel,
+body[data-theme="sun"] .control-panel,
+body[data-theme="sun"] .monitor-panel,
+body[data-theme="sun"] .help-panel,
+body[data-theme="sun"] .bidi-panel,
+body[data-theme="sun"] .theme-panel,
+body[data-theme="sun"] .live-rig-selector,
+body[data-theme="sun"] .rig-panel .live-rig-selector { background: #ffffff; border-color: var(--line); box-shadow: var(--shadow); }
+body[data-theme="sun"] .view-switcher button { color: var(--muted); }
+body[data-theme="sun"] .view-switcher button[aria-pressed="true"] { background: #07100b; color: #ffffff; }
+
+/* Pulsanti "a riposo": bianchi con bordo scuro */
+body[data-theme="sun"] .stage-step,
+body[data-theme="sun"] .stage-round,
+body[data-theme="sun"] .stage-sync,
+body[data-theme="sun"] .stage-tap,
+body[data-theme="sun"] .live-tap-button,
+body[data-theme="sun"] .stage-morph-level summary,
+body[data-theme="sun"] .live-morph-toggle:not([aria-pressed="true"]),
+body[data-theme="sun"] .looper-button,
+body[data-theme="sun"] .looper-quantize-options button,
+body[data-theme="sun"] .looper-state-reset,
+body[data-theme="sun"] .live-bank-row button,
+body[data-theme="sun"] .rig-panel .live-bank-row button,
+body[data-theme="sun"] .tuner-overlay-close,
+body[data-theme="sun"] .secondary-button,
+body[data-theme="sun"] .text-button {
+  background-color: #ffffff;
+  background-image: none;
+  border: 2px solid rgba(7, 16, 11, 0.35);
+  color: var(--text);
+}
+body[data-theme="sun"] .stage-tap strong,
+body[data-theme="sun"] .live-tap-button strong { color: var(--red); }
+body[data-theme="sun"] .stage-round { color: var(--amber); }
+body[data-theme="sun"] .looper-quantize-options button[aria-pressed="true"] { background: #07100b; color: #ffffff; border-color: #07100b; }
+body[data-theme="sun"] .looper-button[data-pressed="true"] { background: #07100b; color: #ffffff; }
+body[data-theme="sun"] .looper-record { border-color: var(--red); }
+body[data-theme="sun"] .looper-erase { border-color: var(--red); color: var(--red); }
+
+/* Effetti in PALCO */
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button {
+  background-color: #ffffff;
+  border: 2px solid rgba(var(--tone-rgb), 0.9);
+}
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button > strong { color: #07100b; }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button > span { color: #07100b; }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button > small { color: #3e4e44; }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-tone="pitch"] { border-color: #7d8a83; }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-tone="empty"] { background-color: #eef1ec; border-color: rgba(7, 16, 11, 0.25); }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-tone="empty"] > strong { color: #7a877f; }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-active="true"] { border-color: #07100b; box-shadow: none; }
+body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-active="true"][data-tone="pitch"] { background-image: linear-gradient(165deg, #d9dfdb, #c3cbc6); }
+body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-button,
+body[data-theme="sun"][data-view="live"] .stage-fx .live-action-button { background-color: #ffffff; border: 2px solid rgba(var(--fx-rgb, 7, 16, 11), 0.8); }
+body[data-theme="sun"][data-view="live"] .stage-fx .live-action-button { border-color: rgba(7, 16, 11, 0.35); }
+body[data-theme="sun"][data-view="live"] .stage-fx [data-active="false"] strong,
+body[data-theme="sun"][data-view="live"] .stage-fx [data-active="unknown"] strong { color: #07100b; }
+body[data-theme="sun"][data-view="live"] .stage-fx [data-active="true"] { border-color: #07100b; box-shadow: none; }
+body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-transpose[data-active="true"] { background-image: linear-gradient(165deg, #d9dfdb, #c3cbc6); }
+body[data-theme="sun"] #live-tuner-note { color: var(--green); }
+
+/* Morph */
+body[data-theme="sun"] .live-morph[data-active] { background: #ffffff; border-width: 2px; }
+body[data-theme="sun"] .live-morph-meter { background: rgba(192, 40, 32, 0.18); }
+
+/* Scheda RIG */
+body[data-theme="sun"] .rig-panel .live-rig-slots button {
+  background-color: #ffffff;
+  background-image: none;
+  border: 2px solid rgba(7, 16, 11, 0.3);
+}
+body[data-theme="sun"] .rig-panel .live-rig-slots button strong { border-color: rgba(7, 16, 11, 0.45); color: #07100b; }
+body[data-theme="sun"] .rig-panel .live-rig-slots button span { color: #07100b; }
+body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] { background-image: linear-gradient(165deg, #5fe05a, #3fc93a); border-color: #07100b; box-shadow: none; }
+body[data-theme="sun"] .rig-panel .live-rig-slots button[data-pending="true"] { border-color: var(--amber); }
+body[data-theme="sun"] .rig-panel .live-bank-row > span strong { color: var(--amber); }
+body[data-theme="sun"] .rig-current-jump { background: #ffffff; border: 2px solid var(--green); color: var(--green); }
+
+/* Looper */
+body[data-theme="sun"] .looper-state { background: #ffffff; border-width: 3px; }
+body[data-theme="sun"] .looper-state[data-state="empty"] { --state: #6b7a71; }
+body[data-theme="sun"] .looper-state[data-state="playing"] { --state: #1d8a18; }
+body[data-theme="sun"] .looper-ring { background: conic-gradient(var(--state) calc(var(--p, 0) * 1turn), rgba(7, 16, 11, 0.12) 0); }
+
+/* Accordatore e messaggi */
+body[data-theme="sun"] .tuner-overlay { background: #ffffff; }
+body[data-theme="sun"] .tuner-overlay[data-zone="flat"] { background: #fff1d9; }
+body[data-theme="sun"] .tuner-overlay[data-zone="sharp"] { background: #ffe1de; }
+body[data-theme="sun"] .tuner-overlay[data-zone="in-tune"] { background: #45e04a; }
+body[data-theme="sun"] .tuner-overlay-gauge { background: linear-gradient(90deg, rgba(154, 90, 0, 0.25), rgba(29, 138, 24, 0.25) 44%, rgba(29, 138, 24, 0.25) 56%, rgba(192, 40, 32, 0.25)); }
+body[data-theme="sun"]:not([data-view="full"]) .toast,
+body[data-theme="sun"] .toast { background: #07100b; color: #ffffff; border-color: #07100b; }
+
+/* ALTRO: riquadri interni chiari */
+body[data-theme="sun"] .device-card,
+body[data-theme="sun"] .log-shell,
+body[data-theme="sun"] .monitor-summary > div { background-color: #f6f8f4; background-image: none; border-color: var(--line); color: var(--text); }
+body[data-theme="sun"] .midi-log code,
+body[data-theme="sun"] .midi-log .message-type { color: var(--text); }
+body[data-theme="sun"] .midi-log time { color: var(--muted); }
+body[data-theme="sun"] .rig-stack-item { background: #ffffff; border-color: rgba(7, 16, 11, 0.35); }
+body[data-theme="sun"] .rig-stack-item[data-on="true"] i { box-shadow: none; }
+body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] strong { color: #5fe05a; }
+body[data-theme="sun"] { --bank-blue: #1f5fd6; --bank-yellow: #9a6f00; --bank-red: #c62e28; --bank-green: #1d8a18; --bank-violet: #7440c4; }
+body[data-theme="sun"] .bank-picker { background: #f4f6f2; }
+body[data-theme="sun"] .bank-picker-grid button { background: #ffffff; }
+body[data-theme="sun"] .bank-picker-grid button[data-current="true"] { background: var(--bank-color); }
+body[data-theme="sun"] .bank-picker-grid button[data-current="true"] strong,
+body[data-theme="sun"] .bank-picker-grid button[data-current="true"] small { color: #ffffff; }
+body[data-theme="sun"] .tools-panel { background: #ffffff; border-color: var(--line); box-shadow: var(--shadow); }

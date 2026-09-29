@@ -1,0 +1,265 @@
+/* rig.css — Scheda RIG: Bank e Rig, griglia delle Bank, colori delle Bank, ampli e cabinet (AMP/CAB). */
+
+.live-rig-selector {
+  margin-top: 21px;
+  padding: 15px;
+  border: 1px solid rgba(141, 255, 100, 0.2);
+  border-radius: 15px;
+  background: rgba(3, 8, 5, 0.7);
+}
+.live-rig-selector-heading,
+.live-bank-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.live-rig-selector-heading strong { color: var(--green); font-size: 0.86rem; letter-spacing: 0.09em; }
+.live-rig-selector-heading span { color: var(--muted); font-size: 0.83rem; text-align: right; }
+.live-bank-row { justify-content: flex-start; margin: 13px 0 10px; }
+.live-bank-row button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 194, 92, 0.34);
+  border-radius: 9px;
+  background: rgba(255, 194, 92, 0.08);
+  color: var(--amber);
+  font-size: 1.35rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.live-bank-row > span { color: var(--muted); font-size: 0.9rem; font-weight: 850; letter-spacing: 0.08em; }
+.live-bank-row > span strong { color: var(--amber); font-size: 1.35rem; }
+.live-bank-row button:disabled,
+.live-rig-slots button:disabled { opacity: 0.5; cursor: default; }
+.live-rig-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+.live-rig-slots button {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+  min-height: 76px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(11, 21, 14, 0.95);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.live-rig-slots button strong { color: var(--muted); font-size: 1.25rem; line-height: 1; }
+.live-rig-slots button span { overflow: hidden; width: 100%; color: var(--muted); font-size: 0.83rem; line-height: 1.2; overflow-wrap: anywhere; }
+.live-rig-slots button[data-active="true"] {
+  border-color: rgba(141, 255, 100, 0.8);
+  background: linear-gradient(140deg, rgba(141, 255, 100, 0.22), rgba(11, 21, 14, 0.95));
+}
+.live-rig-slots button[data-active="true"] strong,
+.live-rig-slots button[data-active="true"] span { color: var(--text); }
+.live-rig-slots button[data-pending="true"] { border-color: var(--amber); }
+
+@media (max-width: 520px) {
+  .live-rig-selector { padding: 12px; }
+  .live-rig-selector-heading { align-items: start; flex-direction: column; gap: 3px; }
+  .live-rig-selector-heading span { text-align: left; }
+  .live-rig-slots { gap: 4px; }
+  .live-rig-slots button { min-height: 80px; padding: 7px 5px; }
+  .live-rig-slots button strong { font-size: 1.12rem; }
+  .live-rig-slots button span { font-size: 0.75rem; }
+}
+
+/* Quale sezione si vede in ogni scheda */
+body[data-view="rig"] main > :not(.rig-panel) { display: none; }
+body:not([data-view="rig"]) .rig-panel { display: none; }
+body[data-view="full"] .rig-panel { display: none; }
+
+/* Scheda RIG */
+.rig-panel .live-rig-selector { margin-top: 0; padding: 14px; }
+.rig-panel .live-rig-slots { grid-template-columns: 1fr; gap: 8px; }
+.rig-panel .live-rig-slots button {
+  grid-template-columns: 44px minmax(0, 1fr); align-items: center; align-content: center; min-height: 64px; padding: 10px 14px;
+}
+.rig-panel .live-rig-slots button strong { font-size: 1.6rem; }
+.rig-panel .live-rig-slots button span { font-size: 1.05rem; font-weight: 800; overflow-wrap: anywhere; }
+.rig-panel .live-bank-row > span { flex: 1; text-align: center; font-size: 1.1rem; }
+.rig-panel-note { margin: 12px 0 0; color: var(--muted); font-size: 0.78rem; }
+
+/* v1.32 · nomi Bank e slot dal Player */
+.live-bank-name { display: block; margin-top: 2px; color: var(--text); font-size: 0.9rem; font-style: normal; font-weight: 800; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+.live-bank-name:empty { display: none; }
+.rig-panel .live-rig-slots button { grid-template-areas: "num name" "num rig"; row-gap: 2px; }
+.rig-panel .live-rig-slots button strong { grid-area: num; }
+.rig-panel .live-rig-slots button span { grid-area: name; }
+.rig-panel .live-rig-slots button small { grid-area: rig; color: var(--muted); font-size: 0.78rem; font-weight: 700; overflow-wrap: anywhere; }
+.rig-panel .live-rig-slots button small:empty { display: none; }
+@keyframes v138-pending { from { box-shadow: 0 0 0 rgba(255, 194, 92, 0); } to { box-shadow: 0 0 14px rgba(255, 194, 92, 0.55); } }
+
+/* ───────── v1.38 · Proposta 4: scheda RIG ─────────
+   Bank e nome della Bank in grande, i 5 Rig come pulsanti che riempiono lo schermo,
+   il Rig in uso pieno di verde con "IN USO", quello in caricamento in ambra. */
+body[data-view="rig"] .rig-panel .live-rig-selector {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 78px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding: 12px;
+}
+.rig-panel .live-rig-selector-heading { flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.rig-panel .live-rig-selector-heading strong { flex: 0 0 auto; }
+.rig-panel .live-rig-selector-heading span {
+  flex: 1 1 60%; min-width: 0; color: var(--text); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.03em; text-align: right;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.rig-current-jump {
+  flex: 1 0 100%;
+  min-height: 34px;
+  border: 1px solid rgba(141, 255, 100, 0.45);
+  border-radius: 9px;
+  background: rgba(141, 255, 100, 0.08);
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.rig-current-jump[hidden] { display: none; }
+
+.rig-panel .live-bank-row { margin: 10px 0; gap: 10px; }
+.rig-panel .live-bank-row button { flex: 0 0 auto; width: 68px; height: 68px; border-radius: 14px; font-size: 2rem; }
+.rig-panel .live-bank-row > span {
+  display: grid; justify-items: center; align-content: center; min-width: 0; min-height: 68px;
+  color: var(--muted); font-size: 0.72rem; letter-spacing: 0.16em;
+}
+.rig-panel .live-bank-row > span strong { color: var(--amber); font-size: 2.3rem; line-height: 1; letter-spacing: 0; }
+.rig-panel .live-bank-name {
+  max-width: 100%; margin-top: 3px; color: var(--text); font-size: clamp(1.05rem, 5vw, 1.45rem); font-weight: 900;
+  letter-spacing: 0.01em; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.live-rig-selector[data-other-bank="true"] .live-bank-row > span strong { color: var(--cyan); }
+
+.rig-panel .live-rig-slots { flex: 1 1 auto; grid-auto-rows: minmax(58px, 1fr); gap: 8px; }
+.rig-panel .live-rig-slots button {
+  position: relative;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  grid-template-areas: "num name tag" "num rig tag";
+  align-content: center;
+  column-gap: 12px;
+  min-height: 0;
+  padding: 8px 14px 8px 10px;
+  border-radius: 14px;
+  border-color: rgba(171, 255, 202, 0.16);
+  background: linear-gradient(180deg, rgba(20, 34, 25, 0.95), rgba(9, 17, 12, 0.95));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.rig-panel .live-rig-slots button strong {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  border: 2px solid rgba(171, 255, 202, 0.28); color: var(--muted); font-size: 1.35rem; font-weight: 900;
+}
+.rig-panel .live-rig-slots button span { color: var(--text); font-size: clamp(1rem, 4.6vw, 1.3rem); font-weight: 850; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.rig-panel .live-rig-slots button::after { grid-area: tag; justify-self: end; font-size: 0.66rem; font-weight: 900; letter-spacing: 0.1em; }
+.rig-panel .live-rig-slots button[data-active="true"] {
+  border-color: var(--green);
+  background: linear-gradient(165deg, #8dff64, rgba(141, 255, 100, 0.8));
+  box-shadow: 0 0 18px rgba(141, 255, 100, 0.28);
+}
+.rig-panel .live-rig-slots button[data-active="true"] strong { border-color: #04100a; background: #04100a; color: var(--green); }
+.rig-panel .live-rig-slots button[data-active="true"] span,
+.rig-panel .live-rig-slots button[data-active="true"] small { color: #04100a; }
+.rig-panel .live-rig-slots button[data-active="true"]::after { content: "IN USO"; color: rgba(4, 16, 10, 0.75); }
+.rig-panel .live-rig-slots button[data-pending="true"] {
+  border: 2px solid var(--amber);
+  animation: v138-pending 0.7s ease-in-out infinite alternate;
+}
+.rig-panel .live-rig-slots button[data-pending="true"] strong { border-color: var(--amber); color: var(--amber); }
+.rig-panel .live-rig-slots button[data-pending="true"]::after { content: "CARICO…"; color: var(--amber); }
+.rig-panel .live-rig-slots button:disabled:not([data-pending="true"]) { opacity: 0.55; }
+.rig-panel .live-rig-slots button:not(:disabled):active { transform: scale(0.985); }
+.rig-panel-note { margin: 10px 0 0; font-size: 0.72rem; line-height: 1.35; }
+
+/* Telefono in orizzontale: i 5 Rig affiancati */
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="rig"] .rig-panel .live-rig-selector { min-height: calc(100dvh - 64px); padding: 10px; }
+  .rig-panel .live-bank-row { margin: 6px 0; }
+  .rig-panel .live-bank-row button { width: 56px; height: 52px; }
+  .rig-panel .live-bank-row > span { min-height: 52px; }
+  .rig-panel .live-bank-row > span strong { font-size: 1.8rem; }
+  .rig-panel .live-rig-slots { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: 1fr; }
+  .rig-panel .live-rig-slots button {
+    grid-template-columns: minmax(0, 1fr); grid-template-areas: "num" "name" "rig" "tag";
+    justify-items: center; text-align: center; row-gap: 4px; padding: 8px 6px;
+  }
+  .rig-panel .live-rig-slots button span { white-space: normal; font-size: 0.95rem; }
+  .rig-panel .live-rig-slots button::after { justify-self: center; }
+  .rig-panel-note { display: none; }
+}
+.rig-panel .live-rig-slots button:has(small:empty) { grid-template-areas: "num name tag"; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .rig-panel .live-rig-slots button:has(small:empty) { grid-template-areas: "num" "name" "tag"; }
+}
+.rig-panel .live-rig-slots button[data-pending="true"] { opacity: 1; }
+
+/* ───────── v1.45 · Ampli e cabinet del Rig in uso (scheda RIG) ───────── */
+.rig-stack { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 8px 0 2px; }
+.rig-stack[hidden] { display: none; }
+.rig-stack-item {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 9px;
+  font-size: 0.82rem; line-height: 1.2;
+}
+.rig-stack-item b { flex: 0 0 34px; color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; }
+.rig-stack-item i {
+  flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--muted); opacity: 0.5;
+}
+.rig-stack-item > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
+.rig-stack-item[data-on="true"] i { background: var(--green); opacity: 1; box-shadow: 0 0 6px var(--green); }
+.rig-stack-item[data-on="false"] > span { color: var(--muted); }
+/* v1.47: blocco non presente nel Rig (es. profilo DI senza cabinet): pallino vuoto, testo attenuato. */
+.rig-stack-item[data-on="none"] i { background: transparent; border: 1.5px solid var(--muted); opacity: 0.8; box-shadow: none; }
+.rig-stack-item[data-on="none"] > span { color: var(--muted); letter-spacing: 0.04em; }
+
+.live-bank-row[data-bank-color] > span strong,
+.rig-panel .live-bank-row[data-bank-color] > span strong,
+.live-rig-selector[data-other-bank="true"] .live-bank-row[data-bank-color] > span strong { color: var(--bank-color); }
+.rig-panel .live-bank-row[data-bank-color] > span strong {
+  min-width: 2.2em; padding: 2px 10px 4px; border-radius: 12px; text-align: center;
+  background: color-mix(in srgb, var(--bank-color) 16%, transparent);
+  box-shadow: inset 0 0 0 2px var(--bank-color);
+}
+.live-bank-pick { cursor: pointer; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
+.live-bank-pick:active { background: rgba(255, 255, 255, 0.05); }
+
+/* Scelta rapida della Bank: griglia 5 colonne, ogni riga è un giro di colori */
+.bank-picker {
+  position: fixed; z-index: 55; inset: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px;
+  padding: max(14px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
+  background: #030604; color: var(--text);
+}
+.bank-picker[hidden] { display: none; }
+.bank-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bank-picker-head strong { color: var(--green); font-size: 0.95rem; letter-spacing: 0.1em; }
+.bank-picker-close, .bank-picker-max button {
+  min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04); color: var(--text); font-weight: 900; letter-spacing: 0.06em; cursor: pointer;
+}
+.bank-picker-max button:disabled { opacity: 0.4; cursor: default; }
+.bank-picker-grid {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: 68px; gap: 6px;
+  overflow-y: auto; overscroll-behavior: contain; align-content: start;
+}
+.bank-picker-grid button {
+  display: grid; align-content: center; justify-items: center; gap: 2px; min-width: 0; padding: 4px;
+  border: 2px solid color-mix(in srgb, var(--bank-color) 55%, transparent); border-radius: 11px;
+  background: color-mix(in srgb, var(--bank-color) 10%, transparent); color: var(--text); cursor: pointer;
+}
+.bank-picker-grid button strong { color: var(--bank-color); font-size: 1.45rem; line-height: 1; }
+.bank-picker-grid button small {
+  max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); font-size: 0.6rem; font-weight: 800;
+}
+.bank-picker-grid button[data-chosen="true"] { border-color: var(--bank-color); box-shadow: 0 0 0 2px var(--bank-color); }
+.bank-picker-grid button[data-current="true"] { background: var(--bank-color); }
+.bank-picker-grid button[data-current="true"] strong,
+.bank-picker-grid button[data-current="true"] small { color: #050806; }
+.bank-picker-max { display: flex; align-items: center; gap: 8px; }
+.bank-picker-max span { flex: 1; color: var(--muted); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; }
+.bank-picker-max span strong { color: var(--text); }
