@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.62
+# Kemper Profiler View v1.63
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.63 — grafica riordinata per schermata, nessuna modifica visibile
+
+- **`styles.css` (2.142 righe) è stato diviso in 7 file** nella nuova cartella `dist/css/`: `base.css` (colori e misure comuni, barra delle schede, pulsanti comuni), `palco.css`, `rig.css`, `looper.css`, `tuner.css`, `altro.css` e `tema-sole.css` (solo le differenze del tema SOLE, caricato per ultimo). Totale: circa 1.500 righe.
+- **Tolte 181 regole che non potevano più applicarsi**: riguardavano elementi che non esistono più nella pagina (soprattutto i pannelli tolti da ALTRO nella v1.61). Unite 15 regole doppie dello stesso elemento, solo dove l'ordine non conta.
+- **Nulla cambia sullo schermo.** Lo dimostra la nuova prova `tools/prova-registrata/stili.mjs`: in Chrome automatico confronta lo stile finale di ogni elemento (colori, misure, posizione, anche `::before` e `::after`) fra la v1.62 e la v1.63, in 122 situazioni: 4 schede, Tuner, griglia Bank, Looper in registrazione, effetti in attesa, guida aperta…, ognuna con tema SCURO e SOLE, telefono in verticale, in orizzontale e piccolo (OPPO A9). Risultato: identico, 82.508 elementi. Anche messaggi MIDI, memoria del telefono e pagina sono identici (prova registrata), e l'app parte senza rete.
+- Test: 41 (uno nuovo: ogni file di `css/` è caricato dalla pagina, con `base.css` per primo e `tema-sole.css` per ultimo).
 
 ## Novità v1.62 — due correzioni dopo la prova lunga del 28/09/2026
 
@@ -204,7 +211,13 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 | File | Ruolo |
 | --- | --- |
 | `dist/index.html` | Schede PALCO, RIG, LOOPER, ALTRO e controlli |
-| `dist/styles.css` | Grafica (temi SCURO e SOLE) |
+| `dist/css/base.css` | Grafica comune: colori e misure (variabili), pagina, barra delle schede, pulsanti comuni, messaggi brevi |
+| `dist/css/palco.css` | Grafica della scheda PALCO |
+| `dist/css/rig.css` | Grafica della scheda RIG e della griglia Bank |
+| `dist/css/looper.css` | Grafica della scheda LOOPER e dell'indicatore Looper in PALCO |
+| `dist/css/tuner.css` | Grafica dell'accordatore a tutto schermo |
+| `dist/css/altro.css` | Grafica della scheda ALTRO |
+| `dist/css/tema-sole.css` | Tema SOLE: solo le differenze dal tema SCURO (caricato per ultimo) |
 | `dist/app.js` | Accensione: collega i pulsanti alle funzioni dei moduli e avvia l'app |
 | `dist/kemper-midi.js` | Protocollo: parser MIDI/SysEx, mapping effetti, costruttori di messaggi (anche beacon bidirezionale) |
 | `dist/demo.js` | Kemper simulato per la modalità demo |
@@ -233,7 +246,7 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 | `dist/icon*.svg`, `dist/icon*.png` | Icone |
 | `tests/midi.test.mjs` | Prove di protocollo, Looper, Morph, tempo, colori, 125 Bank |
 | `tests/moduli.test.mjs` | Prove di bidirezionale, conferma cambio Rig, Tuner (v1.60) |
-| `tests/struttura.test.mjs` | Cache offline, import, id della pagina (v1.60) |
+| `tests/struttura.test.mjs` | Cache offline, import, id della pagina (v1.60), file di grafica caricati (v1.63) |
 | `tests/moduli.mjs` | Aiuti per i test (lettura dei moduli) |
 | `tools/prova-registrata/` | Prova registrata prima/dopo (richiede Playwright; vedi il suo README) |
 | `configurazione-sites/hosting.json` | Copia visibile della configurazione Site originale (directory `dist`) |
@@ -263,6 +276,6 @@ Non è stata scelta una licenza open source. Prima di pubblicare il repository a
 
 1. **v1.4x** – grafica completata (cerchio Looper, icona, tema SOLE: fatto nella v1.41), nomi Bank completi (v1.41), pulizia tecnica (v1.41).
 2. **Prova lunga** sul Player: una prova o un servizio intero (vedi `docs/TESTING.md`, "Prova lunga").
-3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata. Poi Transpose −2…+2 in PALCO, dopo la prova di lettura sul Player.
+3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata (fatto). Poi Transpose −2…+2 in PALCO, dopo la prova di lettura sul Player.
 4. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, guida d'uso di una pagina.
 5. Dopo la 2.0: pedale MIDI Bluetooth.

@@ -1,0 +1,251 @@
+/* base.css — Colori e misure comuni (variabili), pagina, barra delle schede, pulsanti comuni, messaggi brevi. */
+
+:root {
+  color-scheme: dark;
+  --bg: #050806;
+  --surface: #0a120e;
+  --surface-2: #0e1913;
+  --surface-3: #132219;
+  --text: #f2fff7;
+  --muted: #8da699;
+  --line: rgba(171, 255, 202, 0.13);
+  --green: #8dff64;
+  --green-strong: #50ea45;
+  --cyan: #72ebdc;
+  --amber: #ffc25c;
+  --red: #ff6a6a;
+  --radius: 20px;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+* { box-sizing: border-box; }
+
+html { min-height: 100%; background: var(--bg); }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: max(18px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background:
+    radial-gradient(circle at 82% -5%, rgba(80, 234, 69, 0.16), transparent 32rem),
+    linear-gradient(180deg, #07100b 0, var(--bg) 34rem);
+}
+
+button { font: inherit; }
+
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid rgba(114, 235, 220, 0.65);
+  outline-offset: 3px;
+}
+
+.topbar,
+.view-switcher,
+main {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+.view-switcher {
+  position: sticky;
+  z-index: 12;
+  top: max(8px, env(safe-area-inset-top));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 18px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(5, 10, 7, 0.9);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+}
+
+.view-switcher button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  cursor: pointer;
+}
+
+.view-switcher button[aria-pressed="true"] {
+  background: var(--green);
+  color: #071008;
+  box-shadow: 0 0 24px rgba(141, 255, 100, 0.2);
+}
+
+.eyebrow,
+.section-kicker {
+  margin: 0 0 7px;
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+
+h1 {
+  margin-bottom: 0;
+  font-size: clamp(1.2rem, 3vw, 1.75rem);
+  letter-spacing: -0.035em;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(8, 18, 12, 0.78);
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #68756e;
+  box-shadow: 0 0 0 4px rgba(104, 117, 110, 0.13);
+}
+
+.status-pill[data-status="connected"] { color: var(--text); border-color: rgba(141, 255, 100, 0.35); }
+.status-pill[data-status="connected"] .status-dot { background: var(--green); box-shadow: 0 0 0 4px rgba(141, 255, 100, 0.13), 0 0 18px var(--green); }
+.status-pill[data-status="error"] .status-dot { background: var(--red); box-shadow: 0 0 0 4px rgba(255, 106, 106, 0.13); }
+
+main { display: grid; gap: 18px; }
+
+.live-panel,
+.looper-panel,
+.control-panel,
+.monitor-panel,
+.help-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, rgba(15, 27, 20, 0.97), rgba(6, 13, 9, 0.97));
+  box-shadow: var(--shadow);
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 50px;
+  border-radius: 12px;
+  padding: 0 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.button-icon { margin-right: 6px; font-size: 1.15rem; }
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.primary-button:hover,
+.secondary-button:hover { transform: translateY(-1px); }
+.primary-button:active,
+.secondary-button:active { transform: translateY(1px); }
+.primary-button:disabled,
+.secondary-button:disabled { opacity: 0.42; cursor: not-allowed; transform: none; }
+
+.auto-button[aria-pressed="true"] {
+  border-color: rgba(141, 255, 100, 0.42);
+  color: var(--green);
+  background: rgba(141, 255, 100, 0.08);
+}
+
+.text-button {
+  border: 0;
+  padding: 8px 0;
+  background: transparent;
+  color: var(--cyan);
+  font-weight: 750;
+  cursor: pointer;
+}
+.text-button:disabled { color: #52645a; cursor: not-allowed; }
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  max-width: min(380px, calc(100vw - 36px));
+  padding: 13px 16px;
+  border: 1px solid rgba(141, 255, 100, 0.25);
+  border-radius: 12px;
+  background: #102016;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.toast[data-visible="true"] { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 780px) {
+  body { padding-inline: 12px; }
+}
+
+@media (max-width: 520px) {
+  .eyebrow { font-size: 0.65rem; }
+  .status-pill { min-height: 36px; padding: 7px 10px; font-size: 0.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
+body:not([data-view="full"]) { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+.view-switcher { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.view-switcher button { font-size: 0.8rem; letter-spacing: 0.08em; }
+body:not([data-view="full"]) .view-switcher { margin-bottom: 8px; padding: 4px; border-radius: 12px; }
+body:not([data-view="full"]) .view-switcher button { min-height: 38px; font-size: 0.78rem; letter-spacing: 0.09em; }
+
+/* v1.38 · Messaggi brevi: pillola compatta in basso, non copre la barra delle schede
+   e lascia passare i tocchi ai pulsanti sottostanti */
+body:not([data-view="full"]) .toast {
+  top: auto; bottom: max(10px, env(safe-area-inset-bottom)); left: 50%; right: auto;
+  width: max-content; max-width: calc(100vw - 24px);
+  padding: 7px 14px 7px 12px; border-radius: 16px;
+  text-align: center; line-height: 1.3;
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.01em;
+  background: rgba(10, 22, 15, 0.94);
+  backdrop-filter: blur(6px);
+  transform: translate(-50%, 8px);
+}
+body:not([data-view="full"]) .toast[data-visible="true"] { transform: translate(-50%, 0); }
+.toast::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--cyan); vertical-align: 1px; }
+.toast[data-kind="ok"]::before { background: var(--green); }
+.toast[data-kind="warn"] { border-color: rgba(255, 194, 92, 0.55); }
+.toast[data-kind="warn"]::before { background: var(--amber); }
+
+/* Telefono in orizzontale */
+@media (orientation: landscape) and (max-height: 560px) {
+  body:not([data-view="full"]) .view-switcher { margin-bottom: 6px; padding: 3px; }
+  body:not([data-view="full"]) .view-switcher button { min-height: 30px; font-size: 0.7rem; }
+}
+
+/* ───────── v1.48 · Colori delle Bank (come i LED del Player) e scelta rapida ─────────
+   Bank 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete. */
+:root { --bank-blue: #5b95ff; --bank-yellow: #ffd84d; --bank-red: #ff5f55; --bank-green: #5fdc5a; --bank-violet: #b98cff; }
+[data-bank-color="blue"] { --bank-color: var(--bank-blue); }
+[data-bank-color="yellow"] { --bank-color: var(--bank-yellow); }
+[data-bank-color="red"] { --bank-color: var(--bank-red); }
+[data-bank-color="green"] { --bank-color: var(--bank-green); }
+[data-bank-color="violet"] { --bank-color: var(--bank-violet); }

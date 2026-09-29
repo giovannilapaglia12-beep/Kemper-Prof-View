@@ -1,0 +1,491 @@
+/* palco.css — Scheda PALCO: Rig in uso, BPM e TAP, Morph, 8 effetti, Fixed FX, Freeze, pulsante Tuner. */
+
+body[data-view="live"] main > :not(.live-panel) { display: none; }
+
+.live-panel {
+  overflow: hidden;
+  min-height: calc(100vh - 162px);
+  padding: clamp(20px, 4vw, 34px);
+  border-color: rgba(141, 255, 100, 0.24);
+  background:
+    radial-gradient(circle at 100% 0, rgba(114, 235, 220, 0.11), transparent 36rem),
+    linear-gradient(145deg, rgba(13, 26, 18, 0.99), rgba(4, 9, 6, 0.99));
+}
+.live-connection { flex: 0 0 auto; color: var(--muted); font-size: 0.78rem; font-weight: 800; }
+.live-connection[data-status="connected"] { color: var(--green); }
+.live-connection[data-status="error"] { color: var(--red); }
+
+.live-morph {
+  margin: 0 0 14px;
+  padding: 12px 16px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(3, 8, 5, 0.72);
+}
+.live-morph[data-active="true"] { border-color: rgba(114, 235, 220, 0.5); background: rgba(35, 98, 90, 0.16); }
+.live-morph[data-active="false"] { border-color: rgba(255, 106, 106, 0.35); }
+.live-morph-top { display: flex; align-items: baseline; gap: 12px; margin-bottom: 9px; }
+.live-morph-top > span:first-child { color: var(--green); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.14em; }
+.live-morph-top strong { color: var(--muted); font-size: 0.9rem; font-weight: 900; letter-spacing: 0.08em; }
+.live-morph[data-active="true"] .live-morph-top strong { color: var(--cyan); }
+.live-morph[data-active="false"] .live-morph-top strong { color: var(--red); }
+.live-morph-top > span:last-child { margin-left: auto; font-size: 1.15rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.live-morph-meter { height: 9px; overflow: hidden; border-radius: 99px; background: rgba(141, 255, 100, 0.11); }
+.live-morph-meter span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--green-strong), var(--cyan)); transition: width 180ms ease; }
+.live-morph-toggle,
+.live-morph-set button { min-height: 46px; border: 1px solid rgba(114, 235, 220, 0.42); border-radius: 10px; background: rgba(114, 235, 220, 0.1); color: var(--text); font-weight: 900; cursor: pointer; }
+.live-morph-set { display: grid; grid-template-columns: minmax(0, 1fr) minmax(96px, auto); align-items: center; gap: 14px; }
+.live-morph-set input { width: 100%; min-height: 44px; accent-color: var(--cyan); cursor: pointer; }
+.live-morph-toggle:disabled,
+.live-morph-set button:disabled,
+.live-morph-set input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.live-effects-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.live-effect-button {
+  --tone: var(--green);
+  --tone-rgb: 141, 255, 100;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-content: stretch;
+  min-width: 0;
+  min-height: 107px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-top: 3px solid rgba(var(--tone-rgb), 0.45);
+  border-radius: 11px;
+  background: rgba(5, 12, 8, 0.86);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.live-effect-button[data-tone="modulation"] { --tone: #91adff; --tone-rgb: 145, 173, 255; }
+
+.live-effect-button > span {
+  color: var(--tone);
+  font-size: 0.84rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.live-effect-button > strong {
+  align-self: center;
+  overflow-wrap: anywhere;
+  margin-block: 7px;
+  font-size: clamp(0.875rem, 1.35vw, 1rem);
+  line-height: 1.17;
+}
+
+.live-effect-button > small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.live-effect-button:not(:disabled):active { transform: scale(0.98); }
+.live-effect-button:disabled { cursor: default; opacity: 0.68; }
+.live-effect-button[data-tone="empty"] { --tone: #788c80; --tone-rgb: 120, 140, 128; background: rgba(5, 12, 8, 0.55); }
+.live-effect-button[data-tone="empty"] > strong { color: var(--muted); font-weight: 650; }
+.live-effect-button[data-active="true"] {
+  border-color: rgba(var(--tone-rgb), 0.7);
+  border-top-color: var(--tone);
+  background: linear-gradient(145deg, rgba(var(--tone-rgb), 0.23), rgba(6, 15, 9, 0.96));
+}
+.live-effect-button[data-active="true"] > small { color: var(--tone); }
+.live-effect-button[data-pending="true"] { border-color: var(--amber); }
+.live-effect-button[data-pending="true"] > small { color: var(--amber); }
+.live-effect-button[data-freeze="true"] {
+  border-color: rgba(114, 235, 220, 0.76);
+  box-shadow: inset 0 0 26px rgba(114, 235, 220, 0.12);
+}
+.live-effect-button[data-freeze="true"] > small { color: var(--cyan); }
+
+.live-fixed-fx-grid { display: grid; gap: 11px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 8px; }
+
+.live-fixed-fx-button,
+.live-action-button {
+  display: grid;
+  align-content: center;
+  min-height: 96px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(6, 14, 9, 0.88);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.live-fixed-fx-button:not(:disabled):active,
+.live-action-button:not(:disabled):active { transform: scale(0.985); }
+.live-fixed-fx-button:disabled,
+.live-action-button:disabled { cursor: default; opacity: 0.53; }
+.live-fixed-fx-button strong,
+.live-action-button strong { font-size: clamp(0.95rem, 1.75vw, 1.25rem); line-height: 1.17; overflow-wrap: anywhere; }
+.live-fixed-fx-button span,
+.live-action-button small { margin-top: 12px; color: var(--muted); font-size: 0.68rem; font-weight: 900; letter-spacing: 0.11em; }
+.live-action-button > span { margin-bottom: 5px; color: var(--muted); font-size: 0.68rem; font-weight: 900; letter-spacing: 0.13em; }
+
+.live-fixed-fx-button[data-active="true"] {
+  border-color: rgba(255, 194, 92, 0.65);
+  background: linear-gradient(145deg, rgba(255, 194, 92, 0.22), rgba(12, 16, 9, 0.96));
+  box-shadow: inset 0 0 30px rgba(255, 194, 92, 0.06);
+}
+.live-fixed-fx-button[data-pending="true"] { border-color: var(--cyan); }
+.live-fixed-fx-button[data-pending="true"] span { color: var(--cyan); }
+
+.live-freeze-button[data-active="true"] {
+  border-color: rgba(114, 235, 220, 0.72);
+  background: linear-gradient(145deg, rgba(114, 235, 220, 0.2), rgba(7, 16, 17, 0.96));
+}
+.live-freeze-button[data-active="true"] small { color: var(--cyan); }
+.live-freeze-button[data-pending="true"] { border-color: var(--amber); }
+.live-tuner-button[data-active="true"] {
+  border-color: rgba(141, 255, 100, 0.72);
+  background: linear-gradient(145deg, rgba(141, 255, 100, 0.2), rgba(7, 17, 9, 0.96));
+}
+.live-tuner-button[data-active="true"] small { color: var(--green); }
+.live-tap-button { border-color: rgba(255, 106, 106, 0.38); }
+.live-tap-button strong { color: var(--red); }
+
+@media (max-width: 780px) {
+  .live-fixed-fx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 900px) {
+  .live-effects-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .live-panel { min-height: calc(100vh - 150px); padding: 18px 14px; }
+  .live-effects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-effect-button { min-height: 104px; padding: 10px; }
+  .live-fixed-fx-button,
+  .live-action-button { min-height: 102px; padding: 13px; }
+  .live-tap-button { grid-column: 1 / -1; min-height: 88px; }
+}
+
+/* Contenitore PALCO: occupa esattamente lo schermo rimasto */
+body[data-view="live"] main { gap: 0; }
+body[data-view="live"] .live-panel.stage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: calc(100dvh - 48px - 8px - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+  min-height: 520px;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+/* Rig attuale */
+.stage-rig { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; min-width: 0; }
+.stage-rig-meta { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 26px; }
+.stage-rig-meta .live-connection { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+.stage-rig-position { flex: 0 0 auto; color: var(--amber); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stage-sync {
+  min-height: 26px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px;
+  background: transparent; color: var(--muted); font-size: 0.66rem; font-weight: 900; letter-spacing: 0.1em; cursor: pointer;
+}
+.stage-sync:disabled { opacity: 0.35; cursor: default; }
+.stage-rig-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(1.7rem, 8.4vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+/* Banner di collegamento: solo quando il Kemper non è collegato */
+.stage-connect { display: grid; gap: 6px; }
+.stage-connect button { min-height: 52px; font-size: 1rem; }
+.stage-connect p { margin: 0; color: var(--muted); font-size: 0.75rem; line-height: 1.35; }
+body[data-connected="true"] .stage-connect { display: none; }
+.stage-demo {
+  min-height: 40px; border: 1px dashed rgba(114, 235, 220, 0.45); border-radius: 10px;
+  background: transparent; color: var(--cyan); font-weight: 800; cursor: pointer;
+}
+
+/* Tempo: −1 · BPM · +1 · TAP */
+.stage-tempo {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px minmax(0, 1.05fr);
+  grid-template-areas: "down bpm up tap" "down round up tap";
+  gap: 4px 6px;
+}
+.stage-step, .stage-round, .stage-tap {
+  border: 1px solid var(--line); border-radius: 10px; background: rgba(6, 14, 9, 0.88);
+  color: var(--text); font-weight: 900; cursor: pointer;
+}
+.stage-step { font-size: 1.05rem; }
+#live-tempo-down-button { grid-area: down; }
+#live-tempo-up-button { grid-area: up; }
+.stage-bpm { grid-area: bpm; display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+.stage-bpm strong { font-size: clamp(1.9rem, 9vw, 2.6rem); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; }
+.stage-bpm span { color: var(--green); font-size: 0.66rem; font-weight: 900; letter-spacing: 0.14em; }
+.stage-round { grid-area: round; min-height: 26px; color: var(--amber); font-size: 0.64rem; letter-spacing: 0.08em; border-color: rgba(255, 194, 92, 0.3); }
+.stage-tap {
+  grid-area: tap; display: grid; place-content: center; gap: 2px; min-height: 64px;
+  border-color: rgba(255, 106, 106, 0.45); background: rgba(255, 106, 106, 0.09);
+}
+.stage-tap strong { color: var(--red); font-size: 1.5rem; letter-spacing: 0.08em; line-height: 1; }
+.stage-tap small { color: var(--muted); font-size: 0.56rem; font-weight: 900; letter-spacing: 0.08em; }
+.stage-step:disabled, .stage-round:disabled, .stage-tap:disabled { opacity: 0.4; cursor: default; }
+.stage-step:not(:disabled):active, .stage-round:not(:disabled):active, .stage-tap:not(:disabled):active { transform: scale(0.97); }
+
+/* Morph in una riga */
+body[data-view="live"] .stage-morph {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(104px, 0.9fr) minmax(0, 1.6fr) 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border-radius: 12px;
+}
+body[data-view="live"] .stage-morph .live-morph-toggle { min-height: 42px; padding: 0 6px; font-size: 0.72rem; letter-spacing: 0.04em; }
+body[data-view="live"] .stage-morph .live-morph-top { margin-bottom: 6px; gap: 8px; }
+body[data-view="live"] .stage-morph .live-morph-top strong { font-size: 0.72rem; }
+body[data-view="live"] .stage-morph .live-morph-top > span:last-child { font-size: 0.9rem; }
+.stage-morph-level summary {
+  display: grid; place-items: center; width: 40px; height: 42px; border: 1px solid var(--line); border-radius: 10px;
+  color: var(--muted); font-weight: 900; list-style: none; cursor: pointer;
+}
+.stage-morph-level summary::-webkit-details-marker { display: none; }
+.stage-morph-level[open] summary { border-color: var(--cyan); color: var(--cyan); }
+.stage-morph-popover {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0;
+  display: grid; gap: 10px; padding: 12px; border: 1px solid rgba(114, 235, 220, 0.4); border-radius: 12px;
+  background: #07110d; box-shadow: var(--shadow);
+}
+.stage-morph-popover label { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.7rem; font-weight: 850; letter-spacing: 0.08em; }
+.stage-morph-popover output { color: var(--text); }
+.stage-morph-popover p { margin: 0; color: var(--amber); font-size: 0.7rem; }
+
+/* 8 effetti: 4 × 2, si allargano per riempire lo spazio */
+body[data-view="live"] .stage .live-effects-grid {
+  flex: 1 1 auto;
+  min-height: 150px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+body[data-view="live"] .stage .live-effect-button {
+  min-height: 0;
+  padding: 7px 7px 6px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-radius: 10px;
+}
+body[data-view="live"] .stage .live-effect-button > span { font-size: 0.78rem; }
+body[data-view="live"] .stage .live-effect-button > strong {
+  display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  margin-block: 3px; font-size: clamp(0.7rem, 3.05vw, 0.98rem); line-height: 1.12; letter-spacing: -0.01em;
+  overflow-wrap: break-word; hyphens: auto;
+}
+body[data-view="live"] .stage .live-effect-button > small { font-size: 0.7rem; }
+body[data-view="live"] .stage .live-effect-button[data-active="true"] > small { font-size: 0.82rem; }
+
+/* Fixed FX + Freeze + Tuner: 3 × 2 */
+.stage-fx { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+body[data-view="live"] .stage-fx .live-fixed-fx-grid { display: contents; }
+body[data-view="live"] .stage-fx .live-fixed-fx-button,
+body[data-view="live"] .stage-fx .live-action-button {
+  min-height: 52px; padding: 6px 8px; gap: 2px; border-radius: 10px; align-content: center;
+}
+body[data-view="live"] .stage-fx .live-fixed-fx-button strong,
+body[data-view="live"] .stage-fx .live-action-button strong { font-size: clamp(0.7rem, 3.1vw, 0.88rem); line-height: 1.1; }
+body[data-view="live"] .stage-fx .live-fixed-fx-button span,
+body[data-view="live"] .stage-fx .live-action-button small { margin-top: 2px; font-size: 0.6rem; letter-spacing: 0.06em; }
+#live-tuner-note { color: var(--green); }
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .live-panel.stage {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "rig effects" "connect effects" "tempo effects" "morph effects" "fx fx";
+    gap: 6px 10px;
+    height: calc(100dvh - 38px - 6px - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+    min-height: 0;
+    padding: 8px;
+  }
+  .stage-rig { grid-area: rig; min-width: 0; }
+  .stage-rig-name { -webkit-line-clamp: 1; font-size: clamp(1.2rem, 3.6vw, 1.9rem); }
+  .stage-connect { grid-area: connect; }
+  .stage-connect p { display: none; }
+  .stage-tempo { grid-area: tempo; grid-template-columns: 38px minmax(0, 1fr) 38px minmax(0, 0.9fr); }
+  .stage-bpm strong { font-size: clamp(1.4rem, 4vw, 2rem); }
+  .stage-tap { min-height: 50px; }
+  .stage-tap strong { font-size: 1.2rem; }
+  body[data-view="live"] .stage-morph { grid-area: morph; align-self: start; padding: 5px; }
+  body[data-view="live"] .stage-morph .live-morph-toggle,
+  .stage-morph-level summary { min-height: 36px; height: 36px; }
+  body[data-view="live"] .stage .live-effects-grid { grid-area: effects; min-height: 0; }
+  .stage-fx { grid-area: fx; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  body[data-view="live"] .stage-fx .live-fixed-fx-button,
+  body[data-view="live"] .stage-fx .live-action-button { min-height: 40px; padding: 4px 6px; }
+  body[data-view="live"] .stage-fx .live-fixed-fx-button strong,
+  body[data-view="live"] .stage-fx .live-action-button strong { font-size: 0.7rem; }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .stage .live-effect-button { padding: 5px 6px; }
+  body[data-view="live"] .stage .live-effect-button > strong {
+    font-size: clamp(0.64rem, 1.45vw, 0.86rem);
+    -webkit-line-clamp: 2;
+  }
+  body[data-view="live"] .stage .live-effect-button > span,
+  body[data-view="live"] .stage .live-effect-button > small { font-size: 0.66rem; }
+}
+.stage-sync { margin-left: auto; }
+
+/* Battito del tempo inviato dal Player (124/0) sulla schermata PALCO */
+.stage-bpm { position: relative; }
+.stage-beat {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(141, 255, 100, 0.16);
+  transition: background 0.06s, box-shadow 0.06s;
+}
+.stage-bpm:not([data-beat-seen="true"]) .stage-beat { display: none; }
+.stage-bpm[data-pulse="true"] .stage-beat { background: var(--green); box-shadow: 0 0 12px var(--green); }
+
+/* ───────── v1.38 · Proposta 1: effetti leggibili da lontano ─────────
+   ON  = riquadro pieno del colore della categoria, testo scuro
+   OFF = riquadro spento, testo attenuato
+   Il nome si adatta alla larghezza del riquadro (--chars = parola più lunga) senza spezzare le parole. */
+body[data-view="live"] .stage .live-effect-button {
+  container-type: inline-size;
+  border-top-width: 1px;
+  border-color: rgba(var(--tone-rgb), 0.2);
+  background: rgba(4, 10, 7, 0.92);
+  transition: background 90ms ease, border-color 90ms ease, box-shadow 90ms ease, transform 120ms ease;
+}
+body[data-view="live"] .stage .live-effect-button > strong {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+  font-size: clamp(0.72rem, calc(100cqi * 1.3 / var(--chars, 8)), 1.2rem);
+  font-weight: 850;
+  line-height: 1.08;
+  color: #a9bcb1;
+}
+body[data-view="live"] .stage .live-effect-button > span { color: rgba(var(--tone-rgb), 0.75); }
+body[data-view="live"] .stage .live-effect-button > small { color: #6f8579; letter-spacing: 0.1em; }
+
+body[data-view="live"] .stage .live-effect-button[data-active="true"] {
+  border-color: var(--tone);
+  background: linear-gradient(165deg, rgba(var(--tone-rgb), 1), rgba(var(--tone-rgb), 0.78));
+  box-shadow: 0 0 16px rgba(var(--tone-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+body[data-view="live"] .stage .live-effect-button[data-active="true"] > strong { color: #04100a; }
+body[data-view="live"] .stage .live-effect-button[data-active="true"] > span,
+body[data-view="live"] .stage .live-effect-button[data-active="true"] > small { color: rgba(4, 16, 10, 0.72); }
+
+body[data-view="live"] .stage .live-effect-button[data-tone="empty"] { border-style: dashed; background: rgba(4, 10, 7, 0.5); }
+body[data-view="live"] .stage .live-effect-button[data-tone="empty"] > strong { color: #56695e; font-weight: 700; }
+
+body[data-view="live"] .stage .live-effect-button[data-pending="true"] {
+  border: 2px solid var(--amber);
+  animation: v138-pending 0.7s ease-in-out infinite alternate;
+}
+body[data-view="live"] .stage .live-effect-button[data-freeze="true"] {
+  border-color: var(--cyan);
+  background: linear-gradient(165deg, rgba(114, 235, 220, 1), rgba(114, 235, 220, 0.72));
+  box-shadow: 0 0 18px rgba(114, 235, 220, 0.35);
+}
+body[data-view="live"] .stage .live-effect-button[data-freeze="true"] > strong { color: #04100a; }
+body[data-view="live"] .stage .live-effect-button[data-freeze="true"] > span,
+body[data-view="live"] .stage .live-effect-button[data-freeze="true"] > small { color: rgba(4, 16, 10, 0.75); }
+
+/* Stesso linguaggio per Fixed FX, Freeze e Tuner nella riga in basso */
+body[data-view="live"] .stage-fx .live-freeze-button[data-active="true"] {
+  border-color: var(--cyan);
+  background: linear-gradient(165deg, #72ebdc, rgba(114, 235, 220, 0.78));
+  box-shadow: 0 0 14px rgba(114, 235, 220, 0.25);
+}
+body[data-view="live"] .stage-fx .live-tuner-button[data-active="true"] {
+  border-color: var(--green);
+  background: linear-gradient(165deg, #8dff64, rgba(141, 255, 100, 0.78));
+}
+body[data-view="live"] .stage-fx [data-active="true"] strong,
+body[data-view="live"] .stage-fx [data-active="true"] #live-tuner-note { color: #04100a; }
+body[data-view="live"] .stage-fx [data-active="true"] span,
+body[data-view="live"] .stage-fx [data-active="true"] small { color: rgba(4, 16, 10, 0.72); }
+body[data-view="live"] .stage-fx [data-active="false"] strong { color: #a9bcb1; }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .stage .live-effect-button > strong {
+    font-size: clamp(0.66rem, calc(100cqi * 1.3 / var(--chars, 8)), 1rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-view="live"] .stage .live-effect-button[data-pending="true"] { animation: none; }
+}
+
+/* ───────── v1.39 · Colori delle categorie come sul Kemper ───────── */
+.live-effect-button[data-tone="wah"] { --tone: #ff9d3d; --tone-rgb: 255, 157, 61; }
+.live-effect-button[data-tone="drive"] { --tone: #ff5f55; --tone-rgb: 255, 95, 85; }
+.live-effect-button[data-tone="eq"] { --tone: #ffd84d; --tone-rgb: 255, 216, 77; }
+.live-effect-button[data-tone="dynamics"] { --tone: #56e3e0; --tone-rgb: 86, 227, 224; }
+.live-effect-button[data-tone="chorus"] { --tone: #6f9bff; --tone-rgb: 111, 155, 255; }
+.live-effect-button[data-tone="phaser"] { --tone: #b98cff; --tone-rgb: 185, 140, 255; }
+.live-effect-button[data-tone="pitch"] { --tone: #eef3f0; --tone-rgb: 238, 243, 240; }
+.live-effect-button[data-tone="delay"] { --tone: #5fdc5a; --tone-rgb: 95, 220, 90; }
+.live-effect-button[data-tone="pitchdelay"] { --tone: #b7f58c; --tone-rgb: 183, 245, 140; }
+.live-effect-button[data-tone="reverb"] { --tone: #34c98a; --tone-rgb: 52, 201, 138; }
+.live-effect-button[data-tone="loop"] { --tone: #ff7cc6; --tone-rgb: 255, 124, 198; }
+
+/* Fixed FX: Pure Booster rosso (booster), Vintage Chorus blu (chorus),
+   Transpose bianco (pitch), Double Tracker giallo (categoria EQ, come sul Kemper) */
+.live-fixed-fx-booster { --fx: #ff5f55; --fx-rgb: 255, 95, 85; }
+.live-fixed-fx-chorus { --fx: #6f9bff; --fx-rgb: 111, 155, 255; }
+.live-fixed-fx-transpose { --fx: #eef3f0; --fx-rgb: 238, 243, 240; }
+.live-fixed-fx-doubleTracker { --fx: #ffd84d; --fx-rgb: 255, 216, 77; }
+body[data-view="live"] .stage-fx .live-fixed-fx-button { border-color: rgba(var(--fx-rgb), 0.22); }
+body[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] {
+  border-color: var(--fx);
+  background: linear-gradient(165deg, rgba(var(--fx-rgb), 1), rgba(var(--fx-rgb), 0.78));
+  box-shadow: 0 0 14px rgba(var(--fx-rgb), 0.28);
+}
+.live-fixed-fx-button[data-active="true"] { border-color: rgba(var(--fx-rgb), 0.7); }
+.live-fixed-fx-button[data-active="true"] span { color: var(--fx); }
+
+/* ───────── v1.39 · Morph con i colori del Kemper ─────────
+   BASE = rosso, MORPH pieno = blu; nei livelli intermedi il colore sfuma dal rosso al blu
+   (--morph = percentuale 0…100, impostata dall'app). */
+.live-morph { --morph-color: color-mix(in srgb, #4f8dff calc(var(--morph, 0) * 1%), #ff5f55); }
+.live-morph[data-active="false"],
+.live-morph[data-active="true"] {
+  border-color: var(--morph-color);
+  background: color-mix(in srgb, var(--morph-color) 9%, rgba(4, 10, 7, 0.7));
+}
+.live-morph[data-active="false"] .live-morph-top strong,
+.live-morph[data-active="true"] .live-morph-top strong { color: var(--morph-color); }
+.live-morph-top > span:first-child { color: var(--muted); }
+.live-morph-meter { background: rgba(255, 95, 85, 0.22); }
+.live-morph-meter span { background: var(--morph-color); }
+.live-morph-toggle { border-color: color-mix(in srgb, var(--morph-color) 60%, transparent); background: rgba(255, 255, 255, 0.04); }
+.live-morph-toggle[aria-pressed="true"] { border-color: var(--morph-color); background: var(--morph-color); color: #04100a; }
+
+/* PALCO: pallino del colore della Bank prima di "BANK x · RIG y" */
+.stage-rig-position[data-bank-color]::before {
+  content: ""; display: inline-block; width: 0.72em; height: 0.72em; margin-right: 0.4em; border-radius: 50%;
+  background: var(--bank-color); vertical-align: -0.06em;
+}
+.stage-rig-position[data-bank-color] { color: var(--bank-color); }

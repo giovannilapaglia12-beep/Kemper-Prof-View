@@ -79,3 +79,13 @@ test('Ogni ui.<nome> usato nel codice è definito in js/dom.js (v1.61: pannelli 
   }
   assert.deepEqual([...new Set(missing)], []);
 });
+
+test('Ogni file di grafica in css/ è caricato da index.html; base.css per primo e tema-sole.css per ultimo (v1.63)', () => {
+  const html = read('index.html');
+  const linked = [...html.matchAll(/<link rel="stylesheet" href="\.\/([^"]+)"/g)].map((match) => match[1]);
+  const files = listFiles('css/', 'css/').filter((file) => file.endsWith('.css'));
+  assert.deepEqual([...linked].sort(), [...files].sort(), 'File .css caricati da index.html diversi da quelli in dist/css/');
+  // Il tema SOLE contiene solo le differenze dal tema SCURO: deve venire dopo tutto il resto.
+  assert.equal(linked[0], 'css/base.css');
+  assert.equal(linked.at(-1), 'css/tema-sole.css');
+});

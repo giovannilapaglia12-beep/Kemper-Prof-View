@@ -1,4 +1,18 @@
-# Verifiche hardware, test locali e problemi aperti — v1.62
+# Verifiche hardware, test locali e problemi aperti — v1.63
+
+## Da provare con la v1.63 (solo un colpo d'occhio, circa 5 minuti)
+
+La v1.63 cambia solo come è organizzata la grafica: sullo schermo deve essere **tutto uguale** alla v1.62. Basta guardare.
+
+- [ ] **Aggiornamento**: in alto in ALTRO compare **v1.63** (alla 2ª–3ª riapertura). Se la pagina appare senza colori o tutta bianca, chiudi e riapri l'app ancora una volta; se resta così, salva la diagnostica e avvisami.
+- [ ] **PALCO, tema SCURO**: nome del Rig, BPM e TAP, Morph, 8 effetti con i loro colori, Fixed FX, REV, pulsante Tuner come prima; niente scorrimento.
+- [ ] **RIG**: Bank con il suo colore, Rig IN USO verde, griglia "BANK ▾" che si apre e si chiude.
+- [ ] **LOOPER**: pulsanti, cerchio di avanzamento, REVERSE e ½ SPEED come prima.
+- [ ] **Tuner**: si apre a tutto schermo, diventa verde quando la corda è intonata.
+- [ ] **ALTRO**: riquadri, messaggi e guida come prima.
+- [ ] **Tema SOLE**: cambialo in ALTRO e ripassa velocemente PALCO, RIG, LOOPER e Tuner. Poi rimetti il tema che usi.
+- [ ] **Telefono in orizzontale**: PALCO come prima.
+- [ ] **Senza rete** (modalità aereo): l'app si apre lo stesso, con la grafica completa.
 
 ## Da provare con la v1.62 (comprende v1.60 e v1.61; circa 5 minuti in più)
 
@@ -45,10 +59,10 @@ La v1.60 non cambia nulla di visibile: il codice è solo diviso in più file. La
 
 Se qualcosa non va: salva la diagnostica e annota il passo. Per tornare alla v1.52 basta ricaricare su GitHub i file della v1.52.
 
-## Test automatici (v1.60)
+## Test automatici (v1.63)
 
-- `node --test` dalla cartella principale: 33 test (protocollo, Looper, Morph, tempo, colori, 125 Bank, bidirezionale, conferma cambio Rig, Tuner, struttura dei file).
-- Prova registrata prima/dopo: `tools/prova-registrata/README.md`.
+- `node --test` dalla cartella principale: 41 test (protocollo, Looper, Morph, tempo, colori, 125 Bank, bidirezionale, conferma cambio Rig, Tuner, prova Transpose, correzioni v1.62, struttura dei file e della grafica).
+- Prova registrata prima/dopo e confronto dello stile di ogni elemento (`stili.mjs`, v1.63): `tools/prova-registrata/README.md`.
 
 ## Esito v1.48–v1.50 sul Player (27/09/2026)
 

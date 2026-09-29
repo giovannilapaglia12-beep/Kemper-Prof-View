@@ -250,7 +250,7 @@ test('Colori delle categorie come sul Kemper (v1.39)', () => {
 });
 
 test('Morph: il colore segue la percentuale (rosso BASE → blu MORPH, v1.40)', () => {
-  const css = fs.readFileSync(new URL('../dist/styles.css', import.meta.url), 'utf8');
+  const css = fs.readFileSync(new URL('../dist/css/palco.css', import.meta.url), 'utf8');
   assert.match(css, /--morph-color: color-mix\(in srgb, #4f8dff calc\(var\(--morph, 0\) \* 1%\), #ff5f55\)/);
   assert.match(css, /\.live-fixed-fx-doubleTracker \{ --fx: #ffd84d;/);
   assert.match(source('js/morph.js'), /ui\.liveMorph\.style\.setProperty\("--morph", String\(percent\)\)/);
