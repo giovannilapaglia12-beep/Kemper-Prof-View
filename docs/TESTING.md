@@ -1,4 +1,19 @@
-# Verifiche hardware, test locali e problemi aperti — v1.61
+# Verifiche hardware, test locali e problemi aperti — v1.62
+
+## Da provare con la v1.62 (comprende v1.60 e v1.61; circa 5 minuti in più)
+
+Se non hai ancora provato la v1.61, fai prima le sue prove qui sotto (cerca **v1.62** nella voce Aggiornamento).
+
+- [ ] **Ritorno all'app**: con il collegamento ⇄ attivo, passa a un'altra app (WhatsApp, lettore delle basi) per almeno 20 secondi, poi torna. Non deve comparire "Collegamento bidirezionale perso" e ⇄ resta acceso.
+- [ ] **REVERSE dopo il Player spento**: nella scheda LOOPER accendi REVERSE (l'app mostra REVERSE: ON). Chiudi l'app, spegni il Player e aspetta più di 10 minuti. Riaccendi il Player e riapri l'app: compare "REVERSE e ½ SPEED azzerati" e la scheda mostra REVERSE: OFF. Registra un loop breve: suona normale.
+- [ ] **REVERSE senza spegnere**: accendi REVERSE, chiudi e riapri l'app entro pochi minuti con il Player acceso: REVERSE resta ON (come sul Player).
+
+## Esito prova lunga v1.52 (28/09/2026)
+
+- Stabile: circa 1 h collegata con il bidirezionale, schermo sempre acceso, nessun errore, 143.666 messaggi e 95 ridisegni. 6 cambi Rig, Looper, Freeze, Fixed FX, Tuner.
+- Due falsi "bidirezionale persa" rientrati subito, dopo una chiamata WhatsApp → corretto nella v1.62.
+- REVERSE indicato ON ma il Player registrava normale (Player spento dalla sera prima) → corretto nella v1.62.
+
 
 ## Da provare con la v1.61 (comprende la v1.60; circa 20 minuti, dopo la prova lunga sulla v1.52)
 

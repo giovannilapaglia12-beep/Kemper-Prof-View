@@ -28,6 +28,12 @@ const BIDI_SENSING_TIMEOUT_MS = 4000;
 const BIDI_PUSH_WINDOW_MS = 350;
 export const BIDI_SAFETY_POLL_MS = 10000;
 const BIDI_TICK_MS = 250;
+// v1.62: al ritorno in primo piano (dopo un'altra app o una chiamata) Chrome consegna in ritardo i messaggi
+// arrivati nel frattempo: per 2 s l'app non dichiara "persa" la modalità bidirezionale (prova lunga del 28/09/2026:
+// due falsi "persa", rientrati in 7–15 ms, dopo una chiamata WhatsApp).
+const BIDI_RESUME_GRACE_MS = 2000;
+// Se fra due controlli passa più di 1 s, i timer erano fermi: l'app era in secondo piano.
+const BIDI_TICK_GAP_MS = 1000;
 const BIDI_LABELS = {
   disabled: "SPENTA",
   off: "IN ATTESA DEL PLAYER",
@@ -129,6 +135,15 @@ export function requestsPerMinute() {
 function bidiTick() {
   const bidi = session.bidi;
   const now = performance.now();
+  const gap = bidi.lastTickAt === undefined ? 0 : now - bidi.lastTickAt;
+  bidi.lastTickAt = now;
+  if (document.visibilityState !== "visible") {
+    bidi.hiddenSeen = true;
+  } else if (bidi.hiddenSeen || gap > BIDI_TICK_GAP_MS) {
+    bidi.hiddenSeen = false;
+    bidi.resumeGraceUntil = now + BIDI_RESUME_GRACE_MS;
+    bidi.resumes = (bidi.resumes ?? 0) + 1;
+  }
   sampleRequestRate(now);
   if (document.body.dataset.view === "full" && now - (bidiTick.paintedAt ?? 0) > 2000) {
     bidiTick.paintedAt = now;
@@ -151,7 +166,7 @@ function bidiTick() {
   // Con l'app in secondo piano non si rinnova il beacon: il Player smette da solo dopo il lease.
   if (document.visibilityState !== "visible") return;
   if (bidi.state === "active") {
-    if (now - bidi.lastSensingAt > BIDI_SENSING_TIMEOUT_MS) {
+    if (now - bidi.lastSensingAt > BIDI_SENSING_TIMEOUT_MS && now >= (bidi.resumeGraceUntil ?? 0)) {
       bidi.drops += 1;
       bidi.covered.clear();
       setBidiState("lost", "Nessun sensing dal Player da oltre 4 s");

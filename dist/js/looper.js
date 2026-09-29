@@ -2,7 +2,7 @@
 // cerchio di avanzamento e posizione INGRESSO/USCITA.
 
 import { buildParameterChangeRequest, buildParameterRequest, bytesToHex } from "../kemper-midi.js";
-import { LOOPER_HALF_KEY, LOOPER_REVERSE_KEY, QUANTIZE_KEY, TEMPO_UNITS_PER_BPM } from "./config.js";
+import { LOOPER_HALF_KEY, LOOPER_REVERSE_KEY, PLAYER_SEEN_KEY, QUANTIZE_KEY, TEMPO_UNITS_PER_BPM } from "./config.js";
 import { setTextIfChanged, toast, ui } from "./dom.js";
 import { session } from "./state.js";
 import { describePort, profilerOutputs, sendProfilerRequests } from "./connection.js";
@@ -102,6 +102,41 @@ export const looper = { state: "empty", since: 0, loopLength: null, stopPresses:
 try { looper.half = localStorage.getItem(LOOPER_HALF_KEY) === "1"; } catch { /* facoltativo */ }
 // v1.42: anche REVERSE resta attivo sul Player dopo la cancellazione (prova del 26/09/2026): lo si ricorda.
 try { looper.reverse = localStorage.getItem(LOOPER_REVERSE_KEY) === "1"; } catch { /* facoltativo */ }
+
+// v1.62: il Player spento torna a REVERSE e ½ SPEED OFF, ma non comunica lo stato del Looper: l'app li ricordava
+// ON (prova del 28/09/2026: "diceva REVERSE attivo, ma registrando non era così"; il Player era stato spento).
+// Se l'app non sente il Player da più di 10 minuti (di solito: Player spento dopo il servizio), riparte da OFF.
+export const PLAYER_RESTART_PAUSE_MS = 10 * 60 * 1000;
+const PLAYER_SEEN_WRITE_MS = 30 * 1000;
+export const LOOPER_FLAGS_RESET_NOTE = "REVERSE e ½ SPEED ripartono da OFF: il Player è rimasto scollegato più di 10 minuti (probabilmente spento).";
+
+// true se REVERSE o ½ SPEED erano ricordati ON ma l'ultimo contatto col Player è troppo vecchio (o sconosciuto).
+export function looperFlagsNeedReset({ reverse, half, seenAt, now }) {
+  if (!reverse && !half) return false;
+  return !(seenAt > 0 && now - seenAt >= 0 && now - seenAt < PLAYER_RESTART_PAUSE_MS);
+}
+
+export let looperFlagsReset = false;
+try {
+  if (looperFlagsNeedReset({ reverse: looper.reverse, half: looper.half,
+    seenAt: Number(localStorage.getItem(PLAYER_SEEN_KEY)), now: Date.now() })) {
+    looper.reverse = false;
+    looper.half = false;
+    localStorage.setItem(LOOPER_REVERSE_KEY, "0");
+    localStorage.setItem(LOOPER_HALF_KEY, "0");
+    looperFlagsReset = true;
+  }
+} catch { /* facoltativo */ }
+
+// Ultimo contatto col Player (scritto al massimo ogni 30 s). La demo non conta: non è un Player vero.
+let playerSeenWrittenAt = 0;
+export function notePlayerContact() {
+  if (window.__kemperDemo) return;
+  const now = Date.now();
+  if (now - playerSeenWrittenAt < PLAYER_SEEN_WRITE_MS) return;
+  playerSeenWrittenAt = now;
+  try { localStorage.setItem(PLAYER_SEEN_KEY, String(now)); } catch { /* facoltativo */ }
+}
 const QUANTIZE_MODES = {
   off: { label: "OFF", beats: 0 },
   beat: { label: "MOVIMENTO", beats: 1 },

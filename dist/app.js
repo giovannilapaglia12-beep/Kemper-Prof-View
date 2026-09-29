@@ -26,6 +26,8 @@ import { paintBidi, toggleBidirectional } from "./js/bidi.js";
 import { requestProfilerState, toggleAutoSync } from "./js/sync.js";
 import {
   looper,
+  LOOPER_FLAGS_RESET_NOTE,
+  looperFlagsReset,
   paintLooperState,
   refreshLooperControls,
   releaseAllLooperSwitches,
@@ -147,6 +149,10 @@ refreshFixedFxControls();
 refreshLiveMorphControls();
 refreshLooperControls();
 paintLooperState();
+if (looperFlagsReset) {
+  ui.looperStatus.textContent = LOOPER_FLAGS_RESET_NOTE;
+  toast("REVERSE e ½ SPEED azzerati: il Player era spento");
+}
 paintBidi();
 try {
   setAppView(localStorage.getItem("kemper-stage-view-mode") ?? "live", { remember: false });

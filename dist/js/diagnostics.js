@@ -283,6 +283,7 @@ function buildDiagnostics() {
       sensingBeforeFirstBeacon: session.bidi.sensingBeforeBeacon,
       activeSince: session.bidi.activeSince,
       drops: session.bidi.drops,
+      resumesFromBackground: session.bidi.resumes ?? 0,
       coveredNow: [...session.bidi.covered].map((key) => ({ key, name: keyName(key) })),
       pushedByPlayer: Object.fromEntries(session.bidi.pushed),
       otherSysexWhileActive: session.bidi.otherSysex,

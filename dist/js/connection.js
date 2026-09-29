@@ -25,7 +25,13 @@ import {
 import { kemper, setConnection } from "./screen.js";
 import { handleBidirectional, startBidiTimer } from "./bidi.js";
 import { requestProfilerState, scheduleProfilerSync, startAutoSync } from "./sync.js";
-import { handleLooperLocation, paintLooperLocation, refreshLooperControls, releaseAllLooperSwitches } from "./looper.js";
+import {
+  handleLooperLocation,
+  notePlayerContact,
+  paintLooperLocation,
+  refreshLooperControls,
+  releaseAllLooperSwitches,
+} from "./looper.js";
 import { captureTransposeProbe } from "./transpose-probe.js";
 
 export function describePort(port) {
@@ -100,6 +106,7 @@ function attachInputs() {
       // Controller and virtual ports may emit PC/CC; only the Profiler owns app state.
       if (!isProfilerPort(input)) return;
       const sourceName = describePort(input);
+      notePlayerContact();
       const decoded = kemper.ingest(event);
       handleBidirectional(decoded);
       handleBankNames(decoded);
