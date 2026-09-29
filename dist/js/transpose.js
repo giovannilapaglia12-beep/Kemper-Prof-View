@@ -4,6 +4,9 @@
 // Deciso con Giovanni (28/09/2026, docs/STATO.md): il valore scelto con un tocco resta anche cambiando Rig, finché
 // non lo cambia lui (dall'app o dal Player); se il Player lo riporta al valore del Rig, l'app lo reimposta.
 // Ogni comando aspetta la conferma del Player (lettura di 4/4 e 5/1).
+// v1.65 (prova di Giovanni del 29/09/2026, diagnostica 09:55): il tocco sul riquadro torna ad accendere e spegnere
+// (con l'ultimo valore scelto), la scelta −2…+2 si apre con il pulsante ±; dopo un cambio Rig il valore scelto viene
+// rimandato subito, senza aspettare 1 s la lettura del nuovo Rig (si sentiva il Rig a 0 per circa un secondo).
 
 import {
   buildFixedFxStateRequests,
@@ -23,14 +26,16 @@ import { confirmationPollAllowed } from "./sync.js";
 const SWITCH = FIXED_FX.find((effect) => effect.key === "transpose");
 const CONFIRM_POLL_MS = 400;
 const CONFIRM_TIMEOUT_MS = 2800;
-// Dopo un cambio Rig: lettura dei valori del nuovo Rig dopo 1 s (come le altre letture dopo un cambio).
-const RIG_READ_DELAY_MS = 1000;
-// L'app reimposta il valore solo se legge il nuovo Rig entro 8 s dal cambio: niente comandi a sorpresa più tardi.
+// Dopo un cambio Rig con Transpose spento (scelto 0): lettura del nuovo Rig. Il Player risponde subito (29/09/2026:
+// nome del Rig 25 ms dopo il Program Change, valori letti in 5 ms).
+const RIG_READ_DELAY_MS = 250;
+// L'app corregge un Rig salvato con il Transpose solo se lo legge entro 8 s dal cambio: niente comandi a sorpresa più tardi.
 const RIG_REAPPLY_WINDOW_MS = 8000;
 
 session.transpose = {
   raw: null, // semitoni letti dal Player (4/4, 64 = 0)
-  target: null, // semitoni scelti con un tocco; null = l'app segue il Player e non reimposta nulla
+  target: null, // semitoni scelti con un tocco (0 = spento); null = l'app segue il Player e non reimposta nulla
+  memory: null, // ultimo valore diverso da 0 (scelto o visto sul Player): lo riaccende il tocco sul riquadro
   pending: null, // comando in attesa di conferma: { semitones, reason, startedAt }
   rigChangeAt: null, // cambio Rig in attesa dei valori del nuovo Rig
   lastRigIndex: null,
@@ -48,7 +53,10 @@ let tile = null;
 function transposeTile() {
   if (!tile) {
     const button = ui.liveFixedFxGrid.querySelector(".live-fixed-fx-transpose");
-    if (button) tile = { button, value: button.querySelector(".live-transpose-value"), state: button.querySelector("span") };
+    if (button) {
+      tile = { button, value: button.querySelector(".live-transpose-value"), state: button.querySelector("span"),
+        pick: ui.liveFixedFxGrid.querySelector(".live-transpose-pick") };
+    }
   }
   return tile;
 }
@@ -64,7 +72,7 @@ function canControl() {
 
 export function closeTransposePicker() {
   ui.liveTransposePicker.hidden = true;
-  transposeTile()?.button.setAttribute("aria-expanded", "false");
+  transposeTile()?.pick.setAttribute("aria-expanded", "false");
 }
 
 export function toggleTransposePicker() {
@@ -73,10 +81,15 @@ export function toggleTransposePicker() {
     return;
   }
   const tile = transposeTile();
-  if (!tile || tile.button.disabled) return;
+  if (!tile || tile.pick.disabled) return;
   ui.liveTransposePicker.hidden = false;
-  tile.button.setAttribute("aria-expanded", "true");
+  tile.pick.setAttribute("aria-expanded", "true");
   paintTranspose();
+}
+
+// Valore mostrato: quello del Player se acceso; se spento, l'ultimo scelto (quello che riaccende il tocco).
+function shownSemitones(semitones, on) {
+  return on === 0 && session.transpose.memory !== null ? session.transpose.memory : semitones;
 }
 
 export function paintTranspose() {
@@ -89,11 +102,13 @@ export function paintTranspose() {
   const known = on !== null && semitones !== null;
   const pending = t.pending !== null;
   const disabled = !canControl() || !known || pending;
+  const shown = known ? shownSemitones(semitones, on) : null;
   tile.button.dataset.active = on === null ? "unknown" : String(on > 0);
   tile.button.dataset.pending = String(pending);
   tile.button.disabled = disabled;
+  tile.pick.disabled = disabled;
   tile.button.setAttribute("aria-pressed", String(on === 1));
-  tile.value.textContent = semitones === null ? "" : signedSemitones(semitones);
+  tile.value.textContent = shown === null ? "" : signedSemitones(shown);
   tile.state.textContent = pending
     ? "ATTENDO KEMPER"
     : current?.supported === false
@@ -102,7 +117,7 @@ export function paintTranspose() {
   tile.button.setAttribute("aria-label", pending
     ? "Transpose: in attesa del Kemper"
     : known
-      ? `Transpose ${signedSemitones(semitones)}, ${on ? "attivo" : "disattivato"}: tocca per scegliere da −2 a +2`
+      ? `Transpose ${signedSemitones(shown)}, ${on ? "attivo: tocca per spegnere" : "spento: tocca per accendere"}`
       : "Transpose: stato non disponibile");
   for (const button of ui.liveTransposeChoices) {
     const choice = Number(button.dataset.transpose);
@@ -180,6 +195,23 @@ export function chooseTranspose(semitones) {
   sendTranspose(semitones, "tocco");
 }
 
+// Tocco sul riquadro: spegne se acceso, altrimenti riaccende con l'ultimo valore (se non ce n'è, apre la scelta).
+export function toggleTranspose() {
+  const t = session.transpose;
+  const on = switchRaw();
+  if (on === 1) {
+    chooseTranspose(0);
+    return;
+  }
+  const semitones = transposeRawToSemitones(t.raw);
+  const value = t.memory ?? (semitones !== null && semitones !== 0 ? semitones : null);
+  if (value === null) {
+    toggleTransposePicker();
+    return;
+  }
+  chooseTranspose(value);
+}
+
 // Cambio Rig (nome diverso o Program Change di un altro Rig): i valori letti non valgono più.
 export function transposeRigChanged() {
   const t = session.transpose;
@@ -188,8 +220,16 @@ export function transposeRigChanged() {
   t.raw = null;
   const current = session.fixedFxState.get(SWITCH.key);
   if (current) session.fixedFxState.set(SWITCH.key, { ...current, raw: null });
-  t.rigChangeAt = t.target === null ? null : performance.now();
   window.clearTimeout(t.readTimer);
+  if (t.target !== null && t.target !== 0 && canControl()) {
+    // Valore scelto con un tocco: rimandato subito (semitoni e On), la conferma arriva con le letture.
+    // Il Player annuncia il nuovo Rig due volte (nome, poi Program Change ~200 ms dopo): il secondo invio non fa danni.
+    t.rigChangeAt = null;
+    t.reapplied += 1;
+    sendTranspose(t.target, "cambio Rig");
+    return;
+  }
+  t.rigChangeAt = t.target === null ? null : performance.now();
   t.readTimer = window.setTimeout(() => {
     if (t.pending === null) requestTransposeState({ withSwitch: switchRaw() === null, record: true });
   }, RIG_READ_DELAY_MS);
@@ -200,6 +240,8 @@ function checkTranspose() {
   const t = session.transpose;
   const on = switchRaw();
   if (t.raw === null || on === null) return;
+  // Ultimo valore acceso (confermato dal Player o scelto sul Player): lo riaccende il tocco sul riquadro.
+  if (on && t.raw !== TRANSPOSE_SEMITONES.center) t.memory = transposeRawToSemitones(t.raw);
   if (t.pending !== null) {
     if (!transposeMatches(t.pending.semitones, t.raw, on)) return;
     const { semitones, reason } = t.pending;
@@ -267,6 +309,7 @@ export function transposeDiagnostics() {
     semitones: transposeRawToSemitones(t.raw),
     active: on === null ? null : on > 0,
     chosen: t.target,
+    lastValue: t.memory,
     pending: t.pending,
     waitingForNewRig: t.rigChangeAt !== null,
     reappliedAfterRigChange: t.reapplied,

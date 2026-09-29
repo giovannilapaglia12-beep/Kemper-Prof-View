@@ -361,6 +361,7 @@ function transposeControlContext() {
   const addTimer = (fn, ms, repeat) => { const id = nextTimer++; timers.set(id, { fn, at: clock.now + ms, ms, repeat }); return id; };
   const value = node();
   const state = node();
+  const pick = node();
   const button = { ...node(), querySelector: (selector) => (selector === 'span' ? state : value) };
   const choices = midi.TRANSPOSE_CHOICES.map((choice) => ({ ...node(), dataset: { transpose: String(choice) } }));
   const session = { sysex: true, fixedFxPollsSent: 0,
@@ -371,7 +372,7 @@ function transposeControlContext() {
     buildFixedFxStateRequests: midi.buildFixedFxStateRequests, buildTransposeCommands: midi.buildTransposeCommands,
     buildTransposeValueRequest: midi.buildTransposeValueRequest, transposeMatches: midi.transposeMatches,
     transposeRawToSemitones: midi.transposeRawToSemitones, signedSemitones: text.signedSemitones,
-    ui: { liveFixedFxGrid: { querySelector: () => button }, liveTransposePicker: { hidden: true }, liveTransposeChoices: choices, copy: node() },
+    ui: { liveFixedFxGrid: { querySelector: (selector) => (selector === '.live-transpose-pick' ? pick : button) }, liveTransposePicker: { hidden: true }, liveTransposeChoices: choices, copy: node() },
     toast: (message) => toasts.push(message),
     profilerOutputs: () => [{}],
     sendProfilerRequests: (requests) => { for (const request of requests) sent.push(midi.bytesToHex(request.bytes)); },
@@ -384,7 +385,7 @@ function transposeControlContext() {
   };
   vm.runInNewContext(`${snippet('js/transpose.js', 'const SWITCH')}
 this.choose = chooseTranspose; this.handle = handleTransposeState; this.rigChanged = transposeRigChanged;
-this.toggle = toggleTransposePicker; this.diagnostics = transposeDiagnostics; this.paint = paintTranspose;`, context);
+this.toggle = toggleTranspose; this.togglePicker = toggleTransposePicker; this.diagnostics = transposeDiagnostics; this.paint = paintTranspose;`, context);
   // Il tempo avanza a passi di 50 ms eseguendo i timer scaduti.
   context.advance = (ms) => {
     const until = clock.now + ms;
@@ -403,7 +404,7 @@ this.toggle = toggleTransposePicker; this.diagnostics = transposeDiagnostics; th
     context.handle({ type: 'Kemper Parameter', page, parameter, value: raw });
   };
   context.playerState = (semitones, on) => { context.reply(4, 4, 64 + semitones); context.reply(5, 1, on); };
-  Object.assign(context, { sent, toasts, clock, button, value, state, choices });
+  Object.assign(context, { sent, toasts, clock, button, value, state, choices, pick });
   return context;
 }
 
@@ -412,7 +413,7 @@ test('Transpose: il tocco su +2 invia semitoni e On, mostra ATTENDO e poi +2 qua
   t.playerState(0, 0);
   assert.equal(t.value.textContent, '0');
   assert.equal(t.state.textContent, 'OFF');
-  t.toggle();
+  t.togglePicker();
   assert.equal(t.ui.liveTransposePicker.hidden, false);
   t.choose(2);
   assert.equal(t.ui.liveTransposePicker.hidden, true);
@@ -441,7 +442,7 @@ test('Transpose: senza conferma entro 2,8 s avvisa e lascia il valore letto dal 
   assert.equal(t.state.textContent, 'OFF');
 });
 
-test('Transpose: cambiando Rig il Player torna a 0 → l\'app rimette il valore scelto e aspetta la conferma', () => {
+test('Transpose: cambiando Rig il valore scelto viene rimandato subito, senza aspettare la lettura (v1.65)', () => {
   const t = transposeControlContext();
   t.handle({ type: 'Program Change', program: 42, rigIndex: 42 });
   t.playerState(0, 0);
@@ -450,47 +451,72 @@ test('Transpose: cambiando Rig il Player torna a 0 → l\'app rimette il valore 
   t.sent.length = 0;
   // Il Player rimanda il Program Change del Rig in uso (Tuner, beacon): non è un cambio Rig.
   t.handle({ type: 'Program Change', program: 42, rigIndex: 42 });
-  assert.equal(t.value.textContent, '+2');
-  // Cambio Rig: i valori del nuovo Rig arrivano (spento, 64) → l'app rimette +2.
+  assert.deepEqual(t.sent, []);
+  // Cambio Rig: semitoni e On partono subito (prova del 29/09/2026: con l'attesa di 1 s si sentiva il Rig a 0).
   t.handle({ type: 'Program Change', program: 41, rigIndex: 41 });
-  assert.equal(t.state.textContent, 'IN LETTURA');
-  t.advance(1000);
-  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
-  t.playerState(0, 0);
-  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 01 00 04 04 00 42 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 42 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
   assert.equal(t.state.textContent, 'ATTENDO KEMPER');
+  t.advance(850);
+  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
   t.playerState(2, 1);
   assert.equal(t.toasts.at(-1), 'Transpose +2 rimesso dopo il cambio Rig');
   assert.equal(t.diagnostics().reappliedAfterRigChange, 1);
   assert.equal(t.diagnostics().chosen, 2);
 });
 
-test('Transpose: senza una scelta fatta con un tocco, o con il nuovo Rig già giusto, nessun comando dopo il cambio Rig', () => {
+test('Transpose: il tocco sul riquadro spegne e riaccende con l\'ultimo valore scelto (v1.65)', () => {
+  const t = transposeControlContext();
+  t.playerState(0, 0);
+  t.toggle(); // nessun valore scelto: si apre la scelta
+  assert.equal(t.ui.liveTransposePicker.hidden, false);
+  assert.deepEqual(t.sent, []);
+  t.choose(-1);
+  t.playerState(-1, 1);
+  t.sent.length = 0;
+  t.toggle(); // spegne
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 40 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 00 F7']);
+  t.playerState(0, 0);
+  assert.equal(t.value.textContent, '−1'); // spento, pronto a riaccendere −1
+  assert.equal(t.state.textContent, 'OFF');
+  // spento: cambiando Rig nessun comando
+  t.sent.length = 0;
+  t.rigChanged();
+  t.advance(300);
+  t.playerState(0, 0);
+  assert.deepEqual(t.sent.filter((hex) => hex.includes(' 01 00 0')), []);
+  t.sent.length = 0;
+  t.toggle(); // riaccende −1
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
+});
+
+test('Transpose: senza una scelta fatta con un tocco nessun comando dopo il cambio Rig; scelto 0, un Rig salvato trasposto viene corretto', () => {
   const t = transposeControlContext();
   t.playerState(0, 0);
   t.rigChanged();
+  t.advance(300);
   t.playerState(2, 1); // Rig salvato con +2: l'app lo mostra e basta
-  assert.deepEqual(t.sent, []);
+  assert.deepEqual(t.sent.filter((hex) => hex.includes(' 01 00 0')), []);
   assert.equal(t.value.textContent, '+2');
   t.choose(0);
   t.playerState(0, 0);
   t.sent.length = 0;
   t.rigChanged();
-  t.playerState(0, 0);
-  assert.deepEqual(t.sent, []);
+  t.advance(300); // lettura del nuovo Rig dopo 250 ms
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
+  t.playerState(2, 1);
+  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 01 00 04 04 00 40 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 00 F7']);
 });
 
-test('Transpose: valori del nuovo Rig letti dopo più di 8 s → nessun comando a sorpresa', () => {
+test('Transpose: scelto 0 e nuovo Rig letto dopo più di 8 s → nessun comando a sorpresa', () => {
   const t = transposeControlContext();
   t.playerState(0, 0);
-  t.choose(1);
-  t.playerState(1, 1);
+  t.choose(0);
   t.rigChanged();
   t.advance(9000);
   t.sent.length = 0;
-  t.playerState(0, 0);
+  t.playerState(1, 1);
   assert.deepEqual(t.sent, []);
-  assert.equal(t.diagnostics().chosen, 0); // da ora vale il valore del Player
+  assert.equal(t.diagnostics().chosen, 1); // da ora vale il valore del Player
 });
 
 test('Transpose: cambiato sul Player, da ora vale quello (anche per i Rig successivi)', () => {
@@ -500,9 +526,9 @@ test('Transpose: cambiato sul Player, da ora vale quello (anche per i Rig succes
   t.playerState(2, 1);
   t.playerState(-1, 1); // Giovanni gira il Transpose sul Player
   assert.equal(t.diagnostics().chosen, -1);
-  t.rigChanged();
+  assert.equal(t.diagnostics().lastValue, -1);
   t.sent.length = 0;
-  t.playerState(0, 0);
+  t.rigChanged();
   assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
   t.playerState(-1, 1);
   t.reply(5, 1, 0); // spento dal Player: nessun transpose

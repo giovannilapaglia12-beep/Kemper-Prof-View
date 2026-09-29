@@ -13,7 +13,7 @@ import { session } from "./state.js";
 import { liveEffectNodes } from "./effects.js";
 import { profilerOutputs, sendProfilerRequests } from "./connection.js";
 import { confirmationPollAllowed } from "./sync.js";
-import { paintTranspose, toggleTransposePicker } from "./transpose.js";
+import { paintTranspose, toggleTranspose, toggleTransposePicker } from "./transpose.js";
 
 const liveFixedFxNodes = new Map();
 for (const effect of FIXED_FX) {
@@ -29,18 +29,29 @@ for (const effect of FIXED_FX) {
   liveState.textContent = "IN LETTURA";
   liveButton.setAttribute("aria-label", `${effect.label}: stato non disponibile`);
   liveButton.append(liveName, liveState);
-  ui.liveFixedFxGrid.append(liveButton);
   liveFixedFxNodes.set(effect.key, { button: liveButton, state: liveState });
   if (effect.key === "transpose") {
-    // v1.64: il Transpose non si accende e spegne con un tocco: il tocco apre la scelta da −2 a +2 (transpose.js).
+    // v1.65: il tocco accende e spegne (con l'ultimo valore scelto); il pulsante ± apre la scelta da −2 a +2 (transpose.js).
     const liveValue = document.createElement("b");
+    const cell = document.createElement("div");
+    const pick = document.createElement("button");
     liveValue.className = "live-transpose-value";
     liveName.append(" ", liveValue);
-    liveButton.setAttribute("aria-haspopup", "true");
-    liveButton.setAttribute("aria-expanded", "false");
-    liveButton.addEventListener("click", () => toggleTransposePicker());
+    cell.className = "live-transpose-cell";
+    pick.type = "button";
+    pick.className = "live-transpose-pick";
+    pick.textContent = "±";
+    pick.disabled = true;
+    pick.setAttribute("aria-label", "Scegli il Transpose da −2 a +2");
+    pick.setAttribute("aria-haspopup", "true");
+    pick.setAttribute("aria-expanded", "false");
+    liveButton.addEventListener("click", () => toggleTranspose());
+    pick.addEventListener("click", () => toggleTransposePicker());
+    cell.append(liveButton, pick);
+    ui.liveFixedFxGrid.append(cell);
   } else {
     liveButton.addEventListener("click", () => toggleFixedFx(effect));
+    ui.liveFixedFxGrid.append(liveButton);
   }
 }
 

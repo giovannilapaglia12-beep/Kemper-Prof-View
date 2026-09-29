@@ -1,4 +1,18 @@
-# Verifiche hardware, test locali e problemi aperti — v1.64
+# Verifiche hardware, test locali e problemi aperti — v1.65
+
+## Da provare con la v1.65 — Transpose ON/OFF e cambio Rig (circa 5 minuti, volume basso)
+
+- [ ] **Aggiornamento**: in alto in ALTRO compare **v1.65**.
+- [ ] **±**: il pulsante **±** in basso a destra del riquadro Transpose apre la fila −2 … +2. Scegli **+2**: la corda suona un tono sopra.
+- [ ] **ON/OFF**: tocca il riquadro (non il ±): si spegne, mostra **Transpose +2 · OFF** e la corda suona normale. Toccalo di nuovo: torna **+2 ON**.
+- [ ] **Cambio Rig con Transpose acceso**: cambia Rig 4–5 volte (dall'app e dal footswitch). Ascolta se si sente ancora il salto a 0 e quanto dura (prima circa 1 s). Annota.
+- [ ] **Cambio Rig con Transpose spento**: spegnilo col tocco e cambia Rig: resta spento, nessun salto.
+- [ ] **Salva diagnostica** e mandala.
+
+## Esito prova v1.64 (29/09/2026, diagnostica 09:55)
+
+- Scelta −2…+2 e conferme ok (11 comandi, tutti confermati in circa 0,8 s). Mancava l'ON/OFF col tocco → v1.65.
+- Cambio Rig: il Player riporta il Transpose a 0, l'app lo rimetteva 1,2 s dopo (attesa di 1 s + lettura): si sentiva il Rig a 0 per circa un secondo → v1.65 lo rimanda subito.
 
 ## Da provare con la v1.64 — Transpose da −2 a +2 in PALCO (circa 10 minuti)
 

@@ -313,6 +313,21 @@ body[data-view="live"] .stage-fx .live-action-button small { margin-top: 2px; fo
 /* v1.64 · Transpose −2…+2: valore scritto nel riquadro; il tocco apre la scelta sopra Fixed FX, Freeze e Tuner */
 .stage-fx { position: relative; }
 .live-transpose-value { font-size: 1.15em; font-weight: 950; }
+/* v1.65: riquadro Transpose = tocco ON/OFF + pulsante ± a destra per scegliere i semitoni */
+.live-transpose-cell { position: relative; display: grid; min-width: 0; }
+body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { min-width: 0; }
+body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button strong { overflow-wrap: normal; }
+.live-transpose-pick {
+  position: absolute; right: 4px; bottom: 4px; width: 40px; height: 30px;
+  border: 1px solid rgba(238, 243, 240, 0.45); border-radius: 8px;
+  background: rgba(6, 14, 9, 0.92); color: var(--text); font-size: 1.2rem; font-weight: 950; line-height: 1; cursor: pointer;
+}
+.live-transpose-pick:disabled { opacity: 0.45; cursor: default; }
+.live-transpose-pick[aria-expanded="true"] { border-color: #eef3f0; }
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button strong { padding-right: 42px; }
+  .live-transpose-pick { height: 26px; }
+}
 .stage-transpose-picker {
   position: absolute; z-index: 15; inset: 0;
   display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) 44px; grid-template-rows: auto minmax(0, 1fr); gap: 5px 6px;
