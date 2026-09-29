@@ -2,7 +2,7 @@
 
 > Copia nel repository della scheda di stato del progetto, così ogni sessione di Claude (anche le sessioni cloud collegate a GitHub) parte informata. Da aggiornare a ogni versione.
 
-App web (PWA) per Kemper Profiler Player MK2 Level III, su telefono Android (OPPO Reno 12 Pro, OPPO A9 2020) via USB/OTG e Web MIDI in Chrome. Pubblicata con GitHub Pages da repository pubblico (cartella `dist`, workflow "Static HTML" con `path: 'dist'`). Versione attuale: **v1.65** (comprende v1.60 codice in moduli, v1.61 ALTRO senza doppioni + prova Leggi Transpose, v1.62 correzioni dopo la prova lunga, v1.63 grafica divisa per schermata, v1.64 Transpose −2…+2 in PALCO, v1.65 Transpose ON/OFF col tocco e cambio Rig più rapido). **Prova lunga sulla v1.52 fatta il 28/09/2026: stabile.** **Prova Leggi Transpose fatta il 29/09/2026** (con l'app ancora v1.62). Prossimo passo di Giovanni: checklist v1.65 (Transpose ON/OFF e cambio Rig) in `docs/TESTING.md`.
+App web (PWA) per Kemper Profiler Player MK2 Level III, su telefono Android (OPPO Reno 12 Pro, OPPO A9 2020) via USB/OTG e Web MIDI in Chrome. Pubblicata con GitHub Pages da repository pubblico (cartella `dist`, workflow "Static HTML" con `path: 'dist'`). Versione attuale: **v1.66** (comprende v1.60 codice in moduli, v1.61 ALTRO senza doppioni + prova Leggi Transpose, v1.62 correzioni dopo la prova lunga, v1.63 grafica divisa per schermata, v1.64 Transpose −2…+2 in PALCO, v1.65 Transpose ON/OFF col tocco e cambio Rig più rapido, v1.66 niente Transpose automatico al cambio Rig). **Prova lunga sulla v1.52 fatta il 28/09/2026: stabile.** **Prova Leggi Transpose fatta il 29/09/2026** (con l'app ancora v1.62). Prossimo passo di Giovanni: checklist v1.66 in `docs/TESTING.md`.
 
 Dalla v1.37 il nome è **Kemper Profiler View** (icona installata: "Profiler View"). Le chiavi di memoria del telefono restano `kemper-stage-view-…`, quindi nomi e impostazioni non si perdono. Rinominare il repository non è necessario; se lo si fa, cambia l'indirizzo Pages e l'app va reinstallata.
 
@@ -44,7 +44,7 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 
 ## Transpose −2…+2 del Fixed FX (richiesta di Giovanni, 28/09/2026)
 - Giovanni vuole scegliere dall'app il transpose da −2 a +2 **del Fixed FX Transpose** (non il Rig Transpose).
-- Deciso: il valore **resta uguale cambiando Rig** finché non lo cambia lui (vale per il brano); scritto sempre in PALCO (es. TRANSPOSE +2), 0 raggiungibile al volo; se il Player lo riporta al valore del Rig a ogni cambio, l'app lo reimposta. In futuro salvato per brano nella scaletta v2.0.
+- Deciso (28/09, **sostituito il 29/09: vedi v1.66 sotto**): il valore **resta uguale cambiando Rig** finché non lo cambia lui (vale per il brano); scritto sempre in PALCO (es. TRANSPOSE +2), 0 raggiungibile al volo; se il Player lo riporta al valore del Rig a ogni cambio, l'app lo reimposta. In futuro salvato per brano nella scaletta v2.0.
 - Indirizzo dei semitoni del Fixed FX non pubblicato da Kemper (noto solo On/Off 5/1). Rig Transpose = 4/4, valori 28–100 (Burkhard, forum Kemper; probabile 64 = 0, da verificare).
 - Prova di sola lettura "Leggi Transpose" (ALTRO, dalla v1.61): lettura multipla pagina 5 + 4/4, differenze tra letture con testo del Player.
 - **Esito (29/09/2026, Bank 9 Rig 3 "RT FIRESPIT 3", diagnostica 08:29)**: Transpose 0 → 4/4 = 64, 5/1 = 0; +2 → 66 e 5/1 = 1; −2 → 62 e 5/1 = 1; cambio Rig (Bank 9 Rig 2) → 64 e spento; tornando più tardi al Rig 3, spento (Rig non salvato). **I semitoni del Fixed FX sono il Rig Transpose 4/4, 64 = 0**. Pagina 5: cambiano solo 5/0 e 5/1 («Off»/«On»); la lettura multipla 0x42 della pagina 5 dà solo 3 valori. 4/4 non visto arrivare da solo: l'app lo legge. Dettagli in `docs/MIDI.md`.
@@ -52,7 +52,9 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 - **Prova v1.64 (29/09/2026, diagnostica 09:55)**: scelta e conferme ok (11 comandi, conferma in ~0,8 s). Giovanni: manca l'ON/OFF col tocco; al cambio Rig si sente il Rig a 0 per circa 1 s prima del valore scelto (diagnostica: comando 1,2 s dopo il cambio; il Player annuncia il nuovo Rig col nome dopo ~25 ms e risponde alle letture in ~5 ms).
 - **v1.65 – FATTO (da provare)**: tocco sul riquadro = ON/OFF (spegne con 4/4 = 64 e 5/1 = 0, riaccende con l'ultimo valore acceso, mostrato anche da spento); pulsante ± in basso a destra apre la scelta. Cambio Rig con Transpose acceso: comando subito all'annuncio del nuovo Rig (nome e Program Change), senza lettura prima; con Transpose spento lettura dopo 250 ms e correzione solo se il Rig era salvato trasposto (entro 8 s). Test: 49.
 - Il Player rimette comunque il valore del Rig caricandolo: un attimo a 0 potrebbe restare. Se dà ancora fastidio: salvare i Rig usati con il Transpose voluto, oppure scegliere il Transpose per brano nella scaletta v2.0 prima di cambiare Rig.
-- Da verificare sul Player: cosa succede con REV Freeze attivo; cambio Rig dal footswitch.
+- **Prova v1.65 (29/09/2026, diagnostica 13:39)**: comando partito 20 ms dopo il cambio Rig (e di nuovo al Program Change), ma il passaggio di tonalità si sente comunque: è il caricamento del Rig sul Player, non evitabile dall'app.
+- **Decisione di Giovanni (29/09/2026)**: meglio che il valore resti in memoria ma che cambiando Rig non si riattivi da solo. **v1.66 – FATTO (da provare)**: al cambio Rig solo lettura (250 ms); il riquadro mostra il valore ricordato con OFF; un tocco lo riaccende. Tolta la reimpostazione automatica (sostituisce la decisione del 28/09). Nessun comando senza tocco.
+- Da verificare sul Player: cosa succede con REV Freeze attivo.
 
 ## Funzioni verificate sul Player
 - Schermata PALCO senza scorrimento: nome Rig, Bank/Rig (colorato col colore della Bank), BPM (−1/+1/BPM INTERO/TAP), Morph, 8 effetti, Fixed FX, Freeze REV, Tuner. Schermo sempre acceso (anche nella prova lunga di ~1 h).
@@ -77,7 +79,7 @@ Decisioni di Giovanni: prova lunga sulla v1.52 (fatta); ALTRO senza controlli do
 - Dal MIDI non si può sapere quali effetti hanno il Morph (valori identici in BASE e MORPH; 0x48 non esiste).
 
 ## Ancora da provare
-- Checklist v1.65 (Transpose ON/OFF e cambio Rig) e v1.63 (solo guardare) in `docs/TESTING.md`.
+- Checklist v1.66 (Transpose al cambio Rig) in `docs/TESTING.md`.
 - Bank Select 2–4 (Bank 52 e oltre), se servono.
 - Checklist v1.61 + v1.62 in `docs/TESTING.md`, se non ancora fatte.
 - Durante la prova Transpose (29/09) il collegamento è caduto e tornato da solo 3 volte ("Player non collegato" 08:25, 08:26, 08:28): chiedere a Giovanni se aveva staccato il cavo; se no, tenerlo d'occhio.

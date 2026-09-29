@@ -442,7 +442,7 @@ test('Transpose: senza conferma entro 2,8 s avvisa e lascia il valore letto dal 
   assert.equal(t.state.textContent, 'OFF');
 });
 
-test('Transpose: cambiando Rig il valore scelto viene rimandato subito, senza aspettare la lettura (v1.65)', () => {
+test('Transpose: cambiando Rig l\'app non invia nulla, legge il nuovo Rig e tiene il valore per riaccenderlo con un tocco (v1.66)', () => {
   const t = transposeControlContext();
   t.handle({ type: 'Program Change', program: 42, rigIndex: 42 });
   t.playerState(0, 0);
@@ -452,16 +452,20 @@ test('Transpose: cambiando Rig il valore scelto viene rimandato subito, senza as
   // Il Player rimanda il Program Change del Rig in uso (Tuner, beacon): non è un cambio Rig.
   t.handle({ type: 'Program Change', program: 42, rigIndex: 42 });
   assert.deepEqual(t.sent, []);
-  // Cambio Rig: semitoni e On partono subito (prova del 29/09/2026: con l'attesa di 1 s si sentiva il Rig a 0).
+  // Cambio Rig (prova del 29/09/2026: il salto di tonalità si sente comunque) → solo lettura dopo 250 ms.
   t.handle({ type: 'Program Change', program: 41, rigIndex: 41 });
+  assert.deepEqual(t.sent, []);
+  assert.equal(t.state.textContent, 'IN LETTURA');
+  t.advance(300);
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
+  t.playerState(0, 0);
+  t.advance(10000);
+  assert.deepEqual(t.sent.filter((hex) => hex.includes(' 7F 01 00 ')), []);
+  assert.equal(t.value.textContent, '+2'); // spento, pronto a riaccendere +2
+  assert.equal(t.state.textContent, 'OFF');
+  t.sent.length = 0;
+  t.toggle();
   assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 42 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
-  assert.equal(t.state.textContent, 'ATTENDO KEMPER');
-  t.advance(850);
-  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
-  t.playerState(2, 1);
-  assert.equal(t.toasts.at(-1), 'Transpose +2 rimesso dopo il cambio Rig');
-  assert.equal(t.diagnostics().reappliedAfterRigChange, 1);
-  assert.equal(t.diagnostics().chosen, 2);
 });
 
 test('Transpose: il tocco sul riquadro spegne e riaccende con l\'ultimo valore scelto (v1.65)', () => {
@@ -489,48 +493,29 @@ test('Transpose: il tocco sul riquadro spegne e riaccende con l\'ultimo valore s
   assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
 });
 
-test('Transpose: senza una scelta fatta con un tocco nessun comando dopo il cambio Rig; scelto 0, un Rig salvato trasposto viene corretto', () => {
+test('Transpose: Rig salvato trasposto → l\'app lo mostra e basta, nessun comando', () => {
   const t = transposeControlContext();
   t.playerState(0, 0);
+  t.choose(0);
   t.rigChanged();
   t.advance(300);
-  t.playerState(2, 1); // Rig salvato con +2: l'app lo mostra e basta
-  assert.deepEqual(t.sent.filter((hex) => hex.includes(' 01 00 0')), []);
-  assert.equal(t.value.textContent, '+2');
-  t.choose(0);
-  t.playerState(0, 0);
-  t.sent.length = 0;
-  t.rigChanged();
-  t.advance(300); // lettura del nuovo Rig dopo 250 ms
-  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
   t.playerState(2, 1);
-  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 01 00 04 04 00 40 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 00 F7']);
+  assert.deepEqual(t.sent.filter((hex) => hex.includes(' 7F 01 00 ')), []);
+  assert.equal(t.value.textContent, '+2');
+  assert.equal(t.state.textContent, 'ON');
 });
 
-test('Transpose: scelto 0 e nuovo Rig letto dopo più di 8 s → nessun comando a sorpresa', () => {
-  const t = transposeControlContext();
-  t.playerState(0, 0);
-  t.choose(0);
-  t.rigChanged();
-  t.advance(9000);
-  t.sent.length = 0;
-  t.playerState(1, 1);
-  assert.deepEqual(t.sent, []);
-  assert.equal(t.diagnostics().chosen, 1); // da ora vale il valore del Player
-});
-
-test('Transpose: cambiato sul Player, da ora vale quello (anche per i Rig successivi)', () => {
+test('Transpose: cambiato sul Player, il tocco riaccende il valore del Player', () => {
   const t = transposeControlContext();
   t.playerState(0, 0);
   t.choose(2);
   t.playerState(2, 1);
   t.playerState(-1, 1); // Giovanni gira il Transpose sul Player
-  assert.equal(t.diagnostics().chosen, -1);
   assert.equal(t.diagnostics().lastValue, -1);
+  t.reply(5, 1, 0); // spento dal Player
+  t.reply(4, 4, 64);
+  assert.equal(t.value.textContent, '−1');
   t.sent.length = 0;
-  t.rigChanged();
+  t.toggle();
   assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
-  t.playerState(-1, 1);
-  t.reply(5, 1, 0); // spento dal Player: nessun transpose
-  assert.equal(t.diagnostics().chosen, 0);
 });

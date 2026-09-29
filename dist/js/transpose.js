@@ -7,6 +7,9 @@
 // v1.65 (prova di Giovanni del 29/09/2026, diagnostica 09:55): il tocco sul riquadro torna ad accendere e spegnere
 // (con l'ultimo valore scelto), la scelta −2…+2 si apre con il pulsante ±; dopo un cambio Rig il valore scelto viene
 // rimandato subito, senza aspettare 1 s la lettura del nuovo Rig (si sentiva il Rig a 0 per circa un secondo).
+// v1.66 (prova del 29/09/2026, diagnostica 13:39): anche con il comando partito 20 ms dopo il cambio Rig si sente il
+// passaggio di tonalità, perché è il Player che carica il Rig con il suo Transpose. Deciso con Giovanni: cambiando Rig
+// l'app NON rimanda più nulla; il valore resta in memoria e si riaccende con un tocco sul riquadro.
 
 import {
   buildFixedFxStateRequests,
@@ -26,25 +29,20 @@ import { confirmationPollAllowed } from "./sync.js";
 const SWITCH = FIXED_FX.find((effect) => effect.key === "transpose");
 const CONFIRM_POLL_MS = 400;
 const CONFIRM_TIMEOUT_MS = 2800;
-// Dopo un cambio Rig con Transpose spento (scelto 0): lettura del nuovo Rig. Il Player risponde subito (29/09/2026:
+// Dopo un cambio Rig: lettura del Transpose del nuovo Rig (sola lettura). Il Player risponde subito (29/09/2026:
 // nome del Rig 25 ms dopo il Program Change, valori letti in 5 ms).
 const RIG_READ_DELAY_MS = 250;
-// L'app corregge un Rig salvato con il Transpose solo se lo legge entro 8 s dal cambio: niente comandi a sorpresa più tardi.
-const RIG_REAPPLY_WINDOW_MS = 8000;
 
 session.transpose = {
   raw: null, // semitoni letti dal Player (4/4, 64 = 0)
-  target: null, // semitoni scelti con un tocco (0 = spento); null = l'app segue il Player e non reimposta nulla
   memory: null, // ultimo valore diverso da 0 (scelto o visto sul Player): lo riaccende il tocco sul riquadro
   pending: null, // comando in attesa di conferma: { semitones, reason, startedAt }
-  rigChangeAt: null, // cambio Rig in attesa dei valori del nuovo Rig
   lastRigIndex: null,
   pollTimer: null,
   timeout: null,
   readTimer: null,
   pollsSent: 0,
   repliesReceived: 0,
-  reapplied: 0,
   lastCommands: [],
 };
 
@@ -186,8 +184,6 @@ export function chooseTranspose(semitones) {
     toast("Prima sincronizza il Transpose");
     return;
   }
-  t.target = semitones;
-  t.rigChangeAt = null;
   if (transposeMatches(semitones, t.raw, on)) {
     paintTranspose();
     return;
@@ -221,15 +217,6 @@ export function transposeRigChanged() {
   const current = session.fixedFxState.get(SWITCH.key);
   if (current) session.fixedFxState.set(SWITCH.key, { ...current, raw: null });
   window.clearTimeout(t.readTimer);
-  if (t.target !== null && t.target !== 0 && canControl()) {
-    // Valore scelto con un tocco: rimandato subito (semitoni e On), la conferma arriva con le letture.
-    // Il Player annuncia il nuovo Rig due volte (nome, poi Program Change ~200 ms dopo): il secondo invio non fa danni.
-    t.rigChangeAt = null;
-    t.reapplied += 1;
-    sendTranspose(t.target, "cambio Rig");
-    return;
-  }
-  t.rigChangeAt = t.target === null ? null : performance.now();
   t.readTimer = window.setTimeout(() => {
     if (t.pending === null) requestTransposeState({ withSwitch: switchRaw() === null, record: true });
   }, RIG_READ_DELAY_MS);
@@ -244,26 +231,9 @@ function checkTranspose() {
   if (on && t.raw !== TRANSPOSE_SEMITONES.center) t.memory = transposeRawToSemitones(t.raw);
   if (t.pending !== null) {
     if (!transposeMatches(t.pending.semitones, t.raw, on)) return;
-    const { semitones, reason } = t.pending;
+    const { semitones } = t.pending;
     stopTransposeConfirmation();
-    toast(reason === "cambio Rig"
-      ? `Transpose ${signedSemitones(semitones)} rimesso dopo il cambio Rig`
-      : `Transpose ${signedSemitones(semitones)} · confermato`);
-    return;
-  }
-  if (t.rigChangeAt !== null) {
-    const recent = performance.now() - t.rigChangeAt <= RIG_REAPPLY_WINDOW_MS;
-    t.rigChangeAt = null;
-    if (recent && t.target !== null && !transposeMatches(t.target, t.raw, on) && canControl()) {
-      t.reapplied += 1;
-      sendTranspose(t.target, "cambio Rig");
-      return;
-    }
-  }
-  // Cambiato sul Player, non confermato o nuovo Rig letto troppo tardi: da ora vale il valore del Player.
-  // Spento = nessun transpose.
-  if (t.target !== null && !transposeMatches(t.target, t.raw, on)) {
-    t.target = on ? transposeRawToSemitones(t.raw) : 0;
+    toast(`Transpose ${signedSemitones(semitones)} · confermato`);
   }
 }
 
@@ -293,7 +263,6 @@ export function resetTransposeControl() {
   stopTransposeConfirmation();
   window.clearTimeout(t.readTimer);
   t.raw = null;
-  t.rigChangeAt = null;
   t.pollsSent = 0;
   t.repliesReceived = 0;
   t.lastCommands = [];
@@ -308,11 +277,8 @@ export function transposeDiagnostics() {
     raw: t.raw,
     semitones: transposeRawToSemitones(t.raw),
     active: on === null ? null : on > 0,
-    chosen: t.target,
     lastValue: t.memory,
     pending: t.pending,
-    waitingForNewRig: t.rigChangeAt !== null,
-    reappliedAfterRigChange: t.reapplied,
     pollsSent: t.pollsSent,
     repliesReceived: t.repliesReceived,
     lastCommands: t.lastCommands,
