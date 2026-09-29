@@ -410,7 +410,8 @@ export function buildTransposeCommands(semitones, switchRaw) {
     `Transpose ${text} · semitoni 4/4`,
   )];
   const on = semitones !== 0;
-  if ((switchRaw > 0) !== on) requests.push(buildFixedFxChangeRequest(TRANSPOSE_SWITCH, on, `Transpose ${on ? "ON" : "OFF"}`));
+  // Dopo un cambio Rig lo stato dell'On/Off non è ancora noto (null): si invia comunque.
+  if (switchRaw === null || switchRaw === undefined || (switchRaw > 0) !== on) requests.push(buildFixedFxChangeRequest(TRANSPOSE_SWITCH, on, `Transpose ${on ? "ON" : "OFF"}`));
   return requests;
 }
 
