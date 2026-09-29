@@ -1,4 +1,16 @@
-# Verifiche hardware, test locali e problemi aperti — v1.65
+# Verifiche hardware, test locali e problemi aperti — v1.66
+
+## Da provare con la v1.66 (circa 3 minuti, volume basso)
+
+- [ ] **Aggiornamento**: in alto in ALTRO compare **v1.66**.
+- [ ] **±** → **+2**: la corda suona un tono sopra.
+- [ ] **Cambia Rig**: nessun salto di tonalità dopo il cambio; il nuovo Rig suona normale e il riquadro mostra **Transpose +2 · OFF**.
+- [ ] **Un tocco sul riquadro**: torna **+2 ON**.
+- [ ] Rifallo 2–3 volte, anche col footswitch del Player.
+
+## Esito prova v1.65 (29/09/2026, diagnostica 13:39)
+
+- ON/OFF col tocco e ± ok. Al cambio Rig l'app rimandava il Transpose 20 ms dopo, ma il passaggio di tonalità si sentiva comunque (è il Player che carica il Rig) → v1.66: nessun invio automatico, valore ricordato e riacceso con un tocco (scelta di Giovanni).
 
 ## Da provare con la v1.65 — Transpose ON/OFF e cambio Rig (circa 5 minuti, volume basso)
 

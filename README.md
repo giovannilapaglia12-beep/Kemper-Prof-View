@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.65
+# Kemper Profiler View v1.66
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.66 — cambiando Rig il Transpose non si riaccende da solo
+
+- Prova della v1.65 (29/09/2026, diagnostica 13:39): l'app rimandava il Transpose **20 ms** dopo il cambio Rig, ma il passaggio di tonalità si sentiva lo stesso, perché è il Player che carica il Rig con il suo Transpose. Dall'app non si può evitare.
+- Scelta di Giovanni: **cambiando Rig l'app non invia più nulla**. Il riquadro mostra il Transpose del nuovo Rig (di solito spento) con l'ultimo valore ricordato, per esempio **Transpose +2 · OFF**: **un tocco lo riaccende**. Il valore resta in memoria finché l'app è aperta.
+- Torna valida senza eccezioni la regola di sicurezza: nessun comando al Player senza un tocco.
+- Test: 48.
 
 ## Novità v1.65 — Transpose: di nuovo ON/OFF con un tocco, cambio Rig senza il secondo a 0
 
@@ -295,6 +302,6 @@ Non è stata scelta una licenza open source. Prima di pubblicare il repository a
 
 1. **v1.4x** – grafica completata (cerchio Looper, icona, tema SOLE: fatto nella v1.41), nomi Bank completi (v1.41), pulizia tecnica (v1.41).
 2. **Prova lunga** sul Player: una prova o un servizio intero (vedi `docs/TESTING.md`, "Prova lunga").
-3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata (fatto). v1.64 Transpose −2…+2 in PALCO (provato il 29/09/2026), v1.65 ON/OFF col tocco e cambio Rig più rapido (da provare).
+3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata (fatto). v1.64 Transpose −2…+2 in PALCO (provato il 29/09/2026), v1.65 ON/OFF col tocco, v1.66 niente Transpose automatico al cambio Rig (da provare).
 4. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, guida d'uso di una pagina.
 5. Dopo la 2.0: pedale MIDI Bluetooth.
