@@ -1,5 +1,11 @@
 // Funzioni di solo calcolo, senza pagina né MIDI (si possono provare direttamente nei test):
-// sillabazione dei nomi effetto, colori delle categorie, nome delle note, mediana.
+// semitoni del Transpose, sillabazione dei nomi effetto, colori delle categorie, nome delle note, mediana.
+
+// v1.64: semitoni del Transpose come li scrive il Player: +2, 0, −2 (segno meno tipografico).
+export function signedSemitones(value) {
+  if (!Number.isInteger(value)) return "—";
+  return value > 0 ? `+${value}` : value < 0 ? `−${-value}` : "0";
+}
 
 export function longestWord(text) {
   return Math.max(5, ...String(text).replace(/\u00ad/g, "").split(/\s+/).map((word) => word.length));

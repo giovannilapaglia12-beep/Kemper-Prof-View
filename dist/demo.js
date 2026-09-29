@@ -10,7 +10,7 @@ export function installDemoKemper() {
     { 0x32: [49, 0], 0x33: [114, 1], 0x34: [42, 0], 0x35: [0, 0], 0x38: [98, 1], 0x3a: [81, 1], 0x3c: [147, 0], 0x3d: [181, 1] },
   ];
   const st = { program: 5, tempo: 4288, morph: 0, tuner: 3, tunerAt: 0, freeze: 0, fx: structuredClone(fxSets[1]),
-    fixed: { 0x10: 0, 0x1a: 1, 0x01: 0, 0x29: 0 }, location: 1 };
+    fixed: { 0x10: 0, 0x1a: 1, 0x01: 0, 0x29: 0 }, transpose: 64, location: 1 };
   const rigName = () => rigs[Math.floor(st.program / 5) % 2][st.program % 5];
   // v1.48: come il Player, CC 0 e CC 32 (Bank Select) prima del Program Change: 625 Rig in 125 Bank.
   let bankSelect = 0;
@@ -105,6 +105,7 @@ export function installDemoKemper() {
           if (p === 0x7c && q === 0x51) return st.tuner === 1 && param(0x7c, 0x51, 8192 + Math.round(cents() * 81.92));
           if (p === 0x7d && q === 0x73) return param(0x7d, 0x73, st.freeze);
           if (p === 0x7f && q === 53) return param(0x7f, 53, st.location);
+          if (p === 4 && q === 4) return param(4, 4, st.transpose);
           if (p === 5 && q in st.fixed) return param(5, q, st.fixed[q]);
           if (st.fx[p]) return param(p, q, q === 0 ? st.fx[p][0] : st.fx[p][1]);
         }
@@ -114,6 +115,7 @@ export function installDemoKemper() {
           if (p === 0x7d && q === 0x73) st.freeze = v;
           if (p === 5 && q in st.fixed) st.fixed[q] = v;
           if (p === 0x7f && q === 53) st.location = v;
+          if (p === 4 && q === 4) st.transpose = v;
         }
         if (fn === 0x7c && p === 4) {
           const v = (b[10] << 7) | b[11];
@@ -133,6 +135,8 @@ export function installDemoKemper() {
         st.program = index;
         st.fx = structuredClone(fxSets[st.program % 2]);
         st.morph = 0; st.freeze = 0;
+        // v1.64: come il Player (29/09/2026), il nuovo Rig parte con il Transpose salvato (spento, 64).
+        st.transpose = 64; st.fixed[0x01] = 0;
         emitProgram();
         if (bidiOn()) setTimeout(pushRig, 30);
       }

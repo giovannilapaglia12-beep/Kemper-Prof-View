@@ -309,6 +309,31 @@ body[data-view="live"] .stage-fx .live-action-button strong { font-size: clamp(0
 body[data-view="live"] .stage-fx .live-fixed-fx-button span,
 body[data-view="live"] .stage-fx .live-action-button small { margin-top: 2px; font-size: 0.6rem; letter-spacing: 0.06em; }
 #live-tuner-note { color: var(--green); }
+
+/* v1.64 · Transpose −2…+2: valore scritto nel riquadro; il tocco apre la scelta sopra Fixed FX, Freeze e Tuner */
+.stage-fx { position: relative; }
+.live-transpose-value { font-size: 1.15em; font-weight: 950; }
+.stage-transpose-picker {
+  position: absolute; z-index: 15; inset: 0;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) 44px; grid-template-rows: auto minmax(0, 1fr); gap: 5px 6px;
+  padding: 6px; border: 1px solid rgba(238, 243, 240, 0.6); border-radius: 12px;
+  background: #07110d; box-shadow: var(--shadow);
+}
+.stage-transpose-picker[hidden] { display: none; }
+.stage-transpose-picker > span { grid-column: 1 / -1; color: var(--muted); font-size: 0.66rem; font-weight: 900; letter-spacing: 0.12em; }
+.stage-transpose-picker button {
+  min-width: 0; min-height: 0; border: 1px solid rgba(238, 243, 240, 0.3); border-radius: 10px;
+  background: rgba(6, 14, 9, 0.88); color: var(--text); font-size: 1.35rem; font-weight: 950; cursor: pointer;
+}
+.stage-transpose-picker button[data-transpose="0"] { border-color: rgba(238, 243, 240, 0.6); }
+.stage-transpose-picker button[data-selected="true"] { border-color: #eef3f0; background: linear-gradient(165deg, #eef3f0, #c7cfca); color: #07100b; }
+.stage-transpose-picker button:disabled { opacity: 0.45; cursor: default; }
+.stage-transpose-picker .stage-transpose-close { color: var(--muted); font-size: 1rem; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .stage-transpose-picker { grid-template-columns: auto repeat(5, minmax(0, 1fr)) 44px; grid-template-rows: minmax(0, 1fr); padding: 3px 6px; }
+  .stage-transpose-picker > span { grid-column: auto; align-self: center; padding-inline: 4px; }
+  .stage-transpose-picker button { font-size: 1.1rem; }
+}
 @media (orientation: landscape) and (max-height: 560px) {
   body[data-view="live"] .live-panel.stage {
     display: grid;

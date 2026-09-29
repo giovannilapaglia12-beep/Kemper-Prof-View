@@ -20,7 +20,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.63</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.64</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -98,6 +98,15 @@
 
         <div class="stage-fx" aria-label="Fixed FX, Freeze e Tuner">
           <div class="live-fixed-fx-grid" id="live-fixed-fx-grid"></div>
+          <div class="stage-transpose-picker" id="live-transpose-picker" role="group" aria-label="Transpose in semitoni" hidden>
+            <span>TRANSPOSE</span>
+            <button type="button" data-transpose="-2" aria-label="Transpose meno 2">−2</button>
+            <button type="button" data-transpose="-1" aria-label="Transpose meno 1">−1</button>
+            <button type="button" data-transpose="0" aria-label="Transpose 0">0</button>
+            <button type="button" data-transpose="1" aria-label="Transpose più 1">+1</button>
+            <button type="button" data-transpose="2" aria-label="Transpose più 2">+2</button>
+            <button class="stage-transpose-close" id="live-transpose-close" type="button" aria-label="Chiudi senza cambiare">✕</button>
+          </div>
           <button class="live-action-button live-freeze-button" id="live-freeze-button" type="button" data-active="unknown" data-pending="false" aria-pressed="false" disabled>
             <strong>REV FREEZE</strong>
             <small id="live-freeze-state">IN LETTURA</small>
@@ -319,6 +328,7 @@
           <li>Apri questa pagina in Chrome e premi <strong>Connetti MIDI</strong>.</li>
           <li>Con la <strong>modalità bidirezionale</strong> (in alto in ALTRO) il Player invia da solo i cambiamenti; per ciò che non invia, l’auto sync continua a leggerlo. Accanto a COLLEGATO compare ⇄ quando è attiva.</li>
           <li>In PALCO tocca un effetto o un Fixed FX: mostra <strong>ATTENDO</strong> finché il Kemper non conferma ON oppure OFF.</li>
+          <li>In PALCO il riquadro <strong>Transpose</strong> mostra i semitoni (es. Transpose +2): toccalo e scegli da −2 a +2 (0 = spento). Il valore scelto resta anche cambiando Rig: se il nuovo Rig lo riporta a 0, l’app lo rimette e lo scrive per un momento.</li>
           <li>Usa <strong>−1</strong> e <strong>+1</strong> per regolare il tempo, oppure premi <strong>TAP</strong>. Se il TAP produce un decimale, <strong>BPM INTERO</strong> lo arrotonda al valore intero più vicino.</li>
           <li>In <strong>RIG</strong> scegli la Bank (anche dalla griglia “BANK ▾”) e poi uno dei cinque Rig: l’app carica quel suono e ne legge il nome dal Kemper.</li>
           <li><strong>Attiva MORPH</strong> o <strong>Torna a BASE</strong>: l’indicatore cambia solo dopo la conferma del Kemper. I parametri Morph si impostano in Rig Manager.</li>

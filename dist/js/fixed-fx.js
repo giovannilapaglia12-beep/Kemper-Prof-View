@@ -13,6 +13,7 @@ import { session } from "./state.js";
 import { liveEffectNodes } from "./effects.js";
 import { profilerOutputs, sendProfilerRequests } from "./connection.js";
 import { confirmationPollAllowed } from "./sync.js";
+import { paintTranspose, toggleTransposePicker } from "./transpose.js";
 
 const liveFixedFxNodes = new Map();
 for (const effect of FIXED_FX) {
@@ -27,10 +28,20 @@ for (const effect of FIXED_FX) {
   liveName.textContent = effect.label;
   liveState.textContent = "IN LETTURA";
   liveButton.setAttribute("aria-label", `${effect.label}: stato non disponibile`);
-  liveButton.addEventListener("click", () => toggleFixedFx(effect));
   liveButton.append(liveName, liveState);
   ui.liveFixedFxGrid.append(liveButton);
   liveFixedFxNodes.set(effect.key, { button: liveButton, state: liveState });
+  if (effect.key === "transpose") {
+    // v1.64: il Transpose non si accende e spegne con un tocco: il tocco apre la scelta da −2 a +2 (transpose.js).
+    const liveValue = document.createElement("b");
+    liveValue.className = "live-transpose-value";
+    liveName.append(" ", liveValue);
+    liveButton.setAttribute("aria-haspopup", "true");
+    liveButton.setAttribute("aria-expanded", "false");
+    liveButton.addEventListener("click", () => toggleTransposePicker());
+  } else {
+    liveButton.addEventListener("click", () => toggleFixedFx(effect));
+  }
 }
 
 export function refreshFreezeControls() {
@@ -173,6 +184,10 @@ export function refreshFixedFxControls() {
   const hasOutput = profilerOutputs().length > 0;
   const canControl = hasOutput && session.sysex;
   for (const effect of FIXED_FX) {
+    if (effect.key === "transpose") {
+      paintTranspose();
+      continue;
+    }
     const liveNode = liveFixedFxNodes.get(effect.key);
     const current = session.fixedFxState.get(effect.key);
     if (!liveNode || !current) continue;

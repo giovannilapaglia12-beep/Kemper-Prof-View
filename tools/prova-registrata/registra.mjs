@@ -176,7 +176,8 @@ const principale = [
   ["effetto 5", async ({ tap }) => tap("#live-effects-grid button:nth-child(5)", 1500)],
   ["effetto 8", async ({ tap }) => tap("#live-effects-grid button:nth-child(8)", 1500)],
   ["Fixed FX 1", async ({ tap }) => tap("#live-fixed-fx-grid button:nth-child(1)", 1500)],
-  ["Fixed FX 3", async ({ tap }) => tap("#live-fixed-fx-grid button:nth-child(3)", 1500)],
+  // v1.64: il riquadro Transpose apre la scelta da −2 a +2
+  ["Transpose +2", async ({ tap }) => { await tap("#live-fixed-fx-grid button:nth-child(3)", 300); await tap('[data-transpose="2"]', 1500); }],
   ["Freeze on", async ({ tap }) => tap("#live-freeze-button", 1500)],
   ["Freeze off", async ({ tap }) => tap("#live-freeze-button", 1500)],
   ["BPM +1", async ({ tap }) => tap("#live-tempo-up-button", 1500)],
@@ -221,9 +222,10 @@ const principale = [
   ["vista ALTRO", view("full")],
   ["tema SOLE", async ({ tap }) => tap('[data-theme-choice="sun"]', 300)],
   ["Leggi Transpose (1ª lettura)", async ({ tap }) => tap("#transpose-probe-button", 3500)],
-  ["PALCO: Transpose ON/OFF, poi ALTRO", async ({ tap }) => {
+  ["PALCO: Transpose −1, poi ALTRO", async ({ tap }) => {
     await tap('[data-view-button="live"]', 300);
-    await tap("#live-fixed-fx-grid button:nth-child(3)", 1500);
+    await tap("#live-fixed-fx-grid button:nth-child(3)", 300);
+    await tap('[data-transpose="-1"]', 1500);
     await tap('[data-view-button="full"]', 300);
   }],
   ["Leggi Transpose (2ª lettura)", async ({ tap }) => tap("#transpose-probe-button", 3800)],

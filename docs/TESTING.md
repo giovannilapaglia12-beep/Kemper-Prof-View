@@ -1,6 +1,24 @@
-# Verifiche hardware, test locali e problemi aperti — v1.63
+# Verifiche hardware, test locali e problemi aperti — v1.64
 
-## Da provare con la v1.63 (solo un colpo d'occhio, circa 5 minuti)
+## Da provare con la v1.64 — Transpose da −2 a +2 in PALCO (circa 10 minuti)
+
+È la prima volta che l'app **scrive** il Transpose: prova a volume basso, con il Player collegato (⇄) e un Rig salvato senza Transpose. Il riquadro del Transpose è quello bianco in basso in PALCO.
+
+- [ ] **Aggiornamento**: in alto in ALTRO compare **v1.64** (alla 2ª–3ª riapertura).
+- [ ] **Si legge**: il riquadro mostra **Transpose 0** e OFF. Sul Player porta il Transpose a +2: entro qualche secondo l'app mostra **Transpose +2** e ON. Rimettilo a 0 sul Player.
+- [ ] **Si apre e si chiude**: tocca il riquadro → compare la fila **−2 −1 0 +1 +2 ✕** sopra i riquadri in basso. Tocca **✕**: si chiude e non cambia nulla.
+- [ ] **+2 dall'app**: tocca il riquadro → **+2**. Per un attimo ATTENDO KEMPER, poi **Transpose +2** ON (riquadro bianco). Suona una corda a vuoto: deve suonare **un tono sopra**. Guarda il Player: deve indicare Transpose acceso a +2.
+- [ ] **−1 e −2**: scegli −1, poi −2; ogni volta il riquadro mostra il valore e la corda scende.
+- [ ] **0 al volo**: tocca il riquadro → **0**. Il riquadro torna OFF e la corda suona normale.
+- [ ] **Resta cambiando Rig**: scegli **+2**, poi cambia Rig dalla scheda RIG (anche in un'altra Bank). Dopo circa un secondo compare **"Transpose +2 rimesso dopo il cambio Rig"** e il riquadro mostra +2; la corda suona un tono sopra. Rifallo 3–4 volte, e una volta cambiando Rig **dal Player** (footswitch).
+- [ ] **Cambiato sul Player**: con +2 scelto dall'app, cambia il Transpose **sul Player** (per esempio a 0). L'app mostra 0; cambiando Rig l'app **non** rimette +2.
+- [ ] **Con REV Freeze**: attiva Freeze su un suono, poi scegli +1. Annota se il suono congelato si interrompe (è il problema Kemper già noto dei Fixed FX).
+- [ ] **Leggi Transpose** (ALTRO) con +2 scelto dall'app: la riga deve dire **Rig Transpose 4/4 = 66**.
+- [ ] **Salva diagnostica** e mandala a Claude (contiene `transposeControl`).
+
+Attenzione: se **salvi il Rig sul Player** mentre è trasposto, il Rig resterà trasposto anche le volte successive. Prima di salvare, rimetti 0.
+
+## Da provare con la v1.63 (solo un colpo d'occhio, circa 5 minuti; si può fare insieme alla v1.64)
 
 La v1.63 cambia solo come è organizzata la grafica: sullo schermo deve essere **tutto uguale** alla v1.62. Basta guardare.
 
@@ -21,6 +39,11 @@ Se non hai ancora provato la v1.61, fai prima le sue prove qui sotto (cerca **v1
 - [ ] **Ritorno all'app**: con il collegamento ⇄ attivo, passa a un'altra app (WhatsApp, lettore delle basi) per almeno 20 secondi, poi torna. Non deve comparire "Collegamento bidirezionale perso" e ⇄ resta acceso.
 - [ ] **REVERSE dopo il Player spento**: nella scheda LOOPER accendi REVERSE (l'app mostra REVERSE: ON). Chiudi l'app, spegni il Player e aspetta più di 10 minuti. Riaccendi il Player e riapri l'app: compare "REVERSE e ½ SPEED azzerati" e la scheda mostra REVERSE: OFF. Registra un loop breve: suona normale.
 - [ ] **REVERSE senza spegnere**: accendi REVERSE, chiudi e riapri l'app entro pochi minuti con il Player acceso: REVERSE resta ON (come sul Player).
+
+## Esito prova "Leggi Transpose" (29/09/2026, app ancora v1.62)
+
+- Transpose 0 → 4/4 = 64 e 5/1 spento; +2 → 4/4 = 66 e 5/1 acceso; −2 → 4/4 = 62 e 5/1 acceso; cambio Rig → spento e 64. I semitoni sono il parametro 4/4: usato dalla v1.64 (dettagli in `docs/MIDI.md`).
+- Nella stessa mattina: 11 cambi Rig, anche **Bank 27** (Bank Select 1): confermata dal Player con il nome del Rig. Nessuna perdita del bidirezionale; 55.796 messaggi e 130 ridisegni.
 
 ## Esito prova lunga v1.52 (28/09/2026)
 

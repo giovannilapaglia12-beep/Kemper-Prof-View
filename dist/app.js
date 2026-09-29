@@ -39,6 +39,7 @@ import {
 } from "./js/looper.js";
 import { bindLooperErase, bindLooperSwitch } from "./js/looper-touch.js";
 import { startTransposeProbe } from "./js/transpose-probe.js";
+import { chooseTranspose, closeTransposePicker } from "./js/transpose.js";
 
 // ── Pulsanti: ogni tocco chiama la funzione del modulo che se ne occupa ──────────
 ui.connect.addEventListener("click", connect);
@@ -122,6 +123,8 @@ for (const button of ui.liveRigSlots) {
   button.addEventListener("click", () => selectRigSlot(Number(button.dataset.liveRigSlot)));
 }
 ui.liveFreeze.addEventListener("click", toggleRevFreeze);
+for (const button of ui.liveTransposeChoices) button.addEventListener("click", () => chooseTranspose(Number(button.dataset.transpose)));
+ui.liveTransposeClose.addEventListener("click", closeTransposePicker);
 ui.liveTuner.addEventListener("click", toggleTunerFromApp);
 ui.liveTap.addEventListener("click", tapTempo);
 for (const button of ui.viewButtons) {

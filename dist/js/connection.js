@@ -33,6 +33,7 @@ import {
   releaseAllLooperSwitches,
 } from "./looper.js";
 import { captureTransposeProbe } from "./transpose-probe.js";
+import { handleTransposeState } from "./transpose.js";
 
 export function describePort(port) {
   const parts = [port.name, port.manufacturer].filter(Boolean);
@@ -121,6 +122,7 @@ function attachInputs() {
       handleRigSelectionState(decoded);
       handleFreezeState(decoded);
       handleFixedFxState(decoded);
+      handleTransposeState(decoded);
       handleLooperLocation(decoded);
       handleTunerStream(decoded, sourceName);
       captureTunerMode(decoded, sourceName);

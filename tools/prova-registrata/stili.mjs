@@ -207,10 +207,13 @@ const percorso = [
   ["PALCO, effetto in attesa", async (h) => { await h.click("#live-effects-grid button:nth-child(1)"); await h.run(20); }],
   ["PALCO, Fixed FX e Freeze accesi", async (h) => {
     await h.run(1500);
-    await h.click("#live-fixed-fx-grid button:nth-child(3)"); await h.run(1500);
+    await h.click("#live-fixed-fx-grid button:nth-child(3)"); await h.run(300);
+    await h.click('[data-transpose="2"]'); await h.run(1500);
     await h.click("#live-freeze-button"); await h.run(1500);
   }],
+  ["PALCO, scelta del Transpose aperta (v1.64)", async (h) => { await h.click("#live-fixed-fx-grid button:nth-child(3)"); await h.run(300); }],
   ["PALCO, Morph acceso e livello aperto", async (h) => {
+    await h.click("#live-transpose-close"); await h.run(300);
     await h.click("#live-morph-toggle"); await h.run(1500);
     await h.click(".stage-morph-level summary"); await h.run(200);
   }],

@@ -378,6 +378,42 @@ export function buildFixedFxChangeRequest(effect, active, label = `${effect.labe
   );
 }
 
+// v1.64: semitoni del Fixed FX Transpose. Prova "Leggi Transpose" sul Player (29/09/2026, Rig RT FIRESPIT 3):
+// Transpose 0 → 4/4 = 64 e On/Off 5/1 = 0; +2 → 4/4 = 66 e 5/1 = 1; −2 → 4/4 = 62 e 5/1 = 1.
+// Quindi i semitoni sono il Rig Transpose (pagina 4, parametro 4), 64 = 0, un'unità = un semitono.
+// Cambiando Rig il Player torna ai valori salvati nel Rig (Transpose spento, 64).
+export const TRANSPOSE_SEMITONES = { page: 0x04, parameter: 0x04, center: 64 };
+export const TRANSPOSE_CHOICES = [-2, -1, 0, 1, 2];
+const TRANSPOSE_SWITCH = FIXED_FX.find((effect) => effect.key === "transpose");
+
+export function transposeRawToSemitones(raw) {
+  return Number.isInteger(raw) ? raw - TRANSPOSE_SEMITONES.center : null;
+}
+
+export function buildTransposeValueRequest(label = "Transpose semitoni 4/4") {
+  return buildParameterRequest(TRANSPOSE_SEMITONES.page, TRANSPOSE_SEMITONES.parameter, label);
+}
+
+// true se il Player è già al valore scelto: semitoni giusti e On/Off come fa il Player (acceso se non è 0).
+export function transposeMatches(semitones, raw, switchRaw) {
+  return raw === TRANSPOSE_SEMITONES.center + semitones && (switchRaw > 0) === (semitones !== 0);
+}
+
+// Comandi per portare il Transpose a `semitones`: prima i semitoni, poi l'On/Off solo se deve cambiare
+// (un Fixed FX acceso di nuovo interrompe il REV Freeze: bug Kemper segnalato il 28/09/2026).
+export function buildTransposeCommands(semitones, switchRaw) {
+  const text = semitones > 0 ? `+${semitones}` : String(semitones);
+  const requests = [buildParameterChangeRequest(
+    TRANSPOSE_SEMITONES.page,
+    TRANSPOSE_SEMITONES.parameter,
+    TRANSPOSE_SEMITONES.center + semitones,
+    `Transpose ${text} · semitoni 4/4`,
+  )];
+  const on = semitones !== 0;
+  if ((switchRaw > 0) !== on) requests.push(buildFixedFxChangeRequest(TRANSPOSE_SWITCH, on, `Transpose ${on ? "ON" : "OFF"}`));
+  return requests;
+}
+
 export function buildTunerModeRequest(label = "Tuner Confirmation") {
   return { label, bytes: KEMPER_REQUESTS.tunerMode };
 }

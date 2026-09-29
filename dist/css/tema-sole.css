@@ -88,6 +88,10 @@ body[data-theme="sun"][data-view="live"] .stage-fx [data-active="unknown"] stron
 body[data-theme="sun"][data-view="live"] .stage-fx [data-active="true"] { border-color: #07100b; box-shadow: none; }
 body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-transpose[data-active="true"] { background-image: linear-gradient(165deg, #d9dfdb, #c3cbc6); }
 body[data-theme="sun"] #live-tuner-note { color: var(--green); }
+body[data-theme="sun"] .stage-transpose-picker { background: #ffffff; border: 2px solid #07100b; }
+body[data-theme="sun"] .stage-transpose-picker > span { color: #3e4e44; }
+body[data-theme="sun"] .stage-transpose-picker button { background: #ffffff; border: 2px solid rgba(7, 16, 11, 0.35); color: #07100b; }
+body[data-theme="sun"] .stage-transpose-picker button[data-selected="true"] { border-color: #07100b; background: linear-gradient(165deg, #d9dfdb, #c3cbc6); }
 
 /* Morph */
 body[data-theme="sun"] .live-morph[data-active] { background: #ffffff; border-width: 2px; }

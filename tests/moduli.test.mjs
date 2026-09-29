@@ -330,3 +330,181 @@ this.needReset = looperFlagsNeedReset;`, context);
   assert.equal(context.needReset({ reverse: true, half: true, seenAt: 0, now }), true, 'contatto sconosciuto: OFF');
   assert.equal(context.needReset({ reverse: false, half: false, seenAt: 0, now }), false, 'niente da azzerare');
 });
+
+// ── v1.64: Transpose −2…+2 in PALCO ─────────────────────────────────────────
+test('Transpose: semitoni = 4/4 con 64 = 0; On/Off 5/1 inviato solo se deve cambiare (prova sul Player del 29/09/2026)', () => {
+  const hex = (requests) => requests.map((request) => midi.bytesToHex(request.bytes));
+  assert.equal(midi.bytesToHex(midi.buildTransposeValueRequest().bytes), 'F0 00 20 33 02 7F 41 00 04 04 F7');
+  // Valori letti sul Player: 0 → 64 (spento), +2 → 66 (acceso), −2 → 62 (acceso)
+  assert.equal(midi.transposeRawToSemitones(64), 0);
+  assert.equal(midi.transposeRawToSemitones(66), 2);
+  assert.equal(midi.transposeRawToSemitones(62), -2);
+  assert.ok(midi.transposeMatches(0, 64, 0));
+  assert.ok(midi.transposeMatches(2, 66, 1));
+  assert.ok(midi.transposeMatches(-2, 62, 1));
+  assert.ok(!midi.transposeMatches(2, 66, 0));
+  assert.ok(!midi.transposeMatches(0, 64, 1));
+  assert.deepEqual(hex(midi.buildTransposeCommands(2, 0)),
+    ['F0 00 20 33 02 7F 01 00 04 04 00 42 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
+  assert.deepEqual(hex(midi.buildTransposeCommands(-1, 1)), ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7']);
+  assert.deepEqual(hex(midi.buildTransposeCommands(0, 1)),
+    ['F0 00 20 33 02 7F 01 00 04 04 00 40 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 00 F7']);
+  assert.deepEqual([2, 1, 0, -1, -2].map(text.signedSemitones), ['+2', '+1', '0', '−1', '−2']);
+});
+
+function transposeControlContext() {
+  const clock = { now: 1000 };
+  const sent = [];
+  const toasts = [];
+  const timers = new Map();
+  let nextTimer = 1;
+  const addTimer = (fn, ms, repeat) => { const id = nextTimer++; timers.set(id, { fn, at: clock.now + ms, ms, repeat }); return id; };
+  const value = node();
+  const state = node();
+  const button = { ...node(), querySelector: (selector) => (selector === 'span' ? state : value) };
+  const choices = midi.TRANSPOSE_CHOICES.map((choice) => ({ ...node(), dataset: { transpose: String(choice) } }));
+  const session = { sysex: true, fixedFxPollsSent: 0,
+    fixedFxState: new Map([['transpose', { raw: 0, supported: true, confirmedAt: null }]]) };
+  const context = {
+    session, Date, Number, String, Map,
+    FIXED_FX: midi.FIXED_FX, TRANSPOSE_SEMITONES: midi.TRANSPOSE_SEMITONES,
+    buildFixedFxStateRequests: midi.buildFixedFxStateRequests, buildTransposeCommands: midi.buildTransposeCommands,
+    buildTransposeValueRequest: midi.buildTransposeValueRequest, transposeMatches: midi.transposeMatches,
+    transposeRawToSemitones: midi.transposeRawToSemitones, signedSemitones: text.signedSemitones,
+    ui: { liveFixedFxGrid: { querySelector: () => button }, liveTransposePicker: { hidden: true }, liveTransposeChoices: choices, copy: node() },
+    toast: (message) => toasts.push(message),
+    profilerOutputs: () => [{}],
+    sendProfilerRequests: (requests) => { for (const request of requests) sent.push(midi.bytesToHex(request.bytes)); },
+    confirmationPollAllowed: (startedAt) => clock.now - startedAt >= 700, // come con il bidirezionale attivo
+    performance: { now: () => clock.now },
+    window: {
+      setTimeout: (fn, ms) => addTimer(fn, ms, false), setInterval: (fn, ms) => addTimer(fn, ms, true),
+      clearTimeout: (id) => timers.delete(id), clearInterval: (id) => timers.delete(id),
+    },
+  };
+  vm.runInNewContext(`${snippet('js/transpose.js', 'const SWITCH')}
+this.choose = chooseTranspose; this.handle = handleTransposeState; this.rigChanged = transposeRigChanged;
+this.toggle = toggleTransposePicker; this.diagnostics = transposeDiagnostics; this.paint = paintTranspose;`, context);
+  // Il tempo avanza a passi di 50 ms eseguendo i timer scaduti.
+  context.advance = (ms) => {
+    const until = clock.now + ms;
+    while (clock.now < until) {
+      clock.now += 50;
+      for (const [id, timer] of [...timers]) {
+        if (!timers.has(id) || timer.at > clock.now) continue;
+        if (timer.repeat) timer.at += timer.ms; else timers.delete(id);
+        timer.fn();
+      }
+    }
+  };
+  // Risposta del Player a una lettura o invio spontaneo: aggiorna 5/1 come fa fixed-fx.js, poi transpose.js.
+  context.reply = (page, parameter, raw) => {
+    if (page === 5) session.fixedFxState.set('transpose', { raw, supported: true, confirmedAt: null });
+    context.handle({ type: 'Kemper Parameter', page, parameter, value: raw });
+  };
+  context.playerState = (semitones, on) => { context.reply(4, 4, 64 + semitones); context.reply(5, 1, on); };
+  Object.assign(context, { sent, toasts, clock, button, value, state, choices });
+  return context;
+}
+
+test('Transpose: il tocco su +2 invia semitoni e On, mostra ATTENDO e poi +2 quando il Player conferma', () => {
+  const t = transposeControlContext();
+  t.playerState(0, 0);
+  assert.equal(t.value.textContent, '0');
+  assert.equal(t.state.textContent, 'OFF');
+  t.toggle();
+  assert.equal(t.ui.liveTransposePicker.hidden, false);
+  t.choose(2);
+  assert.equal(t.ui.liveTransposePicker.hidden, true);
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 42 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
+  assert.equal(t.state.textContent, 'ATTENDO KEMPER');
+  assert.equal(t.button.disabled, true);
+  t.advance(850); // senza conferma spontanea: dal controllo dopo 700 ms l'app rilegge 4/4 e 5/1
+  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
+  t.playerState(2, 1);
+  assert.equal(t.value.textContent, '+2');
+  assert.equal(t.state.textContent, 'ON');
+  assert.equal(t.button.dataset.active, 'true');
+  assert.equal(t.session.transpose.pending, null);
+  assert.equal(t.choices.find((choice) => choice.dataset.transpose === '2').dataset.selected, 'true');
+  assert.deepEqual(t.toasts, ['Transpose +2 · confermato']);
+});
+
+test('Transpose: senza conferma entro 2,8 s avvisa e lascia il valore letto dal Player', () => {
+  const t = transposeControlContext();
+  t.playerState(0, 0);
+  t.choose(-1);
+  t.advance(3000);
+  assert.equal(t.session.transpose.pending, null);
+  assert.deepEqual(t.toasts, ['Transpose −1 non confermato dal Kemper']);
+  assert.equal(t.value.textContent, '0');
+  assert.equal(t.state.textContent, 'OFF');
+});
+
+test('Transpose: cambiando Rig il Player torna a 0 → l\'app rimette il valore scelto e aspetta la conferma', () => {
+  const t = transposeControlContext();
+  t.handle({ type: 'Program Change', program: 42, rigIndex: 42 });
+  t.playerState(0, 0);
+  t.choose(2);
+  t.playerState(2, 1);
+  t.sent.length = 0;
+  // Il Player rimanda il Program Change del Rig in uso (Tuner, beacon): non è un cambio Rig.
+  t.handle({ type: 'Program Change', program: 42, rigIndex: 42 });
+  assert.equal(t.value.textContent, '+2');
+  // Cambio Rig: i valori del nuovo Rig arrivano (spento, 64) → l'app rimette +2.
+  t.handle({ type: 'Program Change', program: 41, rigIndex: 41 });
+  assert.equal(t.state.textContent, 'IN LETTURA');
+  t.advance(1000);
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 41 00 04 04 F7', 'F0 00 20 33 02 7F 41 00 05 01 F7']);
+  t.playerState(0, 0);
+  assert.deepEqual(t.sent.slice(2), ['F0 00 20 33 02 7F 01 00 04 04 00 42 F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
+  assert.equal(t.state.textContent, 'ATTENDO KEMPER');
+  t.playerState(2, 1);
+  assert.equal(t.toasts.at(-1), 'Transpose +2 rimesso dopo il cambio Rig');
+  assert.equal(t.diagnostics().reappliedAfterRigChange, 1);
+  assert.equal(t.diagnostics().chosen, 2);
+});
+
+test('Transpose: senza una scelta fatta con un tocco, o con il nuovo Rig già giusto, nessun comando dopo il cambio Rig', () => {
+  const t = transposeControlContext();
+  t.playerState(0, 0);
+  t.rigChanged();
+  t.playerState(2, 1); // Rig salvato con +2: l'app lo mostra e basta
+  assert.deepEqual(t.sent, []);
+  assert.equal(t.value.textContent, '+2');
+  t.choose(0);
+  t.playerState(0, 0);
+  t.sent.length = 0;
+  t.rigChanged();
+  t.playerState(0, 0);
+  assert.deepEqual(t.sent, []);
+});
+
+test('Transpose: valori del nuovo Rig letti dopo più di 8 s → nessun comando a sorpresa', () => {
+  const t = transposeControlContext();
+  t.playerState(0, 0);
+  t.choose(1);
+  t.playerState(1, 1);
+  t.rigChanged();
+  t.advance(9000);
+  t.sent.length = 0;
+  t.playerState(0, 0);
+  assert.deepEqual(t.sent, []);
+  assert.equal(t.diagnostics().chosen, 0); // da ora vale il valore del Player
+});
+
+test('Transpose: cambiato sul Player, da ora vale quello (anche per i Rig successivi)', () => {
+  const t = transposeControlContext();
+  t.playerState(0, 0);
+  t.choose(2);
+  t.playerState(2, 1);
+  t.playerState(-1, 1); // Giovanni gira il Transpose sul Player
+  assert.equal(t.diagnostics().chosen, -1);
+  t.rigChanged();
+  t.sent.length = 0;
+  t.playerState(0, 0);
+  assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
+  t.playerState(-1, 1);
+  t.reply(5, 1, 0); // spento dal Player: nessun transpose
+  assert.equal(t.diagnostics().chosen, 0);
+});

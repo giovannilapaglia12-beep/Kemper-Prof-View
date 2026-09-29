@@ -7,6 +7,7 @@ import {
   buildProfilerStateRequests,
   buildRigNameRequest,
   buildTempoRequest,
+  buildTransposeValueRequest,
   FIXED_FX,
 } from "../kemper-midi.js";
 import { AUTO_SYNC_INTERVAL, FIXED_FX_SYNC_INTERVAL } from "./config.js";
@@ -16,6 +17,7 @@ import { beginRevHoldProbe, requestFixedFxState } from "./fixed-fx.js";
 import { profilerOutputs, sendProfilerRequests } from "./connection.js";
 import { BIDI_SAFETY_POLL_MS, bidiCovers } from "./bidi.js";
 import { requestLooperLocation } from "./looper.js";
+import { requestTransposeState } from "./transpose.js";
 
 export function requestProfilerState({ silent = false, force = false } = {}) {
   if (!profilerOutputs().length) {
@@ -32,6 +34,9 @@ export function requestProfilerState({ silent = false, force = false } = {}) {
   }
   if (session.sysex && session.fixedFxPending.size === 0) {
     window.setTimeout(() => requestFixedFxState(FIXED_FX, { record: true }), 190);
+    if (session.transpose.pending === null) {
+      window.setTimeout(() => requestTransposeState({ withSwitch: false, record: true }), 190);
+    }
     window.setTimeout(requestLooperLocation, 240);
   }
   if (!silent) toast("Sincronizzazione inviata al Profiler");
@@ -58,6 +63,9 @@ function fillUnknownState() {
   const unknownFx = FIXED_FX.filter((effect) => (session.fixedFxState.get(effect.key)?.raw ?? null) === null
     && !session.fixedFxPending.has(effect.key));
   if (unknownFx.length) requestFixedFxState(unknownFx, { record: true });
+  if (session.transpose.raw === null && session.transpose.pending === null) {
+    requestTransposeState({ withSwitch: false, record: true });
+  }
   session.gapFills = (session.gapFills ?? 0) + 1;
 }
 
@@ -99,6 +107,10 @@ function pollProfilerState() {
     const available = FIXED_FX.filter((effect) => !session.fixedFxPending.has(effect.key)
       && keep(buildParameterRequest(effect.page, effect.parameter)));
     if (available.length) requestFixedFxState(available);
+    // v1.64: semitoni del Transpose (4/4), per seguire anche i cambi fatti sul Player.
+    if (session.transpose.pending === null && keep(buildTransposeValueRequest())) {
+      requestTransposeState({ withSwitch: false });
+    }
   }
 }
 

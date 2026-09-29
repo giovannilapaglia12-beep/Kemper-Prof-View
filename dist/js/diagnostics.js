@@ -20,6 +20,7 @@ import { stopRigSelectionConfirmation } from "./rig.js";
 import { describePort, profilerOutputs } from "./connection.js";
 import { BIDI_LEASE_SECONDS, keyName, requestsPerMinute } from "./bidi.js";
 import { looper } from "./looper.js";
+import { requestTransposeState, resetTransposeControl, transposeDiagnostics } from "./transpose.js";
 
 export function addLog(decoded, sourceName) {
   session.total += 1;
@@ -95,6 +96,7 @@ export function clearLog() {
   session.fixedFxPollsSent = 0;
   session.fixedFxRepliesReceived = 0;
   session.fixedFxLastCommands = [];
+  resetTransposeControl();
   session.tunerNoteWindow = [];
   session.tunerRawNotes.clear();
   session.tunerStableNotes.clear();
@@ -135,6 +137,7 @@ export function clearLog() {
   if (session.sysex && profilerOutputs().length) {
     window.setTimeout(() => beginRevHoldProbe({ record: false }), 120);
     window.setTimeout(() => requestFixedFxState(FIXED_FX, { record: true }), 170);
+    window.setTimeout(() => requestTransposeState({ withSwitch: false, record: true }), 170);
   }
 }
 
@@ -271,6 +274,7 @@ function buildDiagnostics() {
       },
       lastCommands: session.fixedFxLastCommands,
     },
+    transposeControl: transposeDiagnostics(),
     bidirectional: {
       enabled: session.bidi.enabled,
       state: session.bidi.state,

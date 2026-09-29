@@ -180,7 +180,7 @@ test('Only the Kemper input can update live MIDI state', () => {
     handleBidirectional() {}, handleBankNames() {}, handleRigStack() {}, refreshRigControlsOnBankNames() {}, captureLooperProbe() {}, captureTransposeProbe() {}, notePlayerContact() {},
     trackProfilerRig() {}, handlePerformanceControl() {}, handleMorphState() {}, handleEffectState() {},
     handleTempoState() {}, handleRigSelectionState() {}, handleFreezeState() {}, handleLooperLocation() {},
-    handleFixedFxState() {}, handleTunerStream() {}, captureTunerMode() {},
+    handleFixedFxState() {}, handleTransposeState() {}, handleTunerStream() {}, captureTunerMode() {},
     shouldLog: () => false, addLog() {}, pulseTempo() {}, ui: { liveBpmBox: { dataset: {} } }, scheduleProfilerSync() {},
     sendProfilerRequests() {}, buildRenderedValueRequest() {},
   };

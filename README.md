@@ -1,6 +1,15 @@
-# Kemper Profiler View v1.63
+# Kemper Profiler View v1.64
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.64 — Transpose da −2 a +2 in PALCO
+
+- **Esito della prova "Leggi Transpose" (29/09/2026)**: i semitoni del Fixed FX Transpose sono il parametro 4/4 del Player (64 = 0, 66 = +2, 62 = −2); l'On/Off (5/1) si accende quando il valore non è 0. Cambiando Rig il Player torna al valore salvato nel Rig.
+- **Il riquadro Transpose di PALCO scrive sempre i semitoni** (es. *Transpose +2*). Toccandolo si apre una fila **−2 −1 0 +1 +2 ✕** sopra i riquadri in basso: un tocco sceglie il valore (0 = spento), ✕ chiude senza cambiare. Il riquadro mostra ATTENDO KEMPER finché il Player non conferma; senza conferma entro 2,8 s compare "non confermato dal Kemper".
+- **Il valore scelto resta cambiando Rig**, come deciso: se il nuovo Rig lo riporta al suo valore, l'app lo rimette (solo se il nuovo Rig viene letto entro 8 s dal cambio) e scrive "Transpose +2 rimesso dopo il cambio Rig". Se il Transpose viene cambiato sul Player, da quel momento vale quello del Player. All'apertura dell'app nessun valore è scelto: l'app mostra quello del Player e non invia nulla finché non si tocca.
+- Il riquadro non accende e spegne più il Transpose con un tocco: si spegne scegliendo 0.
+- Diagnostica: nuova sezione `transposeControl`. Il Player DEMO simula 4/4 e il ritorno a 0 cambiando Rig.
+- Test: 48 (7 nuovi sul Transpose: comandi, conferma, cambio Rig, cambio fatto sul Player, nessun comando senza una scelta o dopo 8 s).
 
 ## Novità v1.63 — grafica riordinata per schermata, nessuna modifica visibile
 
@@ -223,7 +232,7 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 | `dist/demo.js` | Kemper simulato per la modalità demo |
 | `dist/js/config.js` | Nome, versione, tempi e chiavi di memoria del telefono |
 | `dist/js/dom.js` | Riferimenti agli elementi della pagina, messaggi brevi |
-| `dist/js/text.js` | Funzioni di solo calcolo: sillabazione, colori delle categorie, note, mediana |
+| `dist/js/text.js` | Funzioni di solo calcolo: semitoni, sillabazione, colori delle categorie, note, mediana |
 | `dist/js/state.js` | Stato condiviso (ciò che l'app sa del Player e dei comandi in corso) |
 | `dist/js/views.js` | Schede e tema |
 | `dist/js/screen.js` | Messaggi del Player → stato → schermata; stato del collegamento |
@@ -240,12 +249,13 @@ La vista PALCO mostra gli otto moduli A, B, C, D, X, MOD, DLY, REV, i quattro fi
 | `dist/js/looper.js` | Looper: comandi, stato stimato, aggancio al tempo, cerchio, posizione |
 | `dist/js/looper-touch.js` | Pulsanti del Looper: pressione/rilascio, tocco vero, CANCELLA LOOP |
 | `dist/js/diagnostics.js` | Registro dei messaggi e diagnostica |
+| `dist/js/transpose.js` | Transpose −2…+2 in PALCO: scelta, conferma, valore mantenuto cambiando Rig (v1.64) |
 | `dist/js/transpose-probe.js` | Prova "Leggi Transpose" (v1.61, sola lettura) |
 | `dist/manifest.webmanifest` | PWA |
 | `dist/sw.js` | Service worker e cache offline (elenco di **tutti** i file: un test lo controlla) |
 | `dist/icon*.svg`, `dist/icon*.png` | Icone |
 | `tests/midi.test.mjs` | Prove di protocollo, Looper, Morph, tempo, colori, 125 Bank |
-| `tests/moduli.test.mjs` | Prove di bidirezionale, conferma cambio Rig, Tuner (v1.60) |
+| `tests/moduli.test.mjs` | Prove di bidirezionale, conferma cambio Rig, Tuner (v1.60), Transpose (v1.64) |
 | `tests/struttura.test.mjs` | Cache offline, import, id della pagina (v1.60), file di grafica caricati (v1.63) |
 | `tests/moduli.mjs` | Aiuti per i test (lettura dei moduli) |
 | `tools/prova-registrata/` | Prova registrata prima/dopo (richiede Playwright; vedi il suo README) |
@@ -276,6 +286,6 @@ Non è stata scelta una licenza open source. Prima di pubblicare il repository a
 
 1. **v1.4x** – grafica completata (cerchio Looper, icona, tema SOLE: fatto nella v1.41), nomi Bank completi (v1.41), pulizia tecnica (v1.41).
 2. **Prova lunga** sul Player: una prova o un servizio intero (vedi `docs/TESTING.md`, "Prova lunga").
-3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata (fatto). Poi Transpose −2…+2 in PALCO, dopo la prova di lettura sul Player.
+3. **Riordino del codice**: v1.60 JavaScript diviso in moduli (fatto), v1.61 ALTRO senza controlli doppi (fatto), v1.62 correzioni dopo la prova lunga (fatto), v1.63 `styles.css` riordinato per schermata (fatto). v1.64 Transpose −2…+2 in PALCO (fatto, da provare sul Player).
 4. **v2.0 – pronta per il servizio**: scaletta del servizio (brani con Bank/Rig, BPM e note, avanti/indietro con un tocco), affidabilità dimostrata su entrambi i telefoni, guida d'uso di una pagina.
 5. Dopo la 2.0: pedale MIDI Bluetooth.
