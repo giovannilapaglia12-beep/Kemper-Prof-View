@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.69
+# Kemper Profiler View v1.70
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.70 — ritocchi dopo la prova sul telefono (30/09/2026)
+
+- **Riquadri degli effetti più alti**: sul telefono di Giovanni, in Chrome con la barra dell'indirizzo, erano schiacciati. Nome del Rig, BPM, TAP, Morph e pulsanti in basso sono un po' più compatti: in quello spazio (412 × 760) gli 8 effetti passano da 297 a 341 punti di altezza. Aprendo l'app dall'icona "Profiler View" (a tutto schermo, senza barra) lo spazio è ancora di più.
+- **Effetti accesi sfumati** come Transp.: più scuri in alto, più chiari in basso (anche Fixed FX, REV FREEZE e TUNER accesi).
+- **REV con il Freeze acceso** scrive **FREEZE** (non più "FREEZE ON", che usciva dal riquadro).
+- **"ATTENDO"** più piccolo: non esce più dal riquadro dell'effetto.
 
 ## Novità v1.69 — ritocco delle spie
 

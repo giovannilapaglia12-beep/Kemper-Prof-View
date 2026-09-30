@@ -625,7 +625,7 @@ body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[dat
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] strong,
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] small,
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] #live-tuner-note { color: #000; }
-body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-freeze="true"] > small { font-size: 0.85rem; white-space: nowrap; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-freeze="true"] > small { white-space: nowrap; }
 @media (orientation: landscape) and (max-height: 560px) {
   body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { grid-auto-flow: column; justify-content: start; align-items: center; gap: 5px; }
   body[data-view="live"] .stage-fx .live-transpose-cell .live-transpose-value { font-size: 0.95rem; }
@@ -639,3 +639,29 @@ body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-transpos
 }
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button .live-transpose-value { color: rgb(var(--fx-rgb)); }
 body[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] .live-transpose-value { color: #000; }
+
+/* ───────── v1.70 · prova sul telefono di Giovanni (30/09/2026) ─────────
+   Effetti accesi sfumati come Transp. (più scuro in alto, più chiaro in basso: seconda anteprima scelta da lui). */
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--tone-rgb)) 72%, #000) 0%, rgb(var(--tone-rgb)) 50%, color-mix(in srgb, rgb(var(--tone-rgb)) 70%, #fff) 100%);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"]:not(.live-fixed-fx-transpose),
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--fx-rgb)) 72%, #000) 0%, rgb(var(--fx-rgb)) 50%, color-mix(in srgb, rgb(var(--fx-rgb)) 70%, #fff) 100%);
+}
+/* "ATTENDO" non deve uscire dal riquadro dell'effetto. */
+body[data-view="live"] .stage .live-effect-button[data-pending="true"] > small { font-size: 0.72rem; letter-spacing: 0.02em; white-space: nowrap; }
+/* Riquadri degli effetti più alti: in Chrome con la barra dell'indirizzo lo spazio è poco (schermata di Giovanni:
+   riquadri schiacciati). Si recupera altezza da nome del Rig, tempo e Morph. */
+@media (orientation: portrait) {
+  body:not([data-theme="sun"]) .stage-rig-name { font-size: clamp(1.7rem, 8.4vw, 2.4rem); }
+  body:not([data-theme="sun"]) .stage-bpm strong { font-size: clamp(1.8rem, 8.6vw, 2.35rem); }
+  body[data-view="live"] .stage-tap { min-height: 54px; }
+  body[data-view="live"] .stage-round { min-height: 24px; }
+  body[data-view="live"] .live-morph.stage-morph { margin: 0; padding: 5px; }
+  body[data-view="live"] .stage-morph .live-morph-toggle,
+  body[data-view="live"] .stage-morph-level summary { min-height: 36px; height: 36px; }
+  body[data-view="live"] .stage-morph .live-morph-top { margin-bottom: 4px; }
+  body[data-view="live"] .stage-fx .live-fixed-fx-button,
+  body[data-view="live"] .stage-fx .live-action-button { min-height: 46px; }
+}

@@ -63,7 +63,7 @@ function paintKemperState() {
       if (effect.key === "REV") liveNode.card.dataset.freeze = session.freezeRevRaw === null ? "unknown" : String(freezeActive);
       liveNode.status.textContent = pending
         ? "ATTENDO"
-        : empty ? "VUOTO" : freezeActive ? "FREEZE ON" : effect.active === null ? "—" : effect.active ? "ON" : "OFF";
+        : empty ? "VUOTO" : freezeActive ? "FREEZE" : effect.active === null ? "—" : effect.active ? "ON" : "OFF";
       liveNode.card.disabled = !session.sysex || effect.active === null || empty || profilerOutputs().length === 0 || pending;
       liveNode.card.setAttribute("aria-pressed", String(!empty && effect.active === true));
       liveNode.card.setAttribute("aria-label", empty
