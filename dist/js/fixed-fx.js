@@ -37,7 +37,7 @@ for (const effect of FIXED_FX) {
     const pick = document.createElement("button");
     liveValue.className = "live-transpose-value";
     liveName.textContent = "Transp."; // v1.68: nome breve, il pulsante ± occupa tutta l'altezza a destra
-    liveName.append(" ", liveValue);
+    liveButton.prepend(liveValue); // v1.68: valore grande in alto, nome in basso
     cell.className = "live-transpose-cell";
     pick.type = "button";
     pick.className = "live-transpose-pick";
