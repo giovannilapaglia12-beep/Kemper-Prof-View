@@ -10,7 +10,7 @@ Scelta di Giovanni (30/09/2026) fra le proposte A (pedaliera), B (app moderna) e
 - **Nomi degli effetti più grandi**, adattati al riquadro. **Niente più trattini**: si va a capo solo fra le parole; le parole lunghe sono abbreviate (Compressor → Comp., Ionosphere → Ionos, Simulator → Simlt., Chromatic → Chrom., Harmonic → Harm., Transpose → Transp., Modulator → Mod., Distortion → Dist.). Anche nel tema SOLE.
 - **BPM in una finestrella verde**, come il display di un apparecchio; −1, +1, BPM INTERO e SYNC in rilievo; TAP con il bordo rosso.
 - **Pulsanti in basso** (Fixed FX, REV FREEZE, TUNER): **la spia al posto di ON/OFF** (anche nel tema SOLE); le scritte restano solo per gli stati particolari (ATTENDO KEMPER, IN LETTURA, CENTRATA…). REV FREEZE e TUNER accesi diventano colorati come i Fixed FX.
-- **Transpose**: si chiama **Transp.**, scritto in basso con il valore grande in alto; il pulsante **±** occupa tutta l'altezza a destra. Le spie hanno un bordo scuro, così si vedono anche sul pulsante bianco; su Transp. acceso la spia è verde, come i LED del Kemper.
+- **Transpose**: si chiama **Transp.**, scritto in basso con il valore grande in alto; il pulsante **±** occupa tutta l'altezza a destra. Acceso, Transp. diventa grigio chiaro sfumato (non bianco pieno), così la sua spia bianca si vede; la spia è alla stessa altezza di quelle degli altri pulsanti.
 - La barra delle schede in alto non cambia.
 - Test: 49 (il test della sillabazione è sostituito da quello delle abbreviazioni).
 

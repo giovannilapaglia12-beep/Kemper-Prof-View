@@ -630,14 +630,12 @@ body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-f
   body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { grid-auto-flow: column; justify-content: start; align-items: center; gap: 5px; }
   body[data-view="live"] .stage-fx .live-transpose-cell .live-transpose-value { font-size: 0.95rem; }
   body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button strong { font-size: 0.62rem; }
-  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button::after { top: 50%; right: 46px; margin-top: -5px; }
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button::after { top: 8px; right: 46px; }
 }
 
-/* v1.68: spie con il bordo scuro, visibili anche su un pulsante acceso chiaro (Transp. è bianco);
-   su Transp. acceso la spia è verde, come i LED del Kemper. */
-body[data-view="live"] .stage-fx .live-fixed-fx-button::after,
-body[data-view="live"] .stage-fx .live-action-button::after,
-body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button::after { outline: 2px solid rgba(0, 0, 0, 0.85); }
-body[data-view="live"] .stage-fx .live-fixed-fx-transpose[data-active="true"]::after { background: #50ea45; box-shadow: 0 0 8px #50ea45; }
+/* v1.68: Transp. acceso grigio chiaro sfumato (non bianco pieno), così la spia bianca si vede (scelta di Giovanni, 30/09/2026) */
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-transpose[data-active="true"] {
+  border-color: #eef3f0; background: linear-gradient(180deg, #b4bbb7 0%, #d3d9d6 50%, #eceeed 100%);
+}
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button .live-transpose-value { color: rgb(var(--fx-rgb)); }
 body[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] .live-transpose-value { color: #000; }
