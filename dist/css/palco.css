@@ -650,7 +650,9 @@ body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[dat
   background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--fx-rgb)) 72%, #000) 0%, rgb(var(--fx-rgb)) 50%, color-mix(in srgb, rgb(var(--fx-rgb)) 70%, #fff) 100%);
 }
 /* "ATTENDO" non deve uscire dal riquadro dell'effetto. */
-body[data-view="live"] .stage .live-effect-button[data-pending="true"] > small { font-size: 0.72rem; letter-spacing: 0.02em; white-space: nowrap; }
+body[data-view="live"] .stage .live-effect-button[data-pending="true"] > small,
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"][data-pending="true"] > small { font-size: 0.72rem; letter-spacing: 0.02em; white-space: nowrap; }
+/* v1.71: anche partendo da un effetto acceso (la scritta ON è più grande): prova di Giovanni del 30/09/2026. */
 /* Riquadri degli effetti più alti: in Chrome con la barra dell'indirizzo lo spazio è poco (schermata di Giovanni:
    riquadri schiacciati). Si recupera altezza da nome del Rig, tempo e Morph. */
 @media (orientation: portrait) {
