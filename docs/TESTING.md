@@ -1,4 +1,8 @@
-# Verifiche hardware, test locali e problemi aperti — v1.68
+# Verifiche hardware, test locali e problemi aperti — v1.69
+
+## Da provare con la v1.69 (insieme alla lista della v1.68)
+
+- [ ] In alto in ALTRO compare **v1.69**. Spie senza bordo nero; Transp. acceso è grigio chiaro sfumato e la sua spia bianca si vede.
 
 ## Da provare con la v1.68 — nuova grafica di PALCO (circa 5 minuti)
 
