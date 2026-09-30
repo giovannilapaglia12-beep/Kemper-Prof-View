@@ -2,7 +2,7 @@
 
 import { buildTunerModeRequest, buildTunerStreamRequests, bytesToHex } from "../kemper-midi.js";
 import { TUNER_STREAM_INTERVAL } from "./config.js";
-import { toast, ui } from "./dom.js";
+import { setSwitchState, toast, ui } from "./dom.js";
 import { median, midiNoteName } from "./text.js";
 import { session } from "./state.js";
 import { confirmMorphLevel } from "./morph.js";
@@ -17,9 +17,9 @@ function renderTuner(active, sourceName) {
   ui.liveTuner.disabled = profilerOutputs().length === 0 || session.tunerPendingMode !== null;
   ui.liveTuner.setAttribute("aria-pressed", String(active));
   ui.liveTuner.setAttribute("aria-label", active ? "Chiudi accordatore" : "Apri accordatore");
-  ui.liveTunerState.textContent = session.tunerPendingMode !== null
+  setSwitchState(ui.liveTunerState, session.tunerPendingMode !== null
     ? "ATTENDO KEMPER"
-    : active ? "ON" : "OFF";
+    : active ? "ON" : "OFF");
   if (!active) {
     ui.liveTunerNote.textContent = "APRI";
   }
@@ -60,7 +60,7 @@ function confirmTunerCommand(mode) {
   stopTunerConfirmation();
   session.tunerPendingMode = null;
   ui.liveTuner.disabled = profilerOutputs().length === 0;
-  ui.liveTunerState.textContent = mode === "open" ? "ON" : "OFF";
+  setSwitchState(ui.liveTunerState, mode === "open" ? "ON" : "OFF");
   paintTunerOverlay();
   toast(mode === "open" ? "Tuner aperto dal Kemper" : "Tuner chiuso dal Kemper");
 }
@@ -109,9 +109,9 @@ function renderTunerPitch(rawValue) {
   session.performanceState.tunerSignalRaw = Math.round(smoothedRaw);
   session.performanceState.tunerCents = rounded;
   session.performanceState.tunerZone = zone;
-  ui.liveTunerState.textContent = zone === "in-tune"
+  setSwitchState(ui.liveTunerState, zone === "in-tune"
     ? "CENTRATA"
-    : `${rounded > 0 ? "+" : ""}${rounded} CENT`;
+    : `${rounded > 0 ? "+" : ""}${rounded} CENT`);
   paintTunerOverlay();
 }
 
@@ -278,7 +278,7 @@ export function sendTunerCommand(open) {
   session.tunerPendingMode = targetMode;
   session.tunerLastCommand = { time: new Date().toISOString(), channel, value, targetMode };
   ui.liveTuner.disabled = true;
-  ui.liveTunerState.textContent = "ATTENDO KEMPER";
+  setSwitchState(ui.liveTunerState, "ATTENDO KEMPER");
   ui.copy.disabled = false;
   paintTunerOverlay();
 
@@ -292,7 +292,7 @@ export function sendTunerCommand(open) {
     stopTunerConfirmation();
     session.tunerPendingMode = null;
     ui.liveTuner.disabled = profilerOutputs().length === 0;
-    ui.liveTunerState.textContent = "NON CONFERMATO";
+    setSwitchState(ui.liveTunerState, "NON CONFERMATO");
     paintTunerOverlay();
     toast("Nessuna conferma Tuner dal Kemper");
   }, 3000);

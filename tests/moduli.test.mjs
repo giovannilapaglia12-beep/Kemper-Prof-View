@@ -169,6 +169,7 @@ function tunerContext() {
   const context = {
     session, clock, median: text.median, paintTunerOverlay() {}, performance: { now: () => clock.now },
     ui: { liveTunerState: node() },
+    setSwitchState: (node, value) => { node.textContent = value; node.hidden = value === 'ON' || value === 'OFF'; },
   };
   vm.runInNewContext(`${snippet('js/tuner.js', 'function renderTunerPitch(rawValue) {', 'function handlePerformanceControl(')}
 this.renderTunerPitch = renderTunerPitch;`, context);
@@ -374,6 +375,7 @@ function transposeControlContext() {
     transposeRawToSemitones: midi.transposeRawToSemitones, signedSemitones: text.signedSemitones,
     ui: { liveFixedFxGrid: { querySelector: (selector) => (selector === '.live-transpose-pick' ? pick : button) }, liveTransposePicker: { hidden: true }, liveTransposeChoices: choices, copy: node() },
     toast: (message) => toasts.push(message),
+    setSwitchState: (node, value) => { node.textContent = value; node.hidden = value === 'ON' || value === 'OFF'; },
     profilerOutputs: () => [{}],
     sendProfilerRequests: (requests) => { for (const request of requests) sent.push(midi.bytesToHex(request.bytes)); },
     confirmationPollAllowed: (startedAt) => clock.now - startedAt >= 700, // come con il bidirezionale attivo

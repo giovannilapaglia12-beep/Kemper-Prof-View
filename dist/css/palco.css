@@ -313,20 +313,22 @@ body[data-view="live"] .stage-fx .live-action-button small { margin-top: 2px; fo
 /* v1.64 · Transpose −2…+2: valore scritto nel riquadro; il tocco apre la scelta sopra Fixed FX, Freeze e Tuner */
 .stage-fx { position: relative; }
 .live-transpose-value { font-size: 1.15em; font-weight: 950; }
+body[data-view="live"] .stage-fx .live-transpose-cell .live-transpose-value { font-size: 1.45rem; line-height: 1; }
 /* v1.65: riquadro Transpose = tocco ON/OFF + pulsante ± a destra per scegliere i semitoni */
 .live-transpose-cell { position: relative; display: grid; min-width: 0; }
-body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { min-width: 0; }
+/* v1.68: il ± occupa tutta l'altezza a destra, le scritte stanno nel resto */
+body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { min-width: 0; padding-right: 50px; }
 body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button strong { overflow-wrap: normal; }
 .live-transpose-pick {
-  position: absolute; right: 4px; bottom: 4px; width: 40px; height: 30px;
+  position: absolute; top: 4px; right: 4px; bottom: 4px; width: 42px;
   border: 1px solid rgba(238, 243, 240, 0.45); border-radius: 8px;
-  background: rgba(6, 14, 9, 0.92); color: var(--text); font-size: 1.2rem; font-weight: 950; line-height: 1; cursor: pointer;
+  background: rgba(6, 14, 9, 0.92); color: var(--text); font-size: 1.5rem; font-weight: 950; line-height: 1; cursor: pointer;
 }
 .live-transpose-pick:disabled { opacity: 0.45; cursor: default; }
 .live-transpose-pick[aria-expanded="true"] { border-color: #eef3f0; }
 @media (orientation: landscape) and (max-height: 560px) {
-  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button strong { padding-right: 42px; }
-  .live-transpose-pick { height: 26px; }
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { padding-right: 60px; }
+  .live-transpose-pick { width: 36px; font-size: 1.2rem; }
 }
 .stage-transpose-picker {
   position: absolute; z-index: 15; inset: 0;
@@ -420,7 +422,7 @@ body[data-view="live"] .stage .live-effect-button > strong {
   overflow-wrap: normal;
   word-break: normal;
   hyphens: manual;
-  font-size: clamp(0.72rem, calc(100cqi * 1.3 / var(--chars, 8)), 1.2rem);
+  font-size: clamp(0.95rem, calc(100cqi * 1.42 / var(--chars, 8)), 1.5rem); /* v1.68: più grandi */
   font-weight: 850;
   line-height: 1.08;
   color: #a9bcb1;
@@ -471,7 +473,7 @@ body[data-view="live"] .stage-fx [data-active="false"] strong { color: #a9bcb1; 
 
 @media (orientation: landscape) and (max-height: 560px) {
   body[data-view="live"] .stage .live-effect-button > strong {
-    font-size: clamp(0.66rem, calc(100cqi * 1.3 / var(--chars, 8)), 1rem);
+    font-size: clamp(0.8rem, calc(100cqi * 1.3 / var(--chars, 8)), 1.15rem);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -529,3 +531,113 @@ body[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] {
   background: var(--bank-color); vertical-align: -0.06em;
 }
 .stage-rig-position[data-bank-color] { color: var(--bank-color); }
+
+/* ───────── v1.68 · Pulsanti in basso: la spia al posto di ON/OFF (entrambi i temi) ───────── */
+body[data-view="live"] .stage-fx .live-fixed-fx-button,
+body[data-view="live"] .stage-fx .live-action-button { position: relative; }
+body[data-view="live"] .stage-fx .live-fixed-fx-button::after,
+body[data-view="live"] .stage-fx .live-action-button::after {
+  content: ""; position: absolute; top: 8px; right: 8px; width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(var(--fx-rgb, 160, 160, 160), 0.28); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+body[data-view="live"] .stage-fx .live-freeze-button { --fx-rgb: 114, 235, 220; }
+body[data-view="live"] .stage-fx .live-tuner-button { --fx-rgb: 141, 255, 100; }
+body[data-view="live"] .stage-fx [data-active="true"]::after { background: #fff; box-shadow: 0 0 7px #fff, 0 0 14px rgb(var(--fx-rgb, 255, 255, 255)); }
+body[data-view="live"] .stage-fx [data-active="unknown"]::after { display: none; }
+body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button::after { top: 8px; right: 56px; }
+
+/* ───────── v1.68 · PALCO "pedaliera su nero" (tema scuro; scelta di Giovanni, 30/09/2026) ─────────
+   Nero pieno e scritte grandi (proposta C), pulsanti in rilievo con spia e display del BPM (proposta A).
+   Effetto spento: bordo e nome nel suo colore; acceso: tutto colorato, scritta nera, spia accesa.
+   La barra delle schede resta com'è. Il tema SOLE non cambia. */
+body:not([data-theme="sun"])[data-view="live"] { background: #000; }
+body:not([data-theme="sun"])[data-view="live"] .live-panel { border: 0; background: #000; box-shadow: none; padding-inline: 6px; }
+body:not([data-theme="sun"]) .stage-rig-name { font-size: clamp(2rem, 10vw, 2.9rem); font-weight: 950; }
+body:not([data-theme="sun"]) .stage-rig-position { font-size: 0.9rem; }
+body:not([data-theme="sun"]) .stage-bpm {
+  background: #030605; border: 1px solid #1e2b24; border-radius: 10px; box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9); padding: 4px 6px;
+}
+body:not([data-theme="sun"]) .stage-bpm strong {
+  color: #9dff7a; text-shadow: 0 0 12px rgba(141, 255, 100, 0.55);
+  font-family: ui-monospace, "Roboto Mono", monospace; letter-spacing: -0.06em; font-size: clamp(2.1rem, 10vw, 2.8rem);
+}
+body:not([data-theme="sun"]) .stage-step,
+body:not([data-theme="sun"]) .stage-round,
+body:not([data-theme="sun"]) .stage-sync,
+body:not([data-theme="sun"]) .stage-morph-level summary,
+body:not([data-theme="sun"]) .live-morph-toggle:not([aria-pressed="true"]) {
+  background: linear-gradient(180deg, #25282c, #141618); border: 1px solid #34383d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+body:not([data-theme="sun"]) .stage-tap {
+  background: linear-gradient(180deg, #3a1f1f, #1f1112); border: 2px solid #ff5f55;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 6px rgba(0, 0, 0, 0.6);
+}
+body:not([data-theme="sun"]) .stage-tap strong { font-size: 1.7rem; text-shadow: 0 0 12px rgba(255, 106, 106, 0.6); }
+body:not([data-theme="sun"])[data-view="live"] .stage-morph { border-width: 2px; }
+
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button {
+  position: relative; padding: 8px 8px 7px; border: 2px solid rgb(var(--tone-rgb)); border-radius: 12px;
+  background: linear-gradient(180deg, #1d2023, #0b0c0d); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button::after {
+  content: ""; position: absolute; top: 10px; right: 10px; width: 11px; height: 11px; border-radius: 50%;
+  background: rgba(var(--tone-rgb), 0.25); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button > span { color: rgb(var(--tone-rgb)); font-size: 1rem; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button > strong { color: rgb(var(--tone-rgb)); font-weight: 900; line-height: 1.1; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button > small { color: #9a9a9a; font-size: 0.9rem; font-weight: 950; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--tone-rgb)) 85%, #fff), rgb(var(--tone-rgb)) 55%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -8px 14px rgba(0, 0, 0, 0.15), 0 0 16px rgba(var(--tone-rgb), 0.35);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"]::after {
+  background: #fff; box-shadow: 0 0 8px #fff, 0 0 16px rgb(var(--tone-rgb));
+}
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"] > strong,
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"] > span,
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"] > small { color: #000; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"] > small { font-size: 1.05rem; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-pending="true"] { border-color: var(--amber); }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-tone="empty"] { border: 2px dashed #3a3a3a; background: #050505; box-shadow: none; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-tone="empty"]::after { display: none; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-tone="empty"] > strong { color: #555; }
+
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button,
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button {
+  border: 2px solid #4a4a4a; background: linear-gradient(180deg, #1d2023, #0b0c0d);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 6px rgba(0, 0, 0, 0.6);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button { border-color: rgb(var(--fx-rgb)); }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button strong { color: rgb(var(--fx-rgb)); }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--fx-rgb)) 85%, #fff), rgb(var(--fx-rgb)) 55%);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] strong,
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] span { color: #000; }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx [data-pending="true"] { border-color: var(--amber); }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-freeze-button,
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-tuner-button { border-color: rgba(var(--fx-rgb), 0.8); }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-freeze-button strong { color: rgb(var(--fx-rgb)); }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--fx-rgb)) 85%, #fff), rgb(var(--fx-rgb)) 55%);
+}
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] strong,
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] small,
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] #live-tuner-note { color: #000; }
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-freeze="true"] > small { font-size: 0.85rem; white-space: nowrap; }
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { grid-auto-flow: column; justify-content: start; align-items: center; gap: 5px; }
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-transpose-value { font-size: 0.95rem; }
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button strong { font-size: 0.62rem; }
+  body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button::after { top: 50%; right: 46px; margin-top: -5px; }
+}
+
+/* v1.68: spie con il bordo scuro, visibili anche su un pulsante acceso chiaro (Transp. è bianco);
+   su Transp. acceso la spia è verde, come i LED del Kemper. */
+body[data-view="live"] .stage-fx .live-fixed-fx-button::after,
+body[data-view="live"] .stage-fx .live-action-button::after,
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button::after { outline: 2px solid rgba(0, 0, 0, 0.85); }
+body[data-view="live"] .stage-fx .live-fixed-fx-transpose[data-active="true"]::after { background: #50ea45; box-shadow: 0 0 8px #50ea45; }
+body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-fixed-fx-button .live-transpose-value { color: rgb(var(--fx-rgb)); }
+body[data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"] .live-transpose-value { color: #000; }

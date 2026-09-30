@@ -222,13 +222,17 @@ test('Chiavi di richiesta e risposta coincidono (per riconoscere gli invii spont
   assert.equal(midi.requestKey(midi.buildBeaconRequest().bytes), null);
 });
 
-test('Sillabazione dei nomi effetto: mai spezzati a caso (v1.38)', () => {
-  const show = (name) => text.softHyphenate(name).replace(/­/g, '-');
-  assert.equal(show('Compressor'), 'Com-pres-sor');
-  assert.equal(show('Transpose'), 'Trans-pose');
-  assert.equal(show('Double Tracker'), 'Double Tracker');
-  assert.equal(show('Studio EQ'), 'Studio EQ');
-  assert.equal(show('Chromatic Pitch'), 'Chro-ma-tic Pitch');
+test('Nomi effetto: niente trattini, abbreviazioni scelte da Giovanni per le parole lunghe (v1.68)', () => {
+  const short = text.shortEffectName;
+  assert.equal(short('Compressor'), 'Comp.');
+  assert.equal(short('Ionosphere Reverb'), 'Ionos Reverb');
+  assert.equal(short('Acoustic Simulator'), 'Acoustic Simlt.');
+  assert.equal(short('Melody Chromatic'), 'Melody Chrom.');
+  assert.equal(short('Quad Harmonic'), 'Quad Harm.');
+  assert.equal(short('Double Tracker'), 'Double Tracker');
+  assert.equal(short('Studio EQ'), 'Studio EQ');
+  assert.ok(!/\u00ad|-/.test(short('Chromatic Pitch')));
+  assert.equal(text.longestWord(short('Wah Ring Modulator')), 5); // Ring, Mod. → nessuna parola oltre 8 lettere
 });
 
 test('Colori delle categorie come sul Kemper (v1.39)', () => {

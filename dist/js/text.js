@@ -1,5 +1,5 @@
 // Funzioni di solo calcolo, senza pagina né MIDI (si possono provare direttamente nei test):
-// semitoni del Transpose, sillabazione dei nomi effetto, colori delle categorie, nome delle note, mediana.
+// semitoni del Transpose, nomi effetto abbreviati, colori delle categorie, nome delle note, mediana.
 
 // v1.64: semitoni del Transpose come li scrive il Player: +2, 0, −2 (segno meno tipografico).
 export function signedSemitones(value) {
@@ -11,34 +11,14 @@ export function longestWord(text) {
   return Math.max(5, ...String(text).replace(/\u00ad/g, "").split(/\s+/).map((word) => word.length));
 }
 
-// Punti di sillabazione (trattino morbido) per le parole lunghe: se il nome non entra,
-// il browser va a capo in quel punto mostrando "-" (es. Com-pres-sor), mai a metà a caso.
-const isVowel = (char) => "aeiouy".includes(char);
-// Gruppi di consonanti che in inglese iniziano una sillaba (Com-pres-sor, Chro-ma-tic).
-const SYLLABLE_ONSETS = new Set(["pr", "br", "tr", "dr", "cr", "gr", "fr", "pl", "bl", "cl", "gl", "fl", "sh", "ch", "th", "ph", "wh"]);
-export function softHyphenate(text) {
-  return String(text).split(" ").map((word) => {
-    if (word.length < 7 || /[^a-z]/i.test(word)) return word;
-    const w = word.toLowerCase();
-    const cuts = [];
-    let i = 0;
-    while (i < w.length) {
-      if (!isVowel(w[i])) { i += 1; continue; }
-      let j = i;
-      while (j < w.length && isVowel(w[j])) j += 1; // prima consonante dopo le vocali
-      let k = j;
-      while (k < w.length && !isVowel(w[k])) k += 1; // vocale successiva
-      if (k >= w.length || k === j) break;
-      const cluster = w.slice(j, k);
-      const cut = cluster.endsWith("ck") ? k : cluster.length === 1 ? j : SYLLABLE_ONSETS.has(cluster.slice(-2)) ? k - 2 : k - 1;
-      if (cut >= 3 && w.length - cut >= 3 && (!cuts.length || cut - cuts[cuts.length - 1] >= 2)) cuts.push(cut);
-      i = k;
-    }
-    let out = "";
-    let from = 0;
-    for (const cut of cuts) { out += `${word.slice(from, cut)}\u00ad`; from = cut; }
-    return out + word.slice(from);
-  }).join(" ");
+// v1.68: nomi degli effetti più grandi e mai spezzati col trattino (richiesta di Giovanni, 30/09/2026):
+// si va a capo solo fra le parole; le parole troppo lunghe per un riquadro diventano abbreviazioni scelte da lui.
+const EFFECT_ABBREVIATIONS = new Map([
+  ["Compressor", "Comp."], ["Chromatic", "Chrom."], ["Harmonic", "Harm."], ["Ionosphere", "Ionos"],
+  ["Simulator", "Simlt."], ["Transpose", "Transp."], ["Modulator", "Mod."], ["Distortion", "Dist."],
+]);
+export function shortEffectName(text) {
+  return String(text).split(" ").map((word) => EFFECT_ABBREVIATIONS.get(word) ?? word).join(" ");
 }
 
 // v1.39: colori delle categorie come sul Kemper (manuale Profiler/Player):

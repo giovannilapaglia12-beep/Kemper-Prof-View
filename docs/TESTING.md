@@ -1,4 +1,15 @@
-# Verifiche hardware, test locali e problemi aperti — v1.67
+# Verifiche hardware, test locali e problemi aperti — v1.68
+
+## Da provare con la v1.68 — nuova grafica di PALCO (circa 5 minuti)
+
+- [ ] **Aggiornamento**: in alto in ALTRO compare **v1.68**.
+- [ ] **Colpo d'occhio**: PALCO nero, effetti in rilievo, nessuno scorrimento; il nome del Rig intero o su due righe.
+- [ ] **Effetti**: accendi e spegni 3–4 effetti. Spento = bordo e nome colorati, spia spenta; acceso = tutto colorato, spia accesa. Nessun nome col trattino; le abbreviazioni si leggono.
+- [ ] **Da lontano**: appoggia il telefono sul leggio e guardalo da dove suoni (anche al buio, se puoi): si capisce cosa è acceso?
+- [ ] **Pulsanti in basso**: Pure Booster, Vintage Chorus, Double Tracker, REV FREEZE e TUNER mostrano la spia al posto di ON/OFF.
+- [ ] **Transp.**: il ± a destra apre la scelta; il tocco sul resto accende e spegne.
+- [ ] **BPM**: la finestrella verde; −1/+1 veloci funzionano come nella v1.67.
+- [ ] **Orizzontale** e **tema SOLE**: guarda solo che tutto sia leggibile (il SOLE si rifà dopo).
 
 ## Da provare con la v1.67 (circa 2 minuti)
 

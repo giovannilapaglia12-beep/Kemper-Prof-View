@@ -8,7 +8,7 @@ import {
   FIXED_FX,
   FREEZE_REV_HOLD,
 } from "../kemper-midi.js";
-import { toast, ui } from "./dom.js";
+import { setSwitchState, toast, ui } from "./dom.js";
 import { session } from "./state.js";
 import { liveEffectNodes } from "./effects.js";
 import { profilerOutputs, sendProfilerRequests } from "./connection.js";
@@ -36,7 +36,8 @@ for (const effect of FIXED_FX) {
     const cell = document.createElement("div");
     const pick = document.createElement("button");
     liveValue.className = "live-transpose-value";
-    liveName.append(" ", liveValue);
+    liveName.textContent = "Transp."; // v1.68: nome breve, il pulsante ± occupa tutta l'altezza a destra
+    liveButton.prepend(liveValue); // v1.68: valore grande in alto, nome in basso
     cell.className = "live-transpose-cell";
     pick.type = "button";
     pick.className = "live-transpose-pick";
@@ -71,11 +72,11 @@ export function refreshFreezeControls() {
   ui.liveFreeze.setAttribute("aria-label", known
     ? `Freeze REV ${active ? "attivo" : "disattivato"}`
     : "Freeze REV: stato non disponibile");
-  ui.liveFreezeState.textContent = pending
+  setSwitchState(ui.liveFreezeState, pending
     ? "ATTENDO KEMPER"
     : session.freezeRevSupported === false
       ? "NON DISPONIBILE"
-      : known ? active ? "ON" : "OFF" : "IN LETTURA";
+      : known ? active ? "ON" : "OFF" : "IN LETTURA");
   if (liveRevNode) {
     const revEffect = session.lastState?.effects.get(0x3d);
     liveRevNode.card.dataset.freeze = known ? String(active) : "unknown";
@@ -213,11 +214,11 @@ export function refreshFixedFxControls() {
       "aria-label",
       `${effect.label}: ${pending ? "in attesa del Kemper" : known ? active ? "attivo" : "disattivato" : "stato non disponibile"}`,
     );
-    liveNode.state.textContent = pending
+    setSwitchState(liveNode.state, pending
       ? "ATTENDO KEMPER"
       : current.supported === false
         ? "NON DISPONIBILE"
-        : known ? active ? "ON" : "OFF" : "IN LETTURA";
+        : known ? active ? "ON" : "OFF" : "IN LETTURA");
   }
 }
 
