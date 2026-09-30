@@ -519,3 +519,38 @@ test('Transpose: cambiato sul Player, il tocco riaccende il valore del Player', 
   t.toggle();
   assert.deepEqual(t.sent, ['F0 00 20 33 02 7F 01 00 04 04 00 3F F7', 'F0 00 20 33 02 7F 01 00 05 01 00 01 F7']);
 });
+
+// ── v1.67: BPM −1/+1 con tocchi rapidi ─────────────────────────────────────
+test('Tempo: −1/+1 restano attivi durante la conferma e i tocchi rapidi si sommano (prova del 30/09/2026)', () => {
+  const sent = [];
+  const toasts = [];
+  const ui = { liveTempoDown: node(), liveTempoUp: node(), liveTempoRound: node(), liveTap: node(), liveBpm: node(),
+    liveTapState: node(), liveBpmBox: node(), copy: node() };
+  const session = { sysex: true, lastState: { tempoRaw: 67 * 64, bpm: 67, channel: 1 }, tempoPendingRaw: null,
+    tempoConfirmPollTimer: null, tempoConfirmTimeout: null, tempoTapPollTimer: null, tempoTapPollTimeout: null,
+    tempoPollsSent: 0, tempoRepliesReceived: 0, transmitted: [] };
+  const context = {
+    session, ui, Date, Math, Number, TEMPO_UNITS_PER_BPM: 64,
+    buildTempoChangeRequest: midi.buildTempoChangeRequest, buildTempoRequest: midi.buildTempoRequest, bytesToHex: midi.bytesToHex,
+    toast: (message) => toasts.push(message), profilerOutputs: () => [{}], describePort: () => 'Profiler',
+    sendProfilerRequests: (requests) => { for (const request of requests) sent.push(midi.bytesToHex(request.bytes)); },
+    confirmationPollAllowed: () => false, performance: { now: () => 0 },
+    window: { setTimeout: () => 1, setInterval: () => 1, clearTimeout() {}, clearInterval() {} },
+    setTimeout: () => 1, clearTimeout() {},
+  };
+  vm.runInNewContext(`${snippet('js/tempo.js', 'function refreshTempoControls')}
+this.step = changeTempoBy; this.handle = handleTempoState;`, context);
+  context.step(1);
+  assert.equal(ui.liveTempoUp.disabled, false); // si può toccare di nuovo subito
+  context.step(1);
+  context.step(1);
+  // 67 → 68 → 69 → 70 BPM, un comando per tocco
+  assert.deepEqual(sent, [68, 69, 70].map((bpm) => midi.bytesToHex(midi.buildTempoChangeRequest(bpm * 64).bytes)));
+  assert.equal(ui.liveBpm.textContent, '70.0');
+  assert.equal(ui.liveTapState.textContent, 'ATTENDO KEMPER');
+  context.handle({ type: 'Kemper Parameter', page: 4, parameter: 0, value: 68 * 64 }); // valore intermedio: si aspetta ancora
+  assert.equal(session.tempoPendingRaw, 70 * 64);
+  context.handle({ type: 'Kemper Parameter', page: 4, parameter: 0, value: 70 * 64 });
+  assert.equal(session.tempoPendingRaw, null);
+  assert.deepEqual(toasts, ['Tempo +1 BPM · confermato dal Kemper']);
+});
