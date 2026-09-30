@@ -11,14 +11,19 @@ export function refreshTempoControls() {
   const hasOutput = profilerOutputs().length > 0;
   const hasTempo = Number.isInteger(session.lastState?.tempoRaw);
   const pending = session.tempoPendingRaw !== null;
-  const stepDisabled = !session.sysex || !hasOutput || !hasTempo || pending;
+  // v1.67: −1/+1 restano attivi anche mentre si aspetta la conferma (prova del 30/09/2026: bisognava aspettare
+  // circa 1 s fra un tocco e l'altro). I tocchi si sommano al valore inviato; conta la conferma dell'ultimo.
+  const stepDisabled = !session.sysex || !hasOutput || !hasTempo;
   ui.liveTempoDown.disabled = stepDisabled;
   ui.liveTempoUp.disabled = stepDisabled;
-  ui.liveTempoRound.disabled = stepDisabled;
+  ui.liveTempoRound.disabled = stepDisabled || pending;
   ui.liveTap.disabled = !hasOutput;
-  ui.liveBpm.textContent = session.lastState?.bpm === null || session.lastState?.bpm === undefined
-    ? "—"
-    : session.lastState.bpm.toFixed(1);
+  // In attesa di conferma si vede il valore inviato (con TAP che scrive ATTENDO KEMPER).
+  ui.liveBpm.textContent = pending
+    ? (session.tempoPendingRaw / TEMPO_UNITS_PER_BPM).toFixed(1)
+    : session.lastState?.bpm === null || session.lastState?.bpm === undefined
+      ? "—"
+      : session.lastState.bpm.toFixed(1);
   if (pending) {
     ui.liveTapState.textContent = "ATTENDO KEMPER";
   } else if (!hasOutput) {
@@ -119,8 +124,10 @@ export function changeTempoBy(delta) {
     toast("Sincronizza prima il tempo del Kemper");
     return;
   }
+  // Tocchi rapidi: si parte dal valore già inviato e non ancora confermato.
+  const baseRaw = session.tempoPendingRaw ?? currentRaw;
   const direction = delta > 0 ? "+1" : "−1";
-  setTempoRaw(currentRaw + delta * TEMPO_UNITS_PER_BPM, {
+  setTempoRaw(baseRaw + delta * TEMPO_UNITS_PER_BPM, {
     action: "step",
     delta,
     transmitLabel: `Tempo ${direction} BPM`,

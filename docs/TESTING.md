@@ -1,4 +1,12 @@
-# Verifiche hardware, test locali e problemi aperti — v1.66
+# Verifiche hardware, test locali e problemi aperti — v1.67
+
+## Da provare con la v1.67 (circa 2 minuti)
+
+- [ ] **Aggiornamento**: in alto in ALTRO compare **v1.67**.
+- [ ] **+1 veloce**: tocca **+1** cinque volte di fila, senza aspettare. Il numero sale subito di 5 (es. 67 → 72) e dopo un attimo il Player conferma: il BPM sul Player è lo stesso.
+- [ ] **−1 veloce**: stessa cosa all'indietro.
+- [ ] **Misto**: +1, +1, −1 veloci: alla fine +1 rispetto a prima.
+- [ ] Se il numero sull'app e quello del Player non coincidono, salva la diagnostica e mandala.
 
 ## v1.66 — provata da Giovanni il 29/09/2026: funziona
 

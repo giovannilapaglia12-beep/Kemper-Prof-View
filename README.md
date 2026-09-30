@@ -1,6 +1,12 @@
-# Kemper Profiler View v1.66
+# Kemper Profiler View v1.67
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.67 — BPM −1/+1 con tocchi rapidi
+
+- Prova della v1.66 (30/09/2026): dopo −1 o +1 bisognava aspettare circa 1 s prima di poter toccare di nuovo (i pulsanti restavano bloccati fino alla conferma del Player).
+- Ora **−1 e +1 si possono toccare di fila**: ogni tocco si somma al valore già inviato (67 → 68 → 69 → 70) e il numero del BPM cambia subito; TAP scrive ATTENDO KEMPER finché il Player non conferma l'ultimo valore. BPM INTERO resta bloccato durante l'attesa.
+- Test: 49.
 
 ## Novità v1.66 — cambiando Rig il Transpose non si riaccende da solo
 
