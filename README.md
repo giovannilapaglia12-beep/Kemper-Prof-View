@@ -1,6 +1,18 @@
-# Kemper Profiler View v1.67
+# Kemper Profiler View v1.68
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.68 — nuova grafica di PALCO ("pedaliera su nero")
+
+Scelta di Giovanni (30/09/2026) fra le proposte A (pedaliera), B (app moderna) e C (alto contrasto): un misto di A e C. Solo PALCO e solo il tema scuro; RIG, LOOPER, Tuner e il tema SOLE vengono dopo. Pensata per OPPO Reno 12 Pro e telefoni più grandi (l'OPPO A9 non è più considerato).
+- **Nero pieno** e nome del Rig più grande.
+- **Effetti come pulsanti in rilievo con una spia** in alto a destra. Spento: bordo e nome nel colore dell'effetto, spia spenta. Acceso: tutto colorato, scritta nera, spia accesa.
+- **Nomi degli effetti più grandi**, adattati al riquadro. **Niente più trattini**: si va a capo solo fra le parole; le parole lunghe sono abbreviate (Compressor → Comp., Ionosphere → Ionos, Simulator → Simlt., Chromatic → Chrom., Harmonic → Harm., Transpose → Transp., Modulator → Mod., Distortion → Dist.). Anche nel tema SOLE.
+- **BPM in una finestrella verde**, come il display di un apparecchio; −1, +1, BPM INTERO e SYNC in rilievo; TAP con il bordo rosso.
+- **Pulsanti in basso** (Fixed FX, REV FREEZE, TUNER): **la spia al posto di ON/OFF** (anche nel tema SOLE); le scritte restano solo per gli stati particolari (ATTENDO KEMPER, IN LETTURA, CENTRATA…). REV FREEZE e TUNER accesi diventano colorati come i Fixed FX.
+- **Transpose**: si chiama **Transp.**; il pulsante **±** occupa tutta l'altezza a destra.
+- La barra delle schede in alto non cambia.
+- Test: 49 (il test della sillabazione è sostituito da quello delle abbreviazioni).
 
 ## Novità v1.67 — BPM −1/+1 con tocchi rapidi
 

@@ -20,7 +20,7 @@ import {
   transposeMatches,
   transposeRawToSemitones,
 } from "../kemper-midi.js";
-import { toast, ui } from "./dom.js";
+import { setSwitchState, toast, ui } from "./dom.js";
 import { signedSemitones } from "./text.js";
 import { session } from "./state.js";
 import { profilerOutputs, sendProfilerRequests } from "./connection.js";
@@ -107,11 +107,11 @@ export function paintTranspose() {
   tile.pick.disabled = disabled;
   tile.button.setAttribute("aria-pressed", String(on === 1));
   tile.value.textContent = shown === null ? "" : signedSemitones(shown);
-  tile.state.textContent = pending
+  setSwitchState(tile.state, pending
     ? "ATTENDO KEMPER"
     : current?.supported === false
       ? "NON DISPONIBILE"
-      : known ? on ? "ON" : "OFF" : "IN LETTURA";
+      : known ? on ? "ON" : "OFF" : "IN LETTURA");
   tile.button.setAttribute("aria-label", pending
     ? "Transpose: in attesa del Kemper"
     : known

@@ -2,7 +2,7 @@
 
 import { KemperMidiState } from "../kemper-midi.js";
 import { ui } from "./dom.js";
-import { effectTone, longestWord, softHyphenate } from "./text.js";
+import { effectTone, longestWord, shortEffectName } from "./text.js";
 import { session } from "./state.js";
 import { refreshTempoControls, stopTempoConfirmation, stopTempoTapPolling } from "./tempo.js";
 import { liveEffectNodes, stopAllEffectConfirmations } from "./effects.js";
@@ -53,10 +53,10 @@ function paintKemperState() {
       const pending = session.effectPending.has(page);
       const freezeActive = effect.key === "REV" && session.freezeRevRaw === 1;
       const empty = effect.type === 0;
-      liveNode.name.textContent = empty ? "Slot vuoto" : softHyphenate(effect.name);
+      liveNode.name.textContent = empty ? "Slot vuoto" : shortEffectName(effect.name);
       // v1.38: la dimensione del nome si adatta alla parola più lunga, senza spezzarla.
-      // Oltre 8 lettere la parola va a capo in sillabe (Com-pres-sor) invece di rimpicciolirsi troppo.
-      liveNode.card.style.setProperty("--chars", String(Math.min(8, longestWord(liveNode.name.textContent))));
+      // v1.68: niente più sillabe col trattino: le parole lunghe sono abbreviate (shortEffectName).
+      liveNode.card.style.setProperty("--chars", String(longestWord(liveNode.name.textContent)));
       liveNode.card.dataset.tone = effectTone(effect.type);
       liveNode.card.dataset.active = empty ? "false" : effect.active === null ? "unknown" : String(effect.active);
       liveNode.card.dataset.pending = String(pending);

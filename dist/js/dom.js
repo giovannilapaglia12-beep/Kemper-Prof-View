@@ -139,6 +139,13 @@ export function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
+// v1.68: nei pulsanti in basso di PALCO ON e OFF li mostra la spia (colore del pulsante): la scritta resta
+// solo per gli stati particolari (ATTENDO KEMPER, IN LETTURA, CENTRATA…).
+export function setSwitchState(node, text) {
+  node.textContent = text;
+  node.hidden = text === "ON" || text === "OFF";
+}
+
 export function setTextIfChanged(node, text) {
   if (node.textContent !== text) node.textContent = text;
 }

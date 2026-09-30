@@ -2,7 +2,7 @@
 
 import { buildBeaconRequest, bytesToHex, FIXED_FX, FREEZE_REV_HOLD } from "../kemper-midi.js";
 import { APP_NAME, APP_VERSION, TUNER_STREAM_INTERVAL } from "./config.js";
-import { toast, ui } from "./dom.js";
+import { setSwitchState, toast, ui } from "./dom.js";
 import { session } from "./state.js";
 import { stopTempoConfirmation, stopTempoTapPolling } from "./tempo.js";
 import { isTunerStream, paintTunerOverlay, stopTunerConfirmation, stopTunerStreamPolling } from "./tuner.js";
@@ -122,7 +122,7 @@ export function clearLog() {
   session.performanceState.tunerMode = "unknown";
   ui.liveTuner.dataset.active = "unknown";
   ui.liveTunerNote.textContent = "APRI";
-  ui.liveTunerState.textContent = "IN ATTESA";
+  setSwitchState(ui.liveTunerState, "IN ATTESA");
   ui.liveTuner.setAttribute("aria-pressed", "false");
   ui.liveTuner.disabled = profilerOutputs().length === 0;
   paintTunerOverlay();
