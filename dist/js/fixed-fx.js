@@ -82,7 +82,7 @@ export function refreshFreezeControls() {
     liveRevNode.card.dataset.freeze = known ? String(active) : "unknown";
     if (!session.effectPending.has(0x3d)) {
       liveRevNode.status.textContent = active
-        ? "FREEZE ON"
+        ? "FREEZE"
         : revEffect?.active === null || revEffect?.active === undefined
           ? "—"
           : revEffect.active ? "ON" : "OFF";

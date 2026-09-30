@@ -45,7 +45,7 @@ export function refreshEffectButton(page) {
     }
     liveNode.status.textContent = pending
       ? "ATTENDO"
-      : freezeActive ? "FREEZE ON"
+      : freezeActive ? "FREEZE"
         : effect?.active === null || effect?.active === undefined
           ? "—"
           : effect.active ? "ON" : "OFF";

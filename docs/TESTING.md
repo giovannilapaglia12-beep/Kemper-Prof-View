@@ -1,4 +1,12 @@
-# Verifiche hardware, test locali e problemi aperti — v1.69
+# Verifiche hardware, test locali e problemi aperti — v1.70
+
+## Da provare con la v1.70 (circa 3 minuti)
+
+- [ ] In alto in ALTRO compare **v1.70**.
+- [ ] **Riquadri degli effetti più alti** di prima, sia in Chrome sia aprendo l'app dall'icona "Profiler View".
+- [ ] **Effetti accesi sfumati** (più scuri in alto, più chiari in basso).
+- [ ] **REV Freeze acceso**: nel riquadro REV compare **FREEZE**, intero.
+- [ ] **Accendi/spegni un effetto**: "ATTENDO" resta dentro il riquadro.
 
 ## Da provare con la v1.69 (insieme alla lista della v1.68)
 
