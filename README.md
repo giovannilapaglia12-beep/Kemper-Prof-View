@@ -1,6 +1,10 @@
-# Kemper Profiler View v1.70
+# Kemper Profiler View v1.71
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.71 — "ATTENDO" dentro il riquadro anche spegnendo
+
+- Spegnendo un effetto acceso, "ATTENDO" usciva ancora dal riquadro (la scritta dell'effetto acceso è più grande e vinceva sulla correzione della v1.70). Ora è piccola in entrambi i casi. Grafica di PALCO approvata da Giovanni (30/09/2026).
 
 ## Novità v1.70 — ritocchi dopo la prova sul telefono (30/09/2026)
 

@@ -1,4 +1,8 @@
-# Verifiche hardware, test locali e problemi aperti — v1.70
+# Verifiche hardware, test locali e problemi aperti — v1.71
+
+## Da provare con la v1.71 (1 minuto)
+
+- [ ] In ALTRO compare **v1.71**. Spegni 2–3 effetti accesi e riaccendili: "ATTENDO" resta sempre dentro il riquadro.
 
 ## Da provare con la v1.70 (circa 3 minuti)
 
