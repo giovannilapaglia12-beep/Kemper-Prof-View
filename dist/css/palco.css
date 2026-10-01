@@ -625,7 +625,9 @@ body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[dat
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] strong,
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] small,
 body:not([data-theme="sun"])[data-view="live"] .stage-fx .live-action-button[data-active="true"] #live-tuner-note { color: #000; }
-body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-freeze="true"] > small { white-space: nowrap; }
+/* v1.73: "FREEZE" più piccolo, sul telefono di Giovanni usciva dal riquadro REV in verticale. */
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-freeze="true"] > small,
+body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-active="true"][data-freeze="true"] > small { font-size: 0.74rem; letter-spacing: 0.04em; white-space: nowrap; }
 @media (orientation: landscape) and (max-height: 560px) {
   body[data-view="live"] .stage-fx .live-transpose-cell .live-fixed-fx-button { grid-auto-flow: column; justify-content: start; align-items: center; gap: 5px; }
   body[data-view="live"] .stage-fx .live-transpose-cell .live-transpose-value { font-size: 0.95rem; }
