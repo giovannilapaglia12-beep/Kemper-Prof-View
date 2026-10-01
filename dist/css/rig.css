@@ -263,3 +263,38 @@ body[data-view="rig"] .rig-panel .live-rig-selector {
 .bank-picker-max { display: flex; align-items: center; gap: 8px; }
 .bank-picker-max span { flex: 1; color: var(--muted); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; }
 .bank-picker-max span strong { color: var(--text); }
+
+/* ───────── v1.72 · RIG nello stile "pedaliera su nero" (tema scuro; scelta di Giovanni, 01/10/2026) ─────────
+   Bank in una finestrella come il BPM, Rig come pulsanti in rilievo con spia; il Rig in uso ha il colore della sua Bank. */
+body:not([data-theme="sun"])[data-view="rig"] { background: #000; }
+body:not([data-theme="sun"]) .rig-panel,
+body:not([data-theme="sun"]) .rig-panel .live-rig-selector { border: 0; background: #000; box-shadow: none; }
+body:not([data-theme="sun"]) .rig-panel .live-bank-row button {
+  background: linear-gradient(180deg, #25282c, #141618); border: 1px solid #34383d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 6px rgba(0, 0, 0, 0.6);
+}
+body:not([data-theme="sun"]) .rig-panel .live-bank-row[data-bank-color] > span strong {
+  background: #030605; box-shadow: inset 0 0 0 2px var(--bank-color), inset 0 2px 8px rgba(0, 0, 0, 0.9);
+  font-family: ui-monospace, "Roboto Mono", monospace; text-shadow: 0 0 12px color-mix(in srgb, var(--bank-color) 70%, transparent);
+}
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button {
+  position: relative; border: 2px solid #2e3237; border-radius: 12px;
+  background: linear-gradient(180deg, #1d2023, #0b0c0d); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button::before {
+  content: ""; position: absolute; top: 12px; right: 12px; width: 12px; height: 12px; border-radius: 50%;
+  background: color-mix(in srgb, var(--bank-color, #8dff64) 25%, transparent);
+}
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button::after { white-space: nowrap; margin-right: 18px; }
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button[data-active="true"] {
+  border-color: var(--bank-color, #8dff64);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bank-color, #8dff64) 72%, #000) 0%, var(--bank-color, #8dff64) 50%, color-mix(in srgb, var(--bank-color, #8dff64) 70%, #fff) 100%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--bank-color, #8dff64) 30%, transparent);
+}
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button[data-active="true"]::before {
+  background: #fff; box-shadow: 0 0 8px #fff, 0 0 16px var(--bank-color, #8dff64);
+}
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button[data-active="true"] strong { color: var(--bank-color, #8dff64); }
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button[data-active="true"] span,
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button[data-active="true"] small,
+body:not([data-theme="sun"]) .rig-panel .live-rig-slots button[data-active="true"]::after { color: #000; }

@@ -39,6 +39,8 @@ export function paintTunerOverlay() {
   const zone = state.tunerCents === null ? "waiting" : state.tunerZone;
   ui.tunerOverlay.dataset.zone = zone;
   ui.tunerOverlayNote.textContent = state.tunerCandidateNote ?? "SUONA";
+  // v1.72: "SUONA" (5 lettere) usciva dallo schermo in verticale con la misura delle note (A2, C#3).
+  ui.tunerOverlayNote.dataset.long = String(ui.tunerOverlayNote.textContent.length > 3);
   const cents = state.tunerCents;
   ui.tunerOverlayNeedle.style.setProperty("--pos", String(cents === null ? 50 : Math.max(0, Math.min(100, cents + 50))));
   ui.tunerOverlayCents.textContent = cents === null

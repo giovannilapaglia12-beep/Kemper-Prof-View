@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.71
+# Kemper Profiler View v1.72
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.72 — RIG, LOOPER e Tuner nel nuovo stile
+
+Approvato da Giovanni il 01/10/2026 sugli esempi (solo tema scuro; il tema SOLE viene dopo).
+- **RIG**: sfondo nero, Bank in una finestrella col suo colore, Rig come pulsanti in rilievo con spia. **Il Rig in uso ha il colore della sua Bank** (Bank 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete), sfumato, con la spia accesa e IN USO.
+- **LOOPER**: sfondo nero, stato in una finestrella tipo display, pulsanti in rilievo (REC bordo rosso, STOP arancio, CANCELLA rosso), opzioni scelte sfumate azzurre.
+- **Tuner**: nero pieno, nota luminosa, barra incassata, CHIUDI in rilievo. **"SUONA" non esce più dallo schermo in verticale** (era grande come le note A2, C#3…).
 
 ## Novità v1.71 — "ATTENDO" dentro il riquadro anche spegnendo
 
