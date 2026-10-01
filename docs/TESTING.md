@@ -1,4 +1,12 @@
-# Verifiche hardware, test locali e problemi aperti — v1.73
+# Verifiche hardware, test locali e problemi aperti — v1.74
+
+## Da provare con la v1.74 (circa 3 minuti, meglio all'aperto o con molta luce)
+
+- [ ] In ALTRO compare **v1.74**; scegli il tema **SOLE**.
+- [ ] **PALCO, RIG, LOOPER**: pulsanti bianchi in rilievo; effetti spenti leggibili (anche giallo e azzurro), accesi colorati con la spia.
+- [ ] **BPM e Bank** nella finestrella scura: si leggono anche al sole?
+- [ ] **RIG**: il Rig in uso ha il colore della sua Bank.
+- [ ] Poi rimetti il tema che usi.
 
 ## Da provare con la v1.73 (1 minuto)
 
