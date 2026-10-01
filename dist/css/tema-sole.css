@@ -143,3 +143,81 @@ body[data-theme="sun"] .bank-picker-grid button[data-current="true"] { backgroun
 body[data-theme="sun"] .bank-picker-grid button[data-current="true"] strong,
 body[data-theme="sun"] .bank-picker-grid button[data-current="true"] small { color: #ffffff; }
 body[data-theme="sun"] .tools-panel { background: #ffffff; border-color: var(--line); box-shadow: var(--shadow); }
+
+/* ───────── v1.74 · Tema SOLE "pedaliera su chiaro" (approvato da Giovanni il 01/10/2026) ─────────
+   Stesso stile del tema scuro: pulsanti bianchi in rilievo, effetti spenti con bordo e nome nel loro colore
+   (più scuro, per leggerlo sul bianco), accesi sfumati con la spia; BPM, Bank e stato del Looper in una
+   finestrella scura tipo display. Il Rig in uso ha il colore della sua Bank (colori vivi, --bank-fill).
+   "html body" serve a prevalere sulle regole SOLE più vecchie qui sopra. */
+html body[data-theme="sun"] { background: #e6e9e7; }
+html body[data-theme="sun"] .live-panel, html body[data-theme="sun"] .rig-panel, html body[data-theme="sun"] .looper-panel,
+html body[data-theme="sun"] .rig-panel .live-rig-selector { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+/* pulsanti in rilievo chiari */
+html body[data-theme="sun"] .stage-step, html body[data-theme="sun"] .stage-round, html body[data-theme="sun"] .stage-sync,
+html body[data-theme="sun"] .stage-morph-level summary, html body[data-theme="sun"] .live-morph-toggle:not([aria-pressed="true"]),
+html body[data-theme="sun"] .rig-panel .live-bank-row button, html body[data-theme="sun"] .looper-button,
+html body[data-theme="sun"] .looper-quantize-options button, html body[data-theme="sun"] .looper-state-reset, html body[data-theme="sun"] .tuner-overlay-close {
+  background: linear-gradient(180deg, #ffffff, #e2e6e3); border: 1px solid #b9c0bb; box-shadow: inset 0 1px 0 #fff, 0 3px 6px rgba(0,0,0,.18); }
+html body[data-theme="sun"] .stage-tap { background: linear-gradient(180deg, #ffffff, #f1e3e2); border: 2px solid #d43b33; box-shadow: inset 0 1px 0 #fff, 0 3px 6px rgba(0,0,0,.18); }
+/* display BPM e Bank: finestrella scura anche col sole */
+html body[data-theme="sun"] .stage-bpm { background: #0a120d; border: 1px solid #0a120d; border-radius: 10px; box-shadow: inset 0 2px 8px rgba(0,0,0,.9); padding: 4px 6px; }
+html body[data-theme="sun"] .stage-bpm strong { color: #9dff7a; text-shadow: 0 0 10px rgba(141,255,100,.5); font-family: ui-monospace, "Roboto Mono", monospace; letter-spacing: -0.06em; }
+html body[data-theme="sun"] .stage-bpm span { color: #9dff7a; }
+html body[data-theme="sun"] .stage-rig-name { font-size: clamp(1.7rem, 8.4vw, 2.4rem); font-weight: 950; }
+/* effetti */
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button {
+  position: relative; border: 2px solid color-mix(in srgb, rgb(var(--tone-rgb)) 75%, #000); border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #e4e8e5); box-shadow: inset 0 1px 0 #fff, 0 4px 8px rgba(0,0,0,.2); }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button::after {
+  content: ""; position: absolute; top: 10px; right: 10px; width: 11px; height: 11px; border-radius: 50%; background: rgba(var(--tone-rgb), .35); }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button > span,
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button > strong { color: color-mix(in srgb, rgb(var(--tone-rgb)) 55%, #000); }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button > strong { font-weight: 900; }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button > small { color: #5b665f; font-weight: 950; }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--tone-rgb)) 72%, #000) 0%, rgb(var(--tone-rgb)) 50%, color-mix(in srgb, rgb(var(--tone-rgb)) 70%, #fff) 100%);
+  border-color: color-mix(in srgb, rgb(var(--tone-rgb)) 60%, #000); }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-active="true"]::after { background: #fff; box-shadow: 0 0 8px #fff, 0 0 14px rgb(var(--tone-rgb)); }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-active="true"] > * { color: #000 !important; }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-tone="empty"] { background: #edf0ee; border: 2px dashed #b2b9b4; box-shadow: none; }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-tone="empty"]::after { display: none; }
+html body[data-theme="sun"][data-view="live"] .stage .live-effect-button[data-tone="empty"] > strong { color: #9aa29d; }
+/* pulsanti in basso */
+html body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-button, html body[data-theme="sun"][data-view="live"] .stage-fx .live-action-button {
+  background: linear-gradient(180deg, #ffffff, #e4e8e5); border: 2px solid color-mix(in srgb, rgb(var(--fx-rgb, 120,128,122)) 70%, #000); box-shadow: inset 0 1px 0 #fff, 0 3px 6px rgba(0,0,0,.18); }
+html body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-button strong { color: color-mix(in srgb, rgb(var(--fx-rgb)) 55%, #000); }
+html body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-button[data-active="true"]:not(.live-fixed-fx-transpose),
+html body[data-theme="sun"][data-view="live"] .stage-fx .live-action-button[data-active="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--fx-rgb)) 72%, #000) 0%, rgb(var(--fx-rgb)) 50%, color-mix(in srgb, rgb(var(--fx-rgb)) 70%, #fff) 100%); }
+html body[data-theme="sun"][data-view="live"] .stage-fx .live-fixed-fx-transpose[data-active="true"] { background: linear-gradient(180deg, #b4bbb7 0%, #d3d9d6 50%, #eceeed 100%); }
+html body[data-theme="sun"][data-view="live"] .stage-fx [data-active="true"] strong, html body[data-theme="sun"][data-view="live"] .stage-fx [data-active="true"] span { color: #000 !important; }
+/* RIG */
+html body[data-theme="sun"] .rig-panel .live-bank-row[data-bank-color] > span strong { background: #0a120d; color: var(--bank-fill); box-shadow: inset 0 0 0 2px var(--bank-fill); font-family: ui-monospace, "Roboto Mono", monospace; }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button { position: relative; border: 2px solid #b9c0bb; border-radius: 12px; background: linear-gradient(180deg, #ffffff, #e4e8e5); box-shadow: inset 0 1px 0 #fff, 0 4px 8px rgba(0,0,0,.2); }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button::before { content: ""; position: absolute; top: 12px; right: 12px; width: 12px; height: 12px; border-radius: 50%; background: color-mix(in srgb, var(--bank-color, #50ea45) 35%, transparent); }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button::after { white-space: nowrap; margin-right: 18px; }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] {
+  border-color: color-mix(in srgb, var(--bank-color, #50ea45) 60%, #000);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bank-color, #50ea45) 72%, #000) 0%, var(--bank-color, #50ea45) 50%, color-mix(in srgb, var(--bank-color, #50ea45) 70%, #fff) 100%); }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"]::before { background: #fff; box-shadow: 0 0 8px #fff; }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] span, html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] small,
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"]::after { color: #000; }
+/* LOOPER */
+html body[data-theme="sun"] .looper-state { background: #0a120d; color: #e9f5ee; border: 0; box-shadow: inset 0 2px 10px rgba(0,0,0,.9); }
+html body[data-theme="sun"] #looper-state-label { color: #e9f5ee; font-family: ui-monospace, "Roboto Mono", monospace; }
+html body[data-theme="sun"] .looper-record { border: 2px solid #d43b33; } html body[data-theme="sun"] .looper-record strong { color: #c0261f; }
+html body[data-theme="sun"] .looper-stop { border: 2px solid #c98a12; } html body[data-theme="sun"] .looper-stop strong { color: #a36d00; }
+html body[data-theme="sun"] .looper-erase { border: 2px solid #d43b33; color: #c0261f; }
+html body[data-theme="sun"] .looper-quantize-options button[aria-pressed="true"] { border-color: #1f8f82; background: linear-gradient(180deg, #3aa89b 0%, #72ebdc 50%, #b8f6ee 100%); color: #000; }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] {
+  background: linear-gradient(180deg, var(--bank-color, #50ea45) 0%, color-mix(in srgb, var(--bank-color, #50ea45) 70%, #fff) 55%, color-mix(in srgb, var(--bank-color, #50ea45) 40%, #fff) 100%); }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] strong { color: #fff; }
+html body[data-theme="sun"] [data-bank-color="blue"] { --bank-fill: #5b95ff; }
+html body[data-theme="sun"] [data-bank-color="yellow"] { --bank-fill: #ffd84d; }
+html body[data-theme="sun"] [data-bank-color="red"] { --bank-fill: #ff5f55; }
+html body[data-theme="sun"] [data-bank-color="green"] { --bank-fill: #5fdc5a; }
+html body[data-theme="sun"] [data-bank-color="violet"] { --bank-fill: #b98cff; }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] {
+  border-color: color-mix(in srgb, var(--bank-fill) 60%, #000);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bank-fill) 72%, #000) 0%, var(--bank-fill) 50%, color-mix(in srgb, var(--bank-fill) 70%, #fff) 100%); }
+html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] strong { color: var(--bank-fill); }
