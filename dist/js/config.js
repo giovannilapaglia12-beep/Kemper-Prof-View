@@ -4,7 +4,7 @@
 // "kemper-stage-view-bank-names" e "kemper-stage-view-names-reset-v135" (rig-names.js).
 
 export const APP_NAME = "Kemper Profiler View";
-export const APP_VERSION = "1.71";
+export const APP_VERSION = "1.72";
 export const MAX_BANKS_KEY = "kemper-stage-view-max-bank";
 export const AUTO_SYNC_INTERVAL = 1500;
 export const FIXED_FX_SYNC_INTERVAL = 4500;

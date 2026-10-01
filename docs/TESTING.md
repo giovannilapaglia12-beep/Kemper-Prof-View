@@ -1,4 +1,11 @@
-# Verifiche hardware, test locali e problemi aperti — v1.71
+# Verifiche hardware, test locali e problemi aperti — v1.72
+
+## Da provare con la v1.72 (circa 3 minuti)
+
+- [ ] In ALTRO compare **v1.72**.
+- [ ] **RIG**: il Rig in uso ha il colore della sua Bank. Cambia Rig in Bank di colori diversi (es. Bank 9 = giallo, Bank 7 = blu… secondo la regola 1 blu, 2 giallo, 3 rosso, 4 verde, 5 viola, poi si ripete).
+- [ ] **LOOPER**: pulsanti in rilievo, stato nella finestrella; i comandi funzionano come prima.
+- [ ] **Tuner in verticale**: aprendolo senza suonare compare **SUONA**, centrato e dentro lo schermo; suonando compare la nota grande.
 
 ## Da provare con la v1.71 (1 minuto)
 

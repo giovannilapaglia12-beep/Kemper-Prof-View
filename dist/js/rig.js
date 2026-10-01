@@ -66,6 +66,10 @@ function paintBankColors() {
   const inUse = bankColor(session.rigSelectPending?.bank ?? session.rigSelectedBank);
   if (inUse) ui.liveRigPosition.dataset.bankColor = inUse.key;
   else delete ui.liveRigPosition.dataset.bankColor;
+  // v1.72: il Rig in uso nella scheda RIG ha il colore della sua Bank (richiesta di Giovanni, 01/10/2026).
+  const slots = ui.liveRigSlots[0]?.parentElement;
+  if (slots && inUse) slots.dataset.bankColor = inUse.key;
+  else if (slots) delete slots.dataset.bankColor;
   if (!ui.bankPicker.hidden) paintBankPicker();
 }
 
