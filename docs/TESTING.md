@@ -1,4 +1,9 @@
-# Verifiche hardware, test locali e problemi aperti — v1.72
+# Verifiche hardware, test locali e problemi aperti — v1.73
+
+## Da provare con la v1.73 (1 minuto)
+
+- [ ] In ALTRO compare **v1.73**. Freeze acceso: nel riquadro REV "FREEZE" sta dentro i bordi (in verticale).
+- [ ] Tuner: con la corda intonata lo schermo diventa **verde**.
 
 ## Da provare con la v1.72 (circa 3 minuti)
 

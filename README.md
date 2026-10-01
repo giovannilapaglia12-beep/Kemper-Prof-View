@@ -1,6 +1,11 @@
-# Kemper Profiler View v1.72
+# Kemper Profiler View v1.73
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.73 — FREEZE e Tuner intonato
+
+- **FREEZE** nel riquadro REV più piccolo: sul telefono di Giovanni usciva dai bordi in verticale.
+- **Tuner**: con la corda intonata lo schermo torna **verde pieno** (nella v1.72 lo sfondo nero lo copriva e diventava scuro).
 
 ## Novità v1.72 — RIG, LOOPER e Tuner nel nuovo stile
 
