@@ -1,4 +1,11 @@
-# Verifiche hardware, test locali e problemi aperti — v1.74
+# Verifiche hardware, test locali e problemi aperti — v1.75
+
+## Da provare con la v1.75 (circa 3 minuti, con il doppio pedale)
+
+- [ ] In ALTRO compare **v1.75**. Il cavo deve restare collegato per tutta la prova (in alto **COLLEGATO ⇄**).
+- [ ] **Freeze dal pedale**: premi il pedale Freeze del Player. Entro 2 secondi nell'app REV FREEZE si accende? Premilo di nuovo: si spegne?
+- [ ] Annota l'ora delle pressioni e **salva la diagnostica**: si vede se il Freeze del pedale è lo stesso dell'app (125/115).
+- [ ] **Looper dal pedale**: l'app non lo vede (il Player non lo comunica). Per fermarlo usa STOP nella scheda LOOPER e controlla se il Player si ferma.
 
 ## Da provare con la v1.74 (circa 3 minuti, meglio all'aperto o con molta luce)
 

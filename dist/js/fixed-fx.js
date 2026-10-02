@@ -107,7 +107,7 @@ function stopFreezeProbe({ keepPending = false } = {}) {
   refreshFreezeControls();
 }
 
-function requestRevHoldProbe({ record = false } = {}) {
+export function requestRevHoldProbe({ record = false } = {}) {
   if (!session.sysex || !profilerOutputs().length) return;
   session.freezePollsSent += 1;
   sendProfilerRequests([buildRevHoldRequest()], { record });
