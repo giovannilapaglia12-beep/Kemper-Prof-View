@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.74
+# Kemper Profiler View v1.75
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.75 — Freeze acceso dal Player visibile nell'app
+
+- Prova di Giovanni (02/10/2026) con un doppio pedale sul Player (Looper Play e Freeze): l'app non mostrava i cambiamenti. Nella diagnostica non arriva **nessun messaggio** dal Player quando si premono i suoi pedali: il Player non lo comunica da solo.
+- Ora l'app **rilegge il Freeze del REV ogni 1,5 s** (solo lettura, 125/115): se il pedale del Player accende quel Freeze, il riquadro REV e REV FREEZE lo mostrano entro un paio di secondi. Da verificare se il "Freeze" del pedale è lo stesso del pulsante dell'app.
+- Il **Looper** non si può leggere dal Player (già noto): quello che si fa coi pedali del Player l'app non lo vede. Lo stato nella scheda LOOPER resta una stima; c'è SEGNA COME VUOTO per rimetterlo a posto.
+- Test: 50.
 
 ## Novità v1.74 — tema SOLE nel nuovo stile
 

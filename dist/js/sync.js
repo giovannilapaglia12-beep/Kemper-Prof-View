@@ -5,6 +5,7 @@ import {
   buildParameterRequest,
   buildProfilerPollRequests,
   buildProfilerStateRequests,
+  buildRevHoldRequest,
   buildRigNameRequest,
   buildTempoRequest,
   buildTransposeValueRequest,
@@ -13,7 +14,7 @@ import {
 import { AUTO_SYNC_INTERVAL, FIXED_FX_SYNC_INTERVAL } from "./config.js";
 import { toast, ui } from "./dom.js";
 import { session } from "./state.js";
-import { beginRevHoldProbe, requestFixedFxState } from "./fixed-fx.js";
+import { beginRevHoldProbe, requestFixedFxState, requestRevHoldProbe } from "./fixed-fx.js";
 import { profilerOutputs, sendProfilerRequests } from "./connection.js";
 import { BIDI_SAFETY_POLL_MS, bidiCovers } from "./bidi.js";
 import { requestLooperLocation } from "./looper.js";
@@ -100,6 +101,11 @@ function pollProfilerState() {
   if (safety) session.bidi.lastSafetyPollAt = now;
   const keep = (request) => safety || !bidiCovers(request);
   sendProfilerRequests(buildProfilerPollRequests().filter(keep), { record: false });
+  // v1.75: anche il Freeze del REV, così l'app vede quello acceso da un footswitch del Player (prova di Giovanni
+  // del 02/10/2026 con un doppio pedale: il Player non lo invia da solo). Solo lettura, niente durante un comando.
+  if (session.freezeRevPending === null && session.freezeProbePollTimer === null && keep(buildRevHoldRequest())) {
+    requestRevHoldProbe();
+  }
   // Keep the four fixed effects aligned when hardware or another MIDI controller changes them.
   // Confirmation polling already owns an effect while an app command is pending.
   if (now - session.lastFixedFxAutoPollAt >= FIXED_FX_SYNC_INTERVAL) {

@@ -556,3 +556,26 @@ this.step = changeTempoBy; this.handle = handleTempoState;`, context);
   assert.equal(session.tempoPendingRaw, null);
   assert.deepEqual(toasts, ['Tempo +1 BPM · confermato dal Kemper']);
 });
+
+// ── v1.75: Freeze letto anche durante le letture periodiche ──────────────────
+test('Letture periodiche: il Freeze del REV viene riletto ogni volta, ma non durante un comando (v1.75)', () => {
+  const sent = [];
+  const session = { autoSync: true, bidi: { state: 'active', lastSafetyPollAt: 0, quietUntil: 0 },
+    lastFixedFxAutoPollAt: 0, fixedFxPending: new Map(), transpose: { pending: null },
+    freezeRevPending: null, freezeProbePollTimer: null };
+  const context = {
+    session, FIXED_FX: midi.FIXED_FX, FIXED_FX_SYNC_INTERVAL: 4500, BIDI_SAFETY_POLL_MS: 10000,
+    buildProfilerPollRequests: () => [], buildParameterRequest: midi.buildParameterRequest,
+    buildTransposeValueRequest: midi.buildTransposeValueRequest, buildRevHoldRequest: midi.buildRevHoldRequest,
+    bidiCovers: () => false, requestFixedFxState() {}, requestTransposeState() {},
+    requestRevHoldProbe: () => sent.push('REV Hold'), sendProfilerRequests() {},
+    performance: { now: () => 1000 }, document: { visibilityState: 'visible' },
+  };
+  vm.runInNewContext(`${snippet('js/sync.js', 'function pollProfilerState()', 'function startAutoSync')}
+this.poll = pollProfilerState;`, context);
+  context.poll();
+  assert.deepEqual(sent, ['REV Hold']);
+  session.freezeRevPending = true; // comando dell'app in attesa di conferma: la lettura la fa già la conferma
+  context.poll();
+  assert.deepEqual(sent, ['REV Hold']);
+});
