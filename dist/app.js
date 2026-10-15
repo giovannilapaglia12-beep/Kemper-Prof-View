@@ -39,7 +39,8 @@ import {
 } from "./js/looper.js";
 import { bindLooperErase, bindLooperSwitch } from "./js/looper-touch.js";
 import { startTransposeProbe } from "./js/transpose-probe.js";
-import { paintPedal, toggleBluetoothPedal } from "./js/pedal.js";
+import { connectBluetoothPedal, paintPedal, restoreBluetoothPedal, toggleBluetoothPedal } from "./js/pedal.js";
+import { nextPedalPage } from "./js/pedal-control.js";
 import { chooseTranspose, closeTransposePicker } from "./js/transpose.js";
 
 // ── Pulsanti: ogni tocco chiama la funzione del modulo che se ne occupa ──────────
@@ -90,7 +91,10 @@ ui.forgetNames.addEventListener("click", () => {
 ui.transposeProbe.addEventListener("click", startTransposeProbe);
 ui.pedalBluetooth.addEventListener("click", () => toggleBluetoothPedal());
 ui.pedalBluetoothAll.addEventListener("click", () => toggleBluetoothPedal({ all: true }));
+ui.stagePedalConnect.addEventListener("click", () => connectBluetoothPedal());
+ui.stagePedalPage.addEventListener("click", nextPedalPage);
 paintPedal();
+restoreBluetoothPedal();
 ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();
 window.addEventListener("blur", releaseAllLooperSwitches);

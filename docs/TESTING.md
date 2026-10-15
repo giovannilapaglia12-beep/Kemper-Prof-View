@@ -1,4 +1,15 @@
-# Verifiche hardware, test locali e problemi aperti — v1.77
+# Verifiche hardware, test locali e problemi aperti — v1.78
+
+## Da provare con la v1.78 (circa 10 minuti, Player e pedale collegati)
+
+- [ ] In ALTRO compare **v1.78**. Collega il pedale (ALTRO → Collega pedale Bluetooth): in PALCO compare la riga **LOOPER · A REC/PLAY · B STOP · C TRIGGER · D UNDO**.
+- [ ] Premendo un pedale, il suo riquadro nella riga si illumina.
+- [ ] **Pagina LOOPER**: A registra, A di nuovo suona, B ferma, C fa ripartire dall'inizio, D (tocco) annulla. Lo stato nella scheda LOOPER segue i pedali come con i pulsanti dello schermo?
+- [ ] **Cambio pagina**: tieni premuto D per circa 1 secondo: il telefono vibra e la riga diventa **SUONO**, senza UNDO. Di nuovo D tenuto: torna LOOPER.
+- [ ] **Pagina SUONO**: A Rig precedente, B Rig seguente (dopo il Rig 5 passa alla Bank seguente), C FREEZE del REV, D MORPH. Ogni comando viene confermato come dallo schermo?
+- [ ] **Scollegamento**: spegni il pedale mentre l'app è aperta: la riga dice "RICOLLEGO…"; riaccendilo: entro qualche secondo torna la pagina. Se non torna, tocca la riga.
+- [ ] Chiudi e riapri l'app: la riga PEDALE c'è ancora. Il pedale si ricollega da solo o serve toccare la riga? (Annotalo.)
+- [ ] **Salva la diagnostica** (nella parte `pedal.control` ci sono i comandi dei pedali).
 
 ## Da provare con la v1.77 (circa 5 minuti, con la Chocolate Plus)
 

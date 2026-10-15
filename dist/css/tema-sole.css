@@ -222,3 +222,11 @@ html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"
   border-color: color-mix(in srgb, var(--bank-fill) 60%, #000);
   background: linear-gradient(180deg, color-mix(in srgb, var(--bank-fill) 72%, #000) 0%, var(--bank-fill) 50%, color-mix(in srgb, var(--bank-fill) 70%, #fff) 100%); }
 html body[data-theme="sun"] .rig-panel .live-rig-slots button[data-active="true"] strong { color: var(--bank-fill); }
+/* v1.78 · riga PEDALE in PALCO */
+html body[data-theme="sun"] .stage-pedal-page { background: #0a120d; color: #8dff64; border: 0; }
+html body[data-theme="sun"] .stage-pedal-cell { border: 2px solid #b9c0bb; background: linear-gradient(180deg, #ffffff, #e4e8e5); }
+html body[data-theme="sun"] .stage-pedal-cell b { color: #4b5750; }
+html body[data-theme="sun"] .stage-pedal-cell span { color: #0a120d; }
+html body[data-theme="sun"] .stage-pedal-cell[data-pressed="true"] { border-color: #2f9e2a; background: linear-gradient(180deg, #3fae3a 0%, #5fdc5a 50%, #b6f0b3 100%); box-shadow: none; }
+html body[data-theme="sun"] .stage-pedal-connect { color: #0b6d62; border: 2px solid #1f8f82; background: #ffffff; }
+html body[data-theme="sun"] .stage-pedal[data-state="reconnecting"] .stage-pedal-connect { color: #8a5a00; border-color: #c98a12; }

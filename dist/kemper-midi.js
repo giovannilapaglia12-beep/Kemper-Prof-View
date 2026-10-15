@@ -688,3 +688,29 @@ export function describePedalMessage(message) {
   }
   return { kind: "MIDI", channel: null, number: null, value: null, pressed: null, key: null, text: bytesToHex(bytes) };
 }
+
+// v1.78: i pedali comandano l'app. Impostazione della Chocolate Plus provata da Giovanni il 15/10/2026
+// (CubeSuite, modalità "Press down - release"): A…D = CC 20…23, 127 alla pressione, 0 al rilascio.
+export const PEDAL_CC = [20, 21, 22, 23];
+
+// Pedale (0 = A … 3 = D) e pressione/rilascio da un messaggio MIDI; null se non è uno dei quattro pedali.
+export function pedalSwitchFromMessage(message) {
+  const [status = 0, controller, value = 0] = Array.from(message);
+  if ((status & 0xf0) !== 0xb0) return null;
+  const pedal = PEDAL_CC.indexOf(controller);
+  return pedal < 0 ? null : { pedal, pressed: value >= 64 };
+}
+
+export function isPedalSourceName(name) {
+  const text = String(name ?? "").toLowerCase();
+  return PEDAL_NAME_PREFIXES.some((prefix) => text.includes(prefix.toLowerCase()));
+}
+
+// Rig vicino per Rig −/+ dal pedale: dopo il Rig 5 si passa al Rig 1 della Bank seguente, e viceversa.
+// Ai bordi (Bank 1 · Rig 1, ultima Bank · Rig 5) non si va oltre: null.
+export function neighborRig(bank, slot, delta, maxBanks = PLAYER_MAX_BANKS) {
+  if (!Number.isInteger(bank) || !Number.isInteger(slot)) return null;
+  const index = (bank - 1) * 5 + (slot - 1) + delta;
+  if (index < 0 || index >= maxBanks * 5) return null;
+  return { bank: Math.floor(index / 5) + 1, slot: (index % 5) + 1 };
+}

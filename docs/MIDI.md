@@ -254,7 +254,8 @@ Prova del 26/09/2026: con il loop FERMO, TRIGGER (NRPN 125/90) fa suonare il loo
 
 ## Pedaliera Bluetooth (v1.76, M-Vave Chocolate Plus)
 
-- Non è il Player: i suoi messaggi non toccano lo stato dell'app e per ora finiscono solo nella **Prova pedale** di ALTRO e nella diagnostica (`pedal`). L'app non inoltra nulla al Player.
+- Non è il Player: i suoi messaggi non toccano lo stato dell'app e finiscono nella sezione Pedale di ALTRO e nella diagnostica (`pedal`). L'app non inoltra mai i messaggi del pedale al Player: dalla v1.78 i pedali A…D (CC 20…23, solo dal Bluetooth o da una porta con il nome del pedale) fanno partire le stesse funzioni dei pulsanti dello schermo (`pedal-control.js`).
 - Arriva in due modi: come porta Web MIDI (qualunque ingresso che non sia "Profiler"/"Kemper") oppure con Web Bluetooth, standard "MIDI over Bluetooth LE": servizio `03B80E5A-EDE8-4B33-A751-6CE34EC4C700`, caratteristica `7772E5DB-3868-4112-A1A9-F2669D106BF3` (notifiche).
 - Pacchetto BLE: 1 byte di intestazione (bit 7 = 1, bit 6 = 0), poi per ogni messaggio un byte di tempo (bit 7 = 1) e il messaggio; è ammesso il running status, con o senza byte di tempo. Decodifica in `parseBleMidiPacket` (kemper-midi.js). Clock (F8) e Active Sensing (FE) vengono solo contati.
-- Impostazione consigliata del pedale (manuale CubeSuite): modalità 4 "Advanced Custom 1", sotto-modalità premi-rilascia, un CC per pedale (valore 127 alla pressione, 0 al rilascio): così l'app sa subito quando il pedale è premuto e per quanto.
+- Impostazione del pedale (provata il 15/10/2026): CubeSuite, modalità 4 "Advanced Custom 1", "Mode: Press down - release (Two sets of information)"; Bank A (pressione) CC 20, 21, 22, 23 = 127, Bank B (rilascio) gli stessi CC = 0, canale 1. Un tocco normale dura 0,2–0,28 s.
+- Pagine (v1.78): LOOPER = REC/PLAY · STOP · TRIGGER · UNDO, SUONO = Rig − · Rig + · FREEZE · MORPH. A, B, C alla pressione (REC/STOP/TRIGGER: NRPN 125/88…90 premuto e rilasciato insieme al pedale); D al rilascio, tenuto 0,8 s = cambio pagina.
