@@ -34,6 +34,7 @@ import {
 } from "./looper.js";
 import { captureTransposeProbe } from "./transpose-probe.js";
 import { handleTransposeState } from "./transpose.js";
+import { handlePedalMidi, setPedalPorts } from "./pedal.js";
 
 export function describePort(port) {
   const parts = [port.name, port.manufacturer].filter(Boolean);
@@ -75,6 +76,7 @@ function paintPorts() {
   };
 
   paint(ui.inputs, inputs);
+  setPedalPorts(inputs.filter((port) => !isProfilerPort(port) && port.state !== "disconnected").map(describePort));
   paint(ui.outputs, outputs);
   ui.inputCount.textContent = inputs.length;
   ui.outputCount.textContent = outputs.length;
@@ -105,7 +107,11 @@ function attachInputs() {
     if (input.state === "disconnected") continue;
     input.onmidimessage = (event) => {
       // Controller and virtual ports may emit PC/CC; only the Profiler owns app state.
-      if (!isProfilerPort(input)) return;
+      // v1.76: gli altri ingressi (la pedaliera Bluetooth) finiscono solo nella "Prova pedale" di ALTRO.
+      if (!isProfilerPort(input)) {
+        handlePedalMidi(event.data, describePort(input), event.timeStamp);
+        return;
+      }
       const sourceName = describePort(input);
       notePlayerContact();
       const decoded = kemper.ingest(event);

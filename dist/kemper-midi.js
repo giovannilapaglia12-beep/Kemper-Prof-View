@@ -593,3 +593,85 @@ export function bankColor(bank) {
   if (!Number.isInteger(bank) || bank < 1) return null;
   return BANK_COLORS[(bank - 1) % 5];
 }
+
+// v1.76: pedaliera Bluetooth (M-Vave Chocolate Plus). Servizio e caratteristica dello standard "MIDI over Bluetooth LE".
+export const BLE_MIDI = {
+  service: "03b80e5a-ede8-4b33-a751-6ce34ec4c700",
+  characteristic: "7772e5db-3868-4112-a1a9-f2669d106bf3",
+};
+
+function midiDataLength(status) {
+  const family = status & 0xf0;
+  if (family === 0xc0 || family === 0xd0) return 1;
+  if (family < 0xf0) return 2;
+  if (status === 0xf1 || status === 0xf3) return 1;
+  if (status === 0xf2) return 2;
+  return 0;
+}
+
+// Pacchetto Bluetooth → messaggi MIDI. Ogni pacchetto inizia con un byte di intestazione; ogni messaggio è preceduto
+// da un byte di tempo (bit 7 = 1) e può riusare lo status del precedente ("running status").
+// Un SysEx diviso su più pacchetti viene scartato: il pedale, impostato con CC/PC/Note, non ne manda.
+export function parseBleMidiPacket(packet) {
+  const bytes = Array.from(packet);
+  const messages = [];
+  if (bytes.length < 2 || (bytes[0] & 0xc0) !== 0x80) return messages;
+  let running = null;
+  let sysex = null;
+  let i = 1;
+  while (i < bytes.length) {
+    if (sysex) {
+      if (bytes[i] < 0x80) { sysex.push(bytes[i]); i += 1; continue; }
+      const next = bytes[i + 1];
+      if (next === 0xf7) { messages.push([...sysex, 0xf7]); sysex = null; i += 2; continue; }
+      if (next >= 0xf8) { messages.push([next]); i += 2; continue; }
+      sysex = null;
+    }
+    if (bytes[i] >= 0x80) {
+      i += 1; // byte di tempo
+      const status = bytes[i];
+      if (status === undefined) break;
+      if (status >= 0x80) {
+        i += 1;
+        if (status === 0xf0) { sysex = [0xf0]; continue; }
+        if (status >= 0xf8) { messages.push([status]); continue; }
+        running = status < 0xf0 ? status : null;
+        const data = bytes.slice(i, i + midiDataLength(status));
+        if (data.length === midiDataLength(status) && data.every((byte) => byte < 0x80)) messages.push([status, ...data]);
+        i += data.length;
+        continue;
+      }
+    }
+    if (running === null) { i += 1; continue; }
+    const data = bytes.slice(i, i + midiDataLength(running));
+    if (data.length === midiDataLength(running) && data.every((byte) => byte < 0x80)) messages.push([running, ...data]);
+    i += Math.max(1, data.length);
+  }
+  return messages;
+}
+
+// Messaggio di un pedale in parole. `pressed`: true premuto, false rilasciato, null se il messaggio non lo dice
+// (Program Change). `key` riconosce lo stesso pedale fra pressione e rilascio, per misurare quanto è stato tenuto.
+export function describePedalMessage(message) {
+  const bytes = Array.from(message);
+  const status = bytes[0] ?? 0;
+  const family = status & 0xf0;
+  const channel = (status & 0x0f) + 1;
+  if (family === 0xb0) {
+    const [, controller = 0, value = 0] = bytes;
+    return { kind: "CC", channel, number: controller, value, pressed: value >= 64,
+      key: `CC:${channel}:${controller}`, text: `CC ${controller} = ${value} · canale ${channel}` };
+  }
+  if (family === 0xc0) {
+    const program = bytes[1] ?? 0;
+    return { kind: "PC", channel, number: program, value: null, pressed: null,
+      key: `PC:${channel}:${program}`, text: `Program Change ${program} · canale ${channel}` };
+  }
+  if (family === 0x90 || family === 0x80) {
+    const [, note = 0, velocity = 0] = bytes;
+    const on = family === 0x90 && velocity > 0;
+    return { kind: "Nota", channel, number: note, value: velocity, pressed: on,
+      key: `Nota:${channel}:${note}`, text: `Nota ${note} ${on ? "premuta" : "rilasciata"} · canale ${channel}` };
+  }
+  return { kind: "MIDI", channel: null, number: null, value: null, pressed: null, key: null, text: bytesToHex(bytes) };
+}

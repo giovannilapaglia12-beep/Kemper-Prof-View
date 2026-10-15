@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { importPure, snippet } from './moduli.mjs';
+import { importPure, snippet, source } from './moduli.mjs';
 
 const midi = await importPure('kemper-midi.js');
 const text = await importPure('js/text.js');
@@ -578,4 +578,75 @@ this.poll = pollProfilerState;`, context);
   session.freezeRevPending = true; // comando dell'app in attesa di conferma: la lettura la fa già la conferma
   context.poll();
   assert.deepEqual(sent, ['REV Hold']);
+});
+
+// ── v1.76: Prova pedale (pedaliera Bluetooth M-Vave Chocolate Plus) ─────────
+test('Pedale Bluetooth: i pacchetti MIDI-BLE diventano messaggi MIDI (tempo, running status, SysEx)', () => {
+  const parse = (bytes) => midi.parseBleMidiPacket(Uint8Array.from(bytes)).map((message) => midi.bytesToHex(message));
+  assert.deepEqual(parse([0x80, 0x80, 0xb0, 20, 127]), ['B0 14 7F']);
+  // running status con byte di tempo e senza
+  assert.deepEqual(parse([0x80, 0x81, 0xb0, 20, 127, 0x82, 21, 0, 22, 127]), ['B0 14 7F', 'B0 15 00', 'B0 16 7F']);
+  assert.deepEqual(parse([0x80, 0x80, 0xc0, 5, 0x80, 0x90, 60, 100]), ['C0 05', '90 3C 64']);
+  assert.deepEqual(parse([0x80, 0x80, 0xf0, 1, 2, 0x81, 0xf7]), ['F0 01 02 F7']);
+  assert.deepEqual(parse([0x80, 0x80, 0xfe]), ['FE']);
+  assert.deepEqual(parse([0x40, 0xb0, 20, 127]), []); // intestazione non valida
+  assert.deepEqual(parse([0x80, 0x80, 0xb0, 20]), []); // messaggio troncato
+});
+
+test('Pedale: messaggio in parole, con pressione e rilascio', () => {
+  const cc = midi.describePedalMessage([0xb0, 20, 127]);
+  assert.equal(cc.text, 'CC 20 = 127 · canale 1');
+  assert.equal(cc.pressed, true);
+  assert.equal(midi.describePedalMessage([0xb0, 20, 0]).pressed, false);
+  assert.equal(midi.describePedalMessage([0xb0, 20, 0]).key, cc.key);
+  assert.equal(midi.describePedalMessage([0xc1, 3]).text, 'Program Change 3 · canale 2');
+  assert.equal(midi.describePedalMessage([0xc1, 3]).pressed, null);
+  assert.equal(midi.describePedalMessage([0x90, 60, 0]).text, 'Nota 60 rilasciata · canale 1');
+  assert.equal(midi.describePedalMessage([0x90, 60, 90]).pressed, true);
+});
+
+function pedalContext() {
+  const toasts = [];
+  const list = () => {
+    const items = [];
+    return { items, replaceChildren: (...children) => { items.splice(0, items.length, ...children); } };
+  };
+  const ui = { pedalPorts: node(), pedalBluetooth: node(), pedalStatus: node(), pedalLast: node(), pedalLog: list(), copy: node() };
+  const session = {};
+  const element = () => ({ textContent: '', append(...children) { this.children = children; } });
+  const context = {
+    session, ui, Map, Set, Date, Math,
+    BLE_MIDI: midi.BLE_MIDI, describePedalMessage: midi.describePedalMessage, parseBleMidiPacket: midi.parseBleMidiPacket,
+    toast: (message) => toasts.push(message),
+    navigator: {}, performance: { now: () => 0 },
+    document: { createElement: element },
+  };
+  vm.runInNewContext(`${snippet('js/pedal.js', 'const MAX_MESSAGES')}
+this.handle = handlePedalMidi; this.setPorts = setPedalPorts; this.clear = clearPedalLog; this.diagnostics = pedalDiagnostics;`, context);
+  return { context, session, ui, toasts };
+}
+
+test('Prova pedale: mostra il messaggio e per quanto il pedale è stato tenuto; clock ignorato; niente al Player', () => {
+  const { context, session, ui } = pedalContext();
+  context.handle([0xb0, 20, 127], 'FootCtrl', 1000);
+  assert.equal(ui.pedalLast.textContent, 'CC 20 = 127 · canale 1');
+  context.handle([0xf8], 'FootCtrl', 1100);
+  context.handle([0xb0, 20, 0], 'FootCtrl', 1420);
+  assert.equal(ui.pedalLast.textContent, 'CC 20 = 0 · canale 1 · tenuto 0,42 s');
+  assert.equal(session.pedal.messages.length, 2);
+  assert.equal(session.pedal.ignored, 1);
+  assert.equal(ui.pedalLog.items.length, 2);
+  assert.equal(ui.pedalLog.items[0].children[1].textContent, 'CC 20 = 0 · canale 1 · tenuto 0,42 s · FootCtrl');
+  // stesso numero da un'altra porta: non si mescola
+  context.handle([0xb0, 20, 0], 'Bluetooth · altro', 1500);
+  assert.equal(session.pedal.messages.at(-1).heldMs, null);
+  context.setPorts(['FootCtrl']);
+  assert.equal(ui.pedalPorts.textContent, 'Pedale visto come porta MIDI: FootCtrl');
+  assert.equal(context.diagnostics().messages.length, 3);
+  context.clear();
+  assert.equal(session.pedal.messages.length, 0);
+  assert.equal(ui.pedalLast.textContent, 'Premi un pedale…');
+  // Sicurezza sul palco: il modulo non può inviare nulla al Player.
+  const code = source('js/pedal.js');
+  assert.doesNotMatch(code, /sendProfilerRequests|from "\.\/connection\.js"|\.send\(/);
 });

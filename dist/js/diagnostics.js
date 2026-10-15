@@ -21,6 +21,7 @@ import { describePort, profilerOutputs } from "./connection.js";
 import { BIDI_LEASE_SECONDS, keyName, requestsPerMinute } from "./bidi.js";
 import { looper } from "./looper.js";
 import { requestTransposeState, resetTransposeControl, transposeDiagnostics } from "./transpose.js";
+import { clearPedalLog, pedalDiagnostics } from "./pedal.js";
 
 export function addLog(decoded, sourceName) {
   session.total += 1;
@@ -97,6 +98,7 @@ export function clearLog() {
   session.fixedFxRepliesReceived = 0;
   session.fixedFxLastCommands = [];
   resetTransposeControl();
+  clearPedalLog();
   session.tunerNoteWindow = [];
   session.tunerRawNotes.clear();
   session.tunerStableNotes.clear();
@@ -158,6 +160,8 @@ function buildDiagnostics() {
     transmitted: session.transmitted,
     // v1.61: prova "Leggi Transpose" (pagina 5 dei Fixed FX e Rig Transpose 4/4), sola lettura.
     transposeProbe: session.transposeProbe?.readings ?? [],
+    // v1.76: prova della pedaliera Bluetooth (sola lettura).
+    pedal: pedalDiagnostics(),
     currentState: session.lastState ? {
       rigName: session.lastState.rigName,
       bpm: session.lastState.bpm,

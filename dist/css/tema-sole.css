@@ -143,6 +143,7 @@ body[data-theme="sun"] .bank-picker-grid button[data-current="true"] { backgroun
 body[data-theme="sun"] .bank-picker-grid button[data-current="true"] strong,
 body[data-theme="sun"] .bank-picker-grid button[data-current="true"] small { color: #ffffff; }
 body[data-theme="sun"] .tools-panel { background: #ffffff; border-color: var(--line); box-shadow: var(--shadow); }
+body[data-theme="sun"] .pedal-last { background: #f3f6f4; color: #0b5d2a; }
 
 /* ───────── v1.74 · Tema SOLE "pedaliera su chiaro" (approvato da Giovanni il 01/10/2026) ─────────
    Stesso stile del tema scuro: pulsanti bianchi in rilievo, effetti spenti con bordo e nome nel loro colore

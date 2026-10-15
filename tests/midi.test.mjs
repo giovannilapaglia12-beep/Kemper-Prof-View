@@ -167,11 +167,13 @@ test('Tempo conversion retains exact raw units and rounds 67.03125 to 67 BPM', (
   assert.equal(Math.round(4290 / 64), 67);
 });
 
-test('Only the Kemper input can update live MIDI state', () => {
+test('Only the Kemper input can update live MIDI state; gli altri ingressi vanno solo alla Prova pedale (v1.76)', () => {
   const other = { name: 'MS-1', manufacturer: 'dev-core', state: 'connected' };
   const profiler = { name: 'Profiler', manufacturer: 'Kemper', state: 'connected' };
   const seen = [];
+  const pedal = [];
   const context = {
+    handlePedalMidi: (data, source) => pedal.push({ data: [...data], source }),
     session: { access: { inputs: new Map([['other', other], ['profiler', profiler]]) },
       lastTempoRenderRequested: null },
     isProfilerPort: input => input === profiler,
@@ -188,8 +190,10 @@ test('Only the Kemper input can update live MIDI state', () => {
   context.attachInputs();
   other.onmidimessage({ data: Uint8Array.from([0xc0, 42]) });
   assert.equal(seen.length, 0);
+  assert.deepEqual(pedal, [{ data: [0xc0, 42], source: 'MS-1' }]);
   profiler.onmidimessage({ data: Uint8Array.from([0xc0, 43]) });
   assert.equal(seen.length, 1);
+  assert.equal(pedal.length, 1);
 });
 
 test('Beacon bidirezionale: INIT + SYSEX, set 2, lease 30 s (v1.37)', () => {

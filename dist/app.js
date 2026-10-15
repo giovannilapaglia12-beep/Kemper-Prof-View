@@ -39,6 +39,7 @@ import {
 } from "./js/looper.js";
 import { bindLooperErase, bindLooperSwitch } from "./js/looper-touch.js";
 import { startTransposeProbe } from "./js/transpose-probe.js";
+import { paintPedal, toggleBluetoothPedal } from "./js/pedal.js";
 import { chooseTranspose, closeTransposePicker } from "./js/transpose.js";
 
 // ── Pulsanti: ogni tocco chiama la funzione del modulo che se ne occupa ──────────
@@ -87,6 +88,8 @@ ui.forgetNames.addEventListener("click", () => {
 // hanno il Morph (vedi docs/MIDI.md).
 
 ui.transposeProbe.addEventListener("click", startTransposeProbe);
+ui.pedalBluetooth.addEventListener("click", toggleBluetoothPedal);
+paintPedal();
 ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();
 window.addEventListener("blur", releaseAllLooperSwitches);
