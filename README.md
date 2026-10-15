@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.76
+# Kemper Profiler View v1.77
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.77 — Ricerca del pedale Bluetooth più larga
+
+- Prova di Giovanni (15/10/2026): toccando **Collega pedale Bluetooth** Chrome cercava ma non trovava il pedale. Probabilmente il pedale non si annuncia come "MIDI" durante la ricerca.
+- Ora la ricerca trova il pedale anche **per nome** (in Bluetooth si chiama "FootCtrlPlus").
+- Nuovo pulsante **Cerca tutti i dispositivi**: mostra tutti i dispositivi Bluetooth vicini, così si vede se il pedale c'è.
+- Se il collegamento non riesce, l'app dice **dove si è fermato** (ricerca, collegamento, MIDI) e cosa controllare. Resta tutto in sola lettura: niente al Player.
 
 ## Novità v1.76 — Prova pedale (pedaliera Bluetooth)
 

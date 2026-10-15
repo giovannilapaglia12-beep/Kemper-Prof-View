@@ -600,6 +600,19 @@ export const BLE_MIDI = {
   characteristic: "7772e5db-3868-4112-a1a9-f2669d106bf3",
 };
 
+// v1.77: la prova del 15/10/2026 (Chrome cercava senza trovare nulla) fa pensare che il pedale non annunci il servizio
+// MIDI nella ricerca: si cerca anche per nome (in Bluetooth si chiama "FootCtrlPlus"), oppure si mostrano tutti
+// i dispositivi vicini. Il servizio MIDI va comunque dichiarato, altrimenti Chrome non lo lascia usare.
+export const PEDAL_NAME_PREFIXES = ["FootCtrl", "M-VAVE", "Chocolate"];
+
+export function bluetoothPedalRequest({ all = false } = {}) {
+  if (all) return { acceptAllDevices: true, optionalServices: [BLE_MIDI.service] };
+  return {
+    filters: [{ services: [BLE_MIDI.service] }, ...PEDAL_NAME_PREFIXES.map((namePrefix) => ({ namePrefix }))],
+    optionalServices: [BLE_MIDI.service],
+  };
+}
+
 function midiDataLength(status) {
   const family = status & 0xf0;
   if (family === 0xc0 || family === 0xd0) return 1;

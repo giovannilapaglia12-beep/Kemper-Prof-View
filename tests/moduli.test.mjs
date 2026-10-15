@@ -611,18 +611,18 @@ function pedalContext() {
     const items = [];
     return { items, replaceChildren: (...children) => { items.splice(0, items.length, ...children); } };
   };
-  const ui = { pedalPorts: node(), pedalBluetooth: node(), pedalStatus: node(), pedalLast: node(), pedalLog: list(), copy: node() };
+  const ui = { pedalPorts: node(), pedalBluetooth: node(), pedalBluetoothAll: node(), pedalStatus: node(), pedalLast: node(), pedalLog: list(), copy: node() };
   const session = {};
   const element = () => ({ textContent: '', append(...children) { this.children = children; } });
   const context = {
     session, ui, Map, Set, Date, Math,
-    BLE_MIDI: midi.BLE_MIDI, describePedalMessage: midi.describePedalMessage, parseBleMidiPacket: midi.parseBleMidiPacket,
+    BLE_MIDI: midi.BLE_MIDI, bluetoothPedalRequest: midi.bluetoothPedalRequest, describePedalMessage: midi.describePedalMessage, parseBleMidiPacket: midi.parseBleMidiPacket,
     toast: (message) => toasts.push(message),
     navigator: {}, performance: { now: () => 0 },
     document: { createElement: element },
   };
   vm.runInNewContext(`${snippet('js/pedal.js', 'const MAX_MESSAGES')}
-this.handle = handlePedalMidi; this.setPorts = setPedalPorts; this.clear = clearPedalLog; this.diagnostics = pedalDiagnostics;`, context);
+this.handle = handlePedalMidi; this.setPorts = setPedalPorts; this.errorText = bluetoothErrorText; this.clear = clearPedalLog; this.diagnostics = pedalDiagnostics;`, context);
   return { context, session, ui, toasts };
 }
 
@@ -649,4 +649,26 @@ test('Prova pedale: mostra il messaggio e per quanto il pedale è stato tenuto; 
   // Sicurezza sul palco: il modulo non può inviare nulla al Player.
   const code = source('js/pedal.js');
   assert.doesNotMatch(code, /sendProfilerRequests|from "\.\/connection\.js"|\.send\(/);
+});
+
+// ── v1.77: ricerca Bluetooth più larga (prova del 15/10/2026: Chrome cercava senza trovare il pedale) ──
+test('Pedale Bluetooth: si cerca anche per nome (FootCtrlPlus) o fra tutti i dispositivi, sempre col servizio MIDI', () => {
+  const request = midi.bluetoothPedalRequest();
+  assert.deepEqual(JSON.parse(JSON.stringify(request.filters)), [
+    { services: [midi.BLE_MIDI.service] }, { namePrefix: 'FootCtrl' }, { namePrefix: 'M-VAVE' }, { namePrefix: 'Chocolate' }]);
+  assert.deepEqual(request.optionalServices, [midi.BLE_MIDI.service]);
+  assert.ok('FootCtrlPlus'.startsWith(request.filters[1].namePrefix));
+  const all = midi.bluetoothPedalRequest({ all: true });
+  assert.equal(all.acceptAllDevices, true);
+  assert.equal(all.filters, undefined);
+  assert.deepEqual(all.optionalServices, [midi.BLE_MIDI.service]);
+});
+
+test('Pedale Bluetooth: il messaggio dice dove si è fermato il collegamento', () => {
+  const { context, ui } = pedalContext();
+  assert.match(context.errorText('ricerca', { name: 'NotFoundError', message: 'User cancelled' }), /^nessun pedale scelto\. Se non compariva: interruttore su H/);
+  assert.match(context.errorText('servizio MIDI', { name: 'NotFoundError', message: 'No Services' }), /non ha il MIDI Bluetooth.*\(No Services\)/);
+  assert.match(context.errorText('connessione', { name: 'NetworkError', message: 'GATT failed' }), /non accetta il collegamento/);
+  context.setPorts([]);
+  assert.equal(ui.pedalBluetoothAll.hidden, false);
 });
