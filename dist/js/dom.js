@@ -58,6 +58,7 @@ export const ui = {
   transposeProbeResult: $("#transpose-probe-result"),
   pedalPorts: $("#pedal-ports"),
   pedalBluetooth: $("#pedal-bluetooth-button"),
+  pedalBluetoothAll: $("#pedal-bluetooth-all-button"),
   pedalStatus: $("#pedal-status"),
   pedalLast: $("#pedal-last"),
   pedalLog: $("#pedal-log"),

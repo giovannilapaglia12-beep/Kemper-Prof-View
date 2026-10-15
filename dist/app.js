@@ -88,7 +88,8 @@ ui.forgetNames.addEventListener("click", () => {
 // hanno il Morph (vedi docs/MIDI.md).
 
 ui.transposeProbe.addEventListener("click", startTransposeProbe);
-ui.pedalBluetooth.addEventListener("click", toggleBluetoothPedal);
+ui.pedalBluetooth.addEventListener("click", () => toggleBluetoothPedal());
+ui.pedalBluetoothAll.addEventListener("click", () => toggleBluetoothPedal({ all: true }));
 paintPedal();
 ui.stageLooper.addEventListener("click", () => setAppView("looper"));
 bindLooperErase();

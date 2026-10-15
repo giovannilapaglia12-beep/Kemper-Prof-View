@@ -1,4 +1,11 @@
-# Verifiche hardware, test locali e problemi aperti — v1.76
+# Verifiche hardware, test locali e problemi aperti — v1.77
+
+## Da provare con la v1.77 (circa 5 minuti, con la Chocolate Plus)
+
+- [ ] In ALTRO compare **v1.77**. Prima: interruttore del pedale su **H**, CubeSuite chiusa del tutto, pedale **non** abbinato nelle impostazioni Bluetooth di Android, Bluetooth e Posizione del telefono accesi.
+- [ ] Tocca **Collega pedale Bluetooth**: nella finestra di Chrome compare "FootCtrlPlus"? Sceglilo: compare "Bluetooth: collegato a …"? Premi A, B, C, D.
+- [ ] Se non compare: chiudi la finestra e tocca **Cerca tutti i dispositivi**. Il pedale c'è nell'elenco (anche con un nome diverso)? Annota i nomi che vedi e prova a sceglierlo.
+- [ ] Se compare un messaggio azzurro di errore, fotografalo. **Salva la diagnostica** in ogni caso.
 
 ## Da provare con la v1.76 (circa 5 minuti, con la Chocolate Plus; il Player può anche restare spento)
 

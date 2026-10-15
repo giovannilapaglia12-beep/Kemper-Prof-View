@@ -4,7 +4,7 @@
 // oppure collegato direttamente dall'app con il Bluetooth di Chrome. Per ora i pedali non comandano nulla:
 // questa prova serve a scegliere come usarli (Looper, pagine di funzioni). Non invia niente al Player.
 
-import { BLE_MIDI, describePedalMessage, parseBleMidiPacket } from "../kemper-midi.js";
+import { BLE_MIDI, bluetoothPedalRequest, describePedalMessage, parseBleMidiPacket } from "../kemper-midi.js";
 import { toast, ui } from "./dom.js";
 import { session } from "./state.js";
 
@@ -18,7 +18,8 @@ session.pedal = {
   pressedAt: new Map(),
   ignored: 0,
   midiPorts: [],
-  bluetooth: { supported: typeof navigator !== "undefined" && "bluetooth" in navigator, state: "off", name: null, error: null },
+  bluetooth: { supported: typeof navigator !== "undefined" && "bluetooth" in navigator, state: "off", name: null, error: null,
+    step: null, searchedAll: false },
 };
 
 let bluetoothDevice = null;
@@ -41,6 +42,8 @@ export function paintPedal() {
   ui.pedalBluetooth.textContent = bt.state === "connected" ? "Scollega pedale Bluetooth" : "Collega pedale Bluetooth";
   ui.pedalBluetooth.disabled = !bt.supported || bt.state === "searching";
   ui.pedalBluetooth.setAttribute("aria-pressed", String(bt.state === "connected"));
+  ui.pedalBluetoothAll.hidden = bt.state === "connected";
+  ui.pedalBluetoothAll.disabled = !bt.supported || bt.state === "searching";
   ui.pedalStatus.textContent = !bt.supported
     ? "Il Bluetooth non è disponibile in questo browser: usa Chrome su Android."
     : bt.state === "searching" ? "Ricerca del pedale…"
@@ -107,7 +110,15 @@ function bluetoothDisconnected() {
   paintPedal();
 }
 
-export async function toggleBluetoothPedal() {
+// Passi del collegamento, per capire dalla diagnostica dove si ferma.
+const STEP_ERRORS = {
+  connessione: "il pedale non accetta il collegamento (è già collegato a CubeSuite o ad Android?)",
+  "servizio MIDI": "questo dispositivo non ha il MIDI Bluetooth: scegli il pedale",
+  notifiche: "il pedale non manda i suoi messaggi",
+};
+
+// Tocco su "Collega pedale Bluetooth" (all = false) o "Cerca tutti i dispositivi" (all = true).
+export async function toggleBluetoothPedal({ all = false } = {}) {
   const bt = session.pedal.bluetooth;
   if (bt.state === "connected") {
     bluetoothDevice?.gatt?.disconnect();
@@ -117,12 +128,16 @@ export async function toggleBluetoothPedal() {
   if (!bt.supported || bt.state === "searching") return;
   bt.state = "searching";
   bt.error = null;
+  bt.step = "ricerca";
+  bt.searchedAll = all;
   paintPedal();
   try {
-    // Il nome del pedale non è sicuro: si cercano i dispositivi che si annunciano come MIDI Bluetooth.
-    const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [BLE_MIDI.service] }] });
+    const device = await navigator.bluetooth.requestDevice(bluetoothPedalRequest({ all }));
+    bt.name = device.name ?? null;
     device.addEventListener("gattserverdisconnected", bluetoothDisconnected);
+    bt.step = "connessione";
     const server = await device.gatt.connect();
+    bt.step = "servizio MIDI";
     const service = await server.getPrimaryService(BLE_MIDI.service);
     const characteristic = await service.getCharacteristic(BLE_MIDI.characteristic);
     const source = `Bluetooth · ${device.name ?? "pedale"}`;
@@ -133,17 +148,27 @@ export async function toggleBluetoothPedal() {
         handlePedalMidi(message, source, receivedAt);
       }
     });
+    bt.step = "notifiche";
     await characteristic.startNotifications();
     bluetoothDevice = device;
-    bt.name = device.name ?? null;
+    bt.step = null;
     bt.state = "connected";
     toast(`Pedale collegato: ${bt.name ?? "senza nome"}`);
   } catch (error) {
     bt.state = "off";
-    // NotFoundError: finestra di scelta chiusa senza scegliere.
-    bt.error = error?.name === "NotFoundError" ? "nessun pedale scelto" : (error?.message ?? String(error));
+    bt.error = bluetoothErrorText(bt.step, error);
+    bluetoothDevice?.gatt?.disconnect();
   }
   paintPedal();
+}
+
+export function bluetoothErrorText(step, error) {
+  // NotFoundError durante la ricerca: finestra chiusa senza scegliere (il pedale non compariva).
+  if (step === "ricerca" && error?.name === "NotFoundError") {
+    return "nessun pedale scelto. Se non compariva: interruttore su H, CubeSuite chiusa, pedale non abbinato nelle impostazioni Bluetooth di Android, Posizione attiva; poi prova «Cerca tutti i dispositivi».";
+  }
+  const detail = error?.message ?? String(error);
+  return STEP_ERRORS[step] ? `${STEP_ERRORS[step]} (${detail})` : detail;
 }
 
 export function clearPedalLog() {
