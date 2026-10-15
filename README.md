@@ -1,6 +1,13 @@
-# Kemper Profiler View v1.75
+# Kemper Profiler View v1.76
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.76 — Prova pedale (pedaliera Bluetooth)
+
+- Giovanni ha comprato la pedaliera Bluetooth **M-Vave Chocolate Plus** (15/10/2026), per comandare l'app coi piedi (soprattutto il Looper, così la stima dell'app resta giusta).
+- In ALTRO c'è la nuova sezione **Prova pedale** (sola lettura): mostra in diretta cosa manda ogni pedale (CC, Program Change o nota) e **per quanto è stato tenuto premuto**. Serve a capire come impostarla prima di darle dei comandi.
+- Il pedale può arrivare in due modi: come **porta MIDI** (se Android lo collega come dispositivo MIDI), oppure con **Collega pedale Bluetooth**, che lo collega direttamente dall'app.
+- Per ora i pedali **non comandano nulla** e l'app non invia niente al Player. I messaggi finiscono nella diagnostica.
 
 ## Novità v1.75 — Freeze acceso dal Player visibile nell'app
 

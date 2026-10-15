@@ -166,6 +166,14 @@ body:not([data-view="full"]) .tools-panel { display: none; }
 .tools-panel .action-row { margin: 12px 0 0; }
 .tools-panel .looper-probe-result { color: var(--cyan); font-weight: 700; }
 .tools-panel .tools-subhead { margin-top: 22px; }
+
+/* v1.76 · Prova pedale (pedaliera Bluetooth) */
+.pedal-panel .pedal-ports { color: var(--text); font-weight: 700; }
+.tools-panel > .pedal-last { margin: 14px 0 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 13px; background: #050a07; color: var(--green); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: clamp(1.05rem, 4.6vw, 1.35rem); font-weight: 800; overflow-wrap: anywhere; }
+.pedal-log { margin: 10px 0 0; padding: 0; list-style: none; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; }
+.pedal-log li { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 8px; padding: 6px 2px; border-top: 1px solid var(--line); }
+.pedal-log time { color: var(--muted); }
+.pedal-log span { overflow-wrap: anywhere; }
 /* Riga "Rig in uso" nel pannello di collegamento (al posto del grande riquadro RIG ATTUALE) */
 .rig-in-use { margin: 0 0 18px; color: var(--muted); font-size: 0.9rem; font-weight: 700; line-height: 1.45; }
 .rig-in-use > span:first-child { margin-right: 6px; color: var(--green); font-size: 0.72rem; letter-spacing: 0.12em; }

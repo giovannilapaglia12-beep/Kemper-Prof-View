@@ -20,7 +20,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.75</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.76</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -267,6 +267,19 @@
             <p id="sysex-note">Il test verificherà se Chrome autorizza i messaggi SysEx.</p>
           </article>
         </div>
+      </section>
+
+      <section class="tools-panel pedal-panel" aria-labelledby="pedal-heading">
+        <p class="section-kicker">PEDALIERA BLUETOOTH · PROVA (SOLA LETTURA)</p>
+        <h2 id="pedal-heading">Prova pedale</h2>
+        <p>Premi i pedali uno alla volta: qui vedi cosa manda ogni pedale e per quanto lo hai tenuto premuto. Per ora i pedali non comandano nulla e l’app non invia niente al Player: la prova serve a scegliere come usarli. Poi salva la diagnostica.</p>
+        <p class="pedal-ports" id="pedal-ports">Nessun pedale fra le porte MIDI.</p>
+        <div class="action-row">
+          <button class="secondary-button" id="pedal-bluetooth-button" type="button" aria-pressed="false">Collega pedale Bluetooth</button>
+        </div>
+        <p class="looper-probe-result" id="pedal-status" role="status"></p>
+        <p class="pedal-last" id="pedal-last" aria-live="polite">Premi un pedale…</p>
+        <ol class="pedal-log" id="pedal-log"></ol>
       </section>
 
       <section class="tools-panel" aria-labelledby="tools-heading">

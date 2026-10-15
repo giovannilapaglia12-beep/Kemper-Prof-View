@@ -1,4 +1,14 @@
-# Verifiche hardware, test locali e problemi aperti — v1.75
+# Verifiche hardware, test locali e problemi aperti — v1.76
+
+## Da provare con la v1.76 (circa 5 minuti, con la Chocolate Plus; il Player può anche restare spento)
+
+- [ ] In ALTRO compare **v1.76** e c'è la sezione **Prova pedale**.
+- [ ] Pedale impostato con CubeSuite in **modalità 4 (Advanced Custom 1), "premi-rilascia"**, un CC diverso per pedale (es. A = CC 20, B = 21, C = 22, D = 23). Non tenere premuti B+C insieme per 3 secondi (cambia fra Bluetooth e cavo).
+- [ ] **Modo 1, porta MIDI**: accendi il pedale, collegalo al telefono, poi tocca **Rileggi porte** in ALTRO. Sotto "Prova pedale" compare "Pedale visto come porta MIDI: …"? Se sì, premi A, B, C, D: per ogni pedale compaiono due righe (premuto e rilasciato, con "tenuto … s")?
+- [ ] **Modo 2, Bluetooth dall'app** (se il modo 1 non lo vede): tocca **Collega pedale Bluetooth**, consenti a Chrome di usare i dispositivi vicini, scegli il pedale. Compare "Bluetooth: collegato a …"? Premi A, B, C, D.
+- [ ] Tieni premuto un pedale per circa 2 secondi: "tenuto" dice circa 2 s?
+- [ ] Con il Player collegato: premendo i pedali **il Player non deve cambiare nulla** (per ora sono solo una prova).
+- [ ] **Salva la diagnostica** e mandamela: dice che cosa manda il pedale e in quale modo è arrivato.
 
 ## Da provare con la v1.75 (circa 3 minuti, con il doppio pedale)
 
