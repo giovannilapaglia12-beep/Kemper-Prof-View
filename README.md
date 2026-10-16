@@ -1,6 +1,17 @@
-# Kemper Profiler View v1.77
+# Kemper Profiler View v1.78
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.78 — I pedali della Chocolate Plus comandano l'app
+
+- Funzioni scelte da Giovanni (15/10/2026), su due pagine:
+  - **LOOPER**: A REC/PLAY · B STOP · C TRIGGER · D UNDO;
+  - **SUONO**: A Rig − · B Rig + · C FREEZE · D MORPH.
+- **Tieni premuto D per circa 1 secondo** per cambiare pagina. A, B e C partono appena premi (per il Looper conta il tempo); D con un tocco breve fa UNDO o MORPH quando lo lasci.
+- In PALCO c'è la **riga PEDALE**: pagina in uso e funzione di ogni pedale; il pedale premuto si illumina. Toccando il nome della pagina la si cambia anche dallo schermo.
+- Se il pedale si scollega, l'app **prova da sola a ricollegarlo** per 30 secondi; altrimenti la riga diventa "PEDALE SCOLLEGATO · TOCCA PER COLLEGARE". Un REC tenuto premuto viene rilasciato.
+- Ogni comando passa dalle stesse funzioni dei pulsanti dello schermo e aspetta la conferma del Player. Lo stato del Looper resta una **stima** dell'app.
+- In ALTRO la scritta delle porte "MS-1 … MS-4" ora dice che sono altre porte MIDI del telefono, non il pedale.
 
 ## Novità v1.77 — Ricerca del pedale Bluetooth più larga
 

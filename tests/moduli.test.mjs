@@ -611,19 +611,25 @@ function pedalContext() {
     const items = [];
     return { items, replaceChildren: (...children) => { items.splice(0, items.length, ...children); } };
   };
-  const ui = { pedalPorts: node(), pedalBluetooth: node(), pedalBluetoothAll: node(), pedalStatus: node(), pedalLast: node(), pedalLog: list(), copy: node() };
+  const ui = { pedalPorts: node(), pedalBluetooth: node(), pedalBluetoothAll: node(), pedalStatus: node(), pedalLast: node(), pedalLog: list(), copy: node(),
+    stagePedal: node(), stagePedalConnect: node() };
   const session = {};
+  const switches = [];
   const element = () => ({ textContent: '', append(...children) { this.children = children; } });
   const context = {
     session, ui, Map, Set, Date, Math,
     BLE_MIDI: midi.BLE_MIDI, bluetoothPedalRequest: midi.bluetoothPedalRequest, describePedalMessage: midi.describePedalMessage, parseBleMidiPacket: midi.parseBleMidiPacket,
+    pedalSwitchFromMessage: midi.pedalSwitchFromMessage, isPedalSourceName: midi.isPedalSourceName, PEDAL_KEY: 'prova-pedale',
+    localStorage: { getItem: () => null, setItem() {} }, window: { setTimeout: () => 1, clearTimeout() {} },
+    handlePedalSwitch: (pedal, pressed) => switches.push([pedal, pressed]), paintPedalPage() {}, releaseAllPedals() {},
+    pedalControlDiagnostics: () => ({ page: 'LOOPER' }),
     toast: (message) => toasts.push(message),
     navigator: {}, performance: { now: () => 0 },
     document: { createElement: element },
   };
   vm.runInNewContext(`${snippet('js/pedal.js', 'const MAX_MESSAGES')}
 this.handle = handlePedalMidi; this.setPorts = setPedalPorts; this.errorText = bluetoothErrorText; this.clear = clearPedalLog; this.diagnostics = pedalDiagnostics;`, context);
-  return { context, session, ui, toasts };
+  return { context, session, ui, toasts, switches };
 }
 
 test('Prova pedale: mostra il messaggio e per quanto il pedale è stato tenuto; clock ignorato; niente al Player', () => {
@@ -641,7 +647,7 @@ test('Prova pedale: mostra il messaggio e per quanto il pedale è stato tenuto; 
   context.handle([0xb0, 20, 0], 'Bluetooth · altro', 1500);
   assert.equal(session.pedal.messages.at(-1).heldMs, null);
   context.setPorts(['FootCtrl']);
-  assert.equal(ui.pedalPorts.textContent, 'Pedale visto come porta MIDI: FootCtrl');
+  assert.equal(ui.pedalPorts.textContent, 'Altre porte MIDI (non il Player): FootCtrl');
   assert.equal(context.diagnostics().messages.length, 3);
   context.clear();
   assert.equal(session.pedal.messages.length, 0);
@@ -671,4 +677,111 @@ test('Pedale Bluetooth: il messaggio dice dove si è fermato il collegamento', (
   assert.match(context.errorText('connessione', { name: 'NetworkError', message: 'GATT failed' }), /non accetta il collegamento/);
   context.setPorts([]);
   assert.equal(ui.pedalBluetoothAll.hidden, false);
+});
+
+// ── v1.78: i pedali comandano l'app (pagine LOOPER e SUONO, D tenuto = cambio pagina) ──
+test('Pedale: CC 20…23 sono i pedali A…D; Rig vicino oltre il Rig 5; solo il pedale comanda', () => {
+  assert.deepEqual({ ...midi.pedalSwitchFromMessage([0xb0, 20, 127]) }, { pedal: 0, pressed: true });
+  assert.deepEqual({ ...midi.pedalSwitchFromMessage([0xb0, 23, 0]) }, { pedal: 3, pressed: false });
+  assert.equal(midi.pedalSwitchFromMessage([0xb0, 24, 127]), null);
+  assert.equal(midi.pedalSwitchFromMessage([0xc0, 20]), null);
+  assert.deepEqual({ ...midi.neighborRig(9, 5, 1) }, { bank: 10, slot: 1 });
+  assert.deepEqual({ ...midi.neighborRig(9, 1, -1) }, { bank: 8, slot: 5 });
+  assert.equal(midi.neighborRig(1, 1, -1), null);
+  assert.equal(midi.neighborRig(125, 5, 1, 125), null);
+  assert.equal(midi.isPedalSourceName('FootCtrlPlus'), true);
+  assert.equal(midi.isPedalSourceName('MS-1 · dev-core'), false);
+  const { context, switches } = pedalContext();
+  context.handle([0xb0, 20, 127], 'Bluetooth · FootCtrlPlus', 0);
+  context.handle([0xb0, 20, 127], 'MS-1 · dev-core', 0); // porta del telefono: solo mostrata
+  context.handle([0xb0, 30, 127], 'Bluetooth · FootCtrlPlus', 0); // CC diverso: solo mostrato
+  assert.deepEqual(switches, [[0, true]]);
+});
+
+function pedalControlContext({ rigBank = 9, rigSlot = 1 } = {}) {
+  const clock = { now: 0 };
+  const timers = [];
+  const sent = [];
+  const toasts = [];
+  const cell = () => ({ dataset: {}, querySelector: () => ({ textContent: '' }) });
+  const ui = { stagePedalPage: node(), stagePedalCells: [cell(), cell(), cell(), cell()], copy: node() };
+  const session = { rigSelectPending: null, rigSelectedBank: rigBank, rigSelectedSlot: rigSlot, maxBanks: 125,
+    rigTargetBank: rigBank, freezeRevPending: null, morphPendingLevel: null };
+  const looperSwitchReleases = new Set();
+  const context = {
+    session, ui, Map, Set, Date, Math, looperSwitchReleases, neighborRig: midi.neighborRig,
+    looper: { state: 'playing', pendingClose: false }, handleQuantizedRecord: () => false, looperSendKey: (key) => key,
+    sendLooperSwitch: (key, pressed) => { sent.push(`${key} ${pressed ? 'premuto' : 'rilasciato'}`); return true; },
+    selectRigSlot: (slot) => { sent.push(`Rig ${session.rigTargetBank}/${slot}`); session.rigSelectPending = { slot }; },
+    toggleRevFreeze: () => sent.push('FREEZE'), toggleMorphFromApp: () => sent.push('MORPH'),
+    toast: (message) => toasts.push(message), navigator: { vibrate() {} },
+    window: {
+      setTimeout: (fn, ms) => { timers.push({ fn, at: clock.now + ms }); return timers.length; },
+      clearTimeout: (id) => { if (timers[id - 1]) timers[id - 1].fn = null; },
+    },
+  };
+  vm.runInNewContext(`${snippet('js/pedal-control.js', 'const PEDAL_LETTERS')}
+this.press = handlePedalSwitch; this.releaseAll = releaseAllPedals;`, context);
+  const advance = (ms) => {
+    clock.now += ms;
+    for (const timer of timers) if (timer.fn && timer.at <= clock.now) { const fn = timer.fn; timer.fn = null; fn(); }
+  };
+  return { context, session, ui, sent, toasts, advance };
+}
+
+test('Pedale pagina LOOPER: REC, STOP e TRIGGER alla pressione e al rilascio; D toccato = UNDO', () => {
+  const pedal = pedalControlContext();
+  pedal.context.press(0, true);
+  assert.deepEqual(pedal.sent, ['record premuto']);
+  assert.equal(pedal.ui.stagePedalCells[0].dataset.pressed, 'true');
+  pedal.advance(250);
+  pedal.context.press(0, false);
+  pedal.context.press(2, true);
+  pedal.context.press(2, false);
+  assert.deepEqual(pedal.sent, ['record premuto', 'record rilasciato', 'trigger premuto', 'trigger rilasciato']);
+  pedal.sent.length = 0;
+  pedal.context.press(3, true);
+  assert.deepEqual(pedal.sent, []); // D aspetta il rilascio
+  pedal.advance(250);
+  pedal.context.press(3, false);
+  pedal.advance(100);
+  assert.deepEqual(pedal.sent, ['undo premuto', 'undo rilasciato']);
+  assert.equal(pedal.session.pedalControl.page, 0);
+});
+
+test('Pedale: D tenuto 0,8 s cambia pagina senza UNDO; pagina SUONO = Rig −/+, FREEZE, MORPH', () => {
+  const pedal = pedalControlContext({ rigBank: 9, rigSlot: 1 });
+  pedal.context.press(3, true);
+  pedal.advance(800);
+  assert.equal(pedal.session.pedalControl.page, 1);
+  assert.equal(pedal.ui.stagePedalPage.textContent, 'SUONO');
+  pedal.context.press(3, false);
+  assert.deepEqual(pedal.sent, []);
+  pedal.context.press(0, true); // Rig − dal Rig 1 della Bank 9 → Bank 8 Rig 5
+  pedal.context.press(0, false);
+  assert.deepEqual(pedal.sent, ['Rig 8/5']);
+  pedal.context.press(1, true); // comando Rig ancora in attesa di conferma: non si accumulano
+  assert.deepEqual(pedal.sent, ['Rig 8/5']);
+  pedal.context.press(1, false);
+  pedal.session.rigSelectPending = null;
+  pedal.context.press(2, true);
+  pedal.context.press(2, false);
+  pedal.context.press(3, true);
+  pedal.advance(200);
+  pedal.context.press(3, false);
+  assert.deepEqual(pedal.sent, ['Rig 8/5', 'FREEZE', 'MORPH']);
+  assert.deepEqual(Array.from(pedal.session.pedalControl.actions, (action) => `${action.pedal} ${action.action}`),
+    ['D PAGINA SUONO', 'A RIG −', 'B RIG +', 'C FREEZE', 'D MORPH']);
+});
+
+test('Pedale scollegato con REC tenuto: REC viene rilasciato; Rig non letto: nessun comando', () => {
+  const pedal = pedalControlContext();
+  pedal.context.press(0, true);
+  pedal.context.releaseAll();
+  assert.deepEqual(pedal.sent, ['record premuto', 'record rilasciato']);
+  const unknown = pedalControlContext({ rigBank: null, rigSlot: null });
+  unknown.session.pedalControl.page = 1;
+  unknown.context.press(1, true);
+  assert.deepEqual(unknown.sent, []);
+  assert.deepEqual(unknown.toasts, ['Pedale: Rig in uso non ancora letto']);
 });

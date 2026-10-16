@@ -669,3 +669,35 @@ body:not([data-theme="sun"])[data-view="live"] .stage .live-effect-button[data-a
   body[data-view="live"] .stage-fx .live-fixed-fx-button,
   body[data-view="live"] .stage-fx .live-action-button { min-height: 46px; }
 }
+
+/* ───────── v1.78 · riga PEDALE (pedaliera Bluetooth) ─────────
+   Pagina in uso nella finestrella scura (come BPM) e la funzione di ogni pedale; il pedale premuto si illumina. */
+.stage-pedal { display: grid; grid-template-columns: minmax(0, 1.15fr) repeat(4, minmax(0, 1fr)); gap: 4px; min-width: 0; }
+.stage-pedal[hidden] { display: none; }
+.stage-pedal:not([data-state="connected"]) { grid-template-columns: minmax(0, 1fr); }
+.stage-pedal:not([data-state="connected"]) .stage-pedal-page,
+.stage-pedal:not([data-state="connected"]) .stage-pedal-cell { display: none; }
+.stage-pedal-connect { min-height: 34px; padding: 4px 8px; color: var(--cyan); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.06em; border-color: rgba(114, 235, 220, 0.35); background: rgba(114, 235, 220, 0.06); }
+.stage-pedal[data-state="reconnecting"] .stage-pedal-connect { color: var(--amber); border-color: rgba(255, 194, 92, 0.4); background: rgba(255, 194, 92, 0.06); }
+.stage-pedal-page {
+  min-height: 34px; padding: 2px 4px; border: 1px solid #1e2b24; border-radius: 10px; background: #030605;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9); color: var(--green); font-family: ui-monospace, "Roboto Mono", monospace;
+  font-size: 0.82rem; font-weight: 900; letter-spacing: 0.06em;
+}
+.stage-pedal-cell {
+  display: grid; align-content: center; justify-items: center; min-width: 0; min-height: 34px; padding: 1px 2px;
+  border: 1px solid var(--line); border-radius: 9px; background: rgba(255, 255, 255, 0.03); line-height: 1.05;
+}
+.stage-pedal-cell b { color: var(--muted); font-size: 0.6rem; font-weight: 900; }
+.stage-pedal-cell span { max-width: 100%; overflow: hidden; color: var(--text); font-size: 0.66rem; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.stage-pedal-cell[data-pressed="true"] { border-color: var(--green); background: var(--green); box-shadow: 0 0 10px rgba(141, 255, 100, 0.55); }
+.stage-pedal-cell[data-pressed="true"] b,
+.stage-pedal-cell[data-pressed="true"] span { color: #000; }
+@media (orientation: landscape) and (max-height: 560px) {
+  body[data-view="live"] .live-panel.stage {
+    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "rig effects" "pedal effects" "connect effects" "tempo effects" "morph effects" "fx fx";
+  }
+  .stage-pedal { grid-area: pedal; }
+  .stage-pedal-connect, .stage-pedal-page, .stage-pedal-cell { min-height: 30px; }
+}
