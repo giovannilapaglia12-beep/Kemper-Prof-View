@@ -80,7 +80,8 @@ export function handleEffectState(decoded) {
   toast(`${pending.key} ${pending.target ? "attivato" : "disattivato"} · confermato dal Kemper`);
 }
 
-function toggleEffect(module) {
+// v1.79: usata anche dai pedali (pagina EFFETTI).
+export function toggleEffect(module) {
   const outputs = profilerOutputs();
   const effect = session.lastState?.effects.get(module.page);
   if (!outputs.length) {

@@ -20,7 +20,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.78</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.79</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -50,11 +50,11 @@
 
         <div class="stage-pedal" id="stage-pedal" data-state="off" aria-label="Pedaliera Bluetooth" hidden>
           <button class="stage-pedal-connect" id="stage-pedal-connect" type="button">PEDALE SCOLLEGATO · TOCCA PER COLLEGARE</button>
-          <button class="stage-pedal-page" id="stage-pedal-page" type="button">LOOPER</button>
-          <div class="stage-pedal-cell" data-pedal-cell="0" data-pressed="false"><b>A</b><span>REC/PLAY</span></div>
-          <div class="stage-pedal-cell" data-pedal-cell="1" data-pressed="false"><b>B</b><span>STOP</span></div>
-          <div class="stage-pedal-cell" data-pedal-cell="2" data-pressed="false"><b>C</b><span>TRIGGER</span></div>
-          <div class="stage-pedal-cell" data-pedal-cell="3" data-pressed="false"><b>D</b><span>UNDO</span></div>
+          <button class="stage-pedal-page" id="stage-pedal-page" type="button">SUONO</button>
+          <div class="stage-pedal-cell" data-pedal-cell="0" data-pressed="false"><b>A</b><span>RIG −</span></div>
+          <div class="stage-pedal-cell" data-pedal-cell="1" data-pressed="false"><b>B</b><span>RIG +</span></div>
+          <div class="stage-pedal-cell" data-pedal-cell="2" data-pressed="false"><b>C</b><span>FREEZE</span></div>
+          <div class="stage-pedal-cell" data-pedal-cell="3" data-pressed="false"><b>D</b><span>MORPH</span></div>
         </div>
 
         <div class="stage-connect">
@@ -281,7 +281,7 @@
       <section class="tools-panel pedal-panel" aria-labelledby="pedal-heading">
         <p class="section-kicker">PEDALIERA BLUETOOTH</p>
         <h2 id="pedal-heading">Pedale (M-Vave Chocolate Plus)</h2>
-        <p>Pagina LOOPER: A REC/PLAY · B STOP · C TRIGGER · D UNDO. Pagina SUONO: A Rig − · B Rig + · C FREEZE · D MORPH. Tieni premuto D per un secondo per cambiare pagina; la pagina in uso si vede in PALCO. Impostazione del pedale (CubeSuite): “Press down - release”, CC 20…23, 127 premuto e 0 rilasciato. Qui sotto vedi cosa manda ogni pedale.</p>
+        <p>Pagina 1 SUONO: A Rig − · B Rig + · C FREEZE · D MORPH. Pagina 2 EFFETTI: A effetto B · B effetto C · C MOD · D DLY. Pagina 3 LOOPER: A REC/PLAY · B STOP · C TRIGGER · D UNDO. Tieni premuto D per un secondo per passare alla pagina seguente; la pagina in uso si vede in PALCO. Impostazione del pedale (CubeSuite): “Press down - release”, CC 20…23, 127 premuto e 0 rilasciato. Qui sotto vedi cosa manda ogni pedale.</p>
         <p class="pedal-ports" id="pedal-ports">Nessun pedale fra le porte MIDI.</p>
         <div class="action-row">
           <button class="secondary-button" id="pedal-bluetooth-button" type="button" aria-pressed="false">Collega pedale Bluetooth</button>

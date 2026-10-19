@@ -1,6 +1,15 @@
-# Kemper Profiler View v1.78
+# Kemper Profiler View v1.79
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.79 — Terza pagina del pedale: EFFETTI
+
+- Scelta di Giovanni (19/10/2026): le pagine del pedale ora sono tre, in quest'ordine:
+  1. **SUONO**: A Rig − · B Rig + · C FREEZE · D MORPH (l'app parte da qui);
+  2. **EFFETTI**: A effetto **B** · B effetto **C** · C **MOD** · D **DLY**;
+  3. **LOOPER**: A REC/PLAY · B STOP · C TRIGGER · D UNDO.
+- D tenuto circa 1 secondo passa alla pagina seguente (dopo LOOPER torna a SUONO).
+- Gli effetti si accendono e spengono come col tocco sul loro riquadro e aspettano la conferma del Player; DLY (pedale D) parte quando lasci il pedale.
 
 ## Novità v1.78 — I pedali della Chocolate Plus comandano l'app
 

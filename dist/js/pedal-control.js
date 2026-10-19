@@ -1,32 +1,40 @@
-// v1.78: i pedali della Chocolate Plus comandano l'app, su due pagine scelte da Giovanni (15/10/2026):
+// v1.78: i pedali della Chocolate Plus comandano l'app, su pagine scelte da Giovanni (15/10/2026):
 // LOOPER = REC/PLAY · STOP · TRIGGER · UNDO, SUONO = Rig − · Rig + · FREEZE · MORPH.
+// v1.79 (19/10/2026): terza pagina EFFETTI = B · C · MOD · DLY; ordine SUONO → EFFETTI → LOOPER, si parte da SUONO.
 // A, B e C partono alla pressione (per il Looper conta il tempo; REC, STOP e TRIGGER restano premuti finché
 // il pedale è giù, come i pulsanti dello schermo). D aspetta il rilascio: tocco = UNDO o MORPH,
 // tenuto 0,8 s = cambio pagina (un tocco normale dura 0,2–0,3 s: prova del 15/10/2026).
 // Il pedale è un tocco dell'utente: ogni comando passa dalle stesse funzioni dello schermo e aspetta la conferma
 // del Player. Lo stato del Looper resta una stima dell'app, aggiornata come per i tocchi.
 
-import { neighborRig } from "../kemper-midi.js";
+import { EFFECT_MODULES, neighborRig } from "../kemper-midi.js";
 import { toast, ui } from "./dom.js";
 import { session } from "./state.js";
 import { handleQuantizedRecord, looper, looperSendKey, looperSwitchReleases, sendLooperSwitch } from "./looper.js";
 import { selectRigSlot } from "./rig.js";
 import { toggleMorphFromApp } from "./morph.js";
 import { toggleRevFreeze } from "./fixed-fx.js";
+import { toggleEffect } from "./effects.js";
 
 export const PEDAL_LETTERS = ["A", "B", "C", "D"];
 export const PEDAL_PAGES = [
-  { name: "LOOPER", pedals: [
-    { label: "REC/PLAY", looper: "record" },
-    { label: "STOP", looper: "stop" },
-    { label: "TRIGGER", looper: "trigger" },
-    { label: "UNDO", tap: "undo" },
-  ] },
   { name: "SUONO", pedals: [
     { label: "RIG −", rig: -1 },
     { label: "RIG +", rig: 1 },
     { label: "FREEZE", freeze: true },
     { label: "MORPH", tap: "morph" },
+  ] },
+  { name: "EFFETTI", pedals: [
+    { label: "FX B", effect: "B" },
+    { label: "FX C", effect: "C" },
+    { label: "MOD", effect: "MOD" },
+    { label: "DLY", tap: "effect", effect: "DLY" },
+  ] },
+  { name: "LOOPER", pedals: [
+    { label: "REC/PLAY", looper: "record" },
+    { label: "STOP", looper: "stop" },
+    { label: "TRIGGER", looper: "trigger" },
+    { label: "UNDO", tap: "undo" },
   ] },
 ];
 const PAGE_PEDAL = 3; // D
@@ -72,6 +80,14 @@ function stepRig(delta) {
   return session.rigSelectPending !== null;
 }
 
+// Effetto del Rig acceso/spento come col tocco sul suo riquadro (aspetta la conferma del Player).
+function flipEffect(key) {
+  const module = EFFECT_MODULES.find((candidate) => candidate.key === key);
+  if (!module || session.effectPending.has(module.page)) return false;
+  toggleEffect(module);
+  return session.effectPending.has(module.page);
+}
+
 function pressAction(pedal, page) {
   const action = PEDAL_PAGES[page].pedals[pedal];
   if (action.looper) {
@@ -88,6 +104,7 @@ function pressAction(pedal, page) {
     if (free) toggleRevFreeze();
     noteAction(pedal, page, action.label, free);
   }
+  if (action.effect) noteAction(pedal, page, action.label, flipEffect(action.effect));
   return null;
 }
 
@@ -100,6 +117,8 @@ function tapAction(pedal, page) {
   } else if (action.tap === "morph" && session.morphPendingLevel === null) {
     toggleMorphFromApp();
     sent = true;
+  } else if (action.tap === "effect") {
+    sent = flipEffect(action.effect);
   }
   noteAction(pedal, page, action.label, sent);
 }
