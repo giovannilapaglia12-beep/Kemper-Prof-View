@@ -3,8 +3,8 @@
 ## Da provare con la v1.79 (circa 5 minuti, Player e pedale collegati)
 
 - [ ] In ALTRO compare **v1.79**. Collegato il pedale, in PALCO la riga dice **SUONO** (A RIG − · B RIG + · C FREEZE · D MORPH).
-- [ ] D tenuto circa 1 secondo: **EFFETTI** (A FX B · B FX C · C MOD · D DLY); di nuovo: **LOOPER**; di nuovo: torna **SUONO**.
-- [ ] Pagina EFFETTI: A accende/spegne l'effetto B, B l'effetto C, C il MOD, D (tocco breve) il DLY. I riquadri degli effetti in PALCO cambiano e arriva la conferma?
+- [ ] D tenuto circa 1 secondo: **EFFETTI** (A FX B · B FX D · C MOD · D DLY); di nuovo: **LOOPER**; di nuovo: torna **SUONO**.
+- [ ] Pagina EFFETTI: A accende/spegne l'effetto B, B l'effetto D, C il MOD, D (tocco breve) il DLY. I riquadri degli effetti in PALCO cambiano e arriva la conferma?
 - [ ] Ripeti la prova della v1.78 qui sotto (Looper, Rig, FREEZE, MORPH, ricollegamento) e **salva la diagnostica**.
 
 ## Da provare con la v1.78 (circa 10 minuti, Player e pedale collegati)

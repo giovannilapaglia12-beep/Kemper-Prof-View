@@ -782,7 +782,7 @@ test('Pedale: si parte da SUONO (Rig −/+, FREEZE, MORPH); D tenuto 0,8 s → E
     ['A RIG −', 'B RIG +', 'C FREEZE', 'D MORPH', 'D PAGINA EFFETTI', 'D PAGINA LOOPER', 'D PAGINA SUONO']);
 });
 
-test('Pedale pagina EFFETTI: B, C e MOD alla pressione, DLY al tocco di D; niente doppio comando in attesa', () => {
+test('Pedale pagina EFFETTI: B, D e MOD alla pressione, DLY al tocco di D; niente doppio comando in attesa', () => {
   const pedal = pedalControlContext();
   pedal.session.pedalControl.page = 1;
   for (const pedalIndex of [0, 1, 2]) {
@@ -792,9 +792,9 @@ test('Pedale pagina EFFETTI: B, C e MOD alla pressione, DLY al tocco di D; nient
   pedal.context.press(3, true);
   pedal.advance(200);
   pedal.context.press(3, false);
-  assert.deepEqual(pedal.sent, ['effetto B', 'effetto C', 'effetto MOD', 'effetto DLY']);
+  assert.deepEqual(pedal.sent, ['effetto B', 'effetto D', 'effetto MOD', 'effetto DLY']);
   pedal.context.press(0, true); // B ancora in attesa di conferma dal Player
-  assert.deepEqual(pedal.sent, ['effetto B', 'effetto C', 'effetto MOD', 'effetto DLY']);
+  assert.deepEqual(pedal.sent, ['effetto B', 'effetto D', 'effetto MOD', 'effetto DLY']);
 });
 
 test('Pedale scollegato con REC tenuto: REC viene rilasciato; Rig non letto: nessun comando', () => {

@@ -1,6 +1,6 @@
 // v1.78: i pedali della Chocolate Plus comandano l'app, su pagine scelte da Giovanni (15/10/2026):
 // LOOPER = REC/PLAY · STOP · TRIGGER · UNDO, SUONO = Rig − · Rig + · FREEZE · MORPH.
-// v1.79 (19/10/2026): terza pagina EFFETTI = B · C · MOD · DLY; ordine SUONO → EFFETTI → LOOPER, si parte da SUONO.
+// v1.79 (19/10/2026): terza pagina EFFETTI = B · D · MOD · DLY (D al posto di C, richiesta di Giovanni); ordine SUONO → EFFETTI → LOOPER, si parte da SUONO.
 // A, B e C partono alla pressione (per il Looper conta il tempo; REC, STOP e TRIGGER restano premuti finché
 // il pedale è giù, come i pulsanti dello schermo). D aspetta il rilascio: tocco = UNDO o MORPH,
 // tenuto 0,8 s = cambio pagina (un tocco normale dura 0,2–0,3 s: prova del 15/10/2026).
@@ -26,7 +26,7 @@ export const PEDAL_PAGES = [
   ] },
   { name: "EFFETTI", pedals: [
     { label: "FX B", effect: "B" },
-    { label: "FX C", effect: "C" },
+    { label: "FX D", effect: "D" },
     { label: "MOD", effect: "MOD" },
     { label: "DLY", tap: "effect", effect: "DLY" },
   ] },
