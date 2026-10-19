@@ -706,7 +706,7 @@ function pedalControlContext({ rigBank = 9, rigSlot = 1 } = {}) {
   const cell = () => ({ dataset: {}, querySelector: () => ({ textContent: '' }) });
   const ui = { stagePedalPage: node(), stagePedalCells: [cell(), cell(), cell(), cell()], copy: node() };
   const session = { rigSelectPending: null, rigSelectedBank: rigBank, rigSelectedSlot: rigSlot, maxBanks: 125,
-    rigTargetBank: rigBank, freezeRevPending: null, morphPendingLevel: null };
+    rigTargetBank: rigBank, freezeRevPending: null, morphPendingLevel: null, effectPending: new Map() };
   const looperSwitchReleases = new Set();
   const context = {
     session, ui, Map, Set, Date, Math, looperSwitchReleases, neighborRig: midi.neighborRig,
@@ -714,6 +714,8 @@ function pedalControlContext({ rigBank = 9, rigSlot = 1 } = {}) {
     sendLooperSwitch: (key, pressed) => { sent.push(`${key} ${pressed ? 'premuto' : 'rilasciato'}`); return true; },
     selectRigSlot: (slot) => { sent.push(`Rig ${session.rigTargetBank}/${slot}`); session.rigSelectPending = { slot }; },
     toggleRevFreeze: () => sent.push('FREEZE'), toggleMorphFromApp: () => sent.push('MORPH'),
+    EFFECT_MODULES: midi.EFFECT_MODULES,
+    toggleEffect: (module) => { sent.push(`effetto ${module.key}`); session.effectPending.set(module.page, {}); },
     toast: (message) => toasts.push(message), navigator: { vibrate() {} },
     window: {
       setTimeout: (fn, ms) => { timers.push({ fn, at: clock.now + ms }); return timers.length; },
@@ -731,6 +733,7 @@ this.press = handlePedalSwitch; this.releaseAll = releaseAllPedals;`, context);
 
 test('Pedale pagina LOOPER: REC, STOP e TRIGGER alla pressione e al rilascio; D toccato = UNDO', () => {
   const pedal = pedalControlContext();
+  pedal.session.pedalControl.page = 2; // LOOPER (v1.79: terza pagina)
   pedal.context.press(0, true);
   assert.deepEqual(pedal.sent, ['record premuto']);
   assert.equal(pedal.ui.stagePedalCells[0].dataset.pressed, 'true');
@@ -746,17 +749,12 @@ test('Pedale pagina LOOPER: REC, STOP e TRIGGER alla pressione e al rilascio; D 
   pedal.context.press(3, false);
   pedal.advance(100);
   assert.deepEqual(pedal.sent, ['undo premuto', 'undo rilasciato']);
-  assert.equal(pedal.session.pedalControl.page, 0);
+  assert.equal(pedal.session.pedalControl.page, 2);
 });
 
-test('Pedale: D tenuto 0,8 s cambia pagina senza UNDO; pagina SUONO = Rig −/+, FREEZE, MORPH', () => {
+test('Pedale: si parte da SUONO (Rig −/+, FREEZE, MORPH); D tenuto 0,8 s → EFFETTI → LOOPER → SUONO, senza MORPH', () => {
   const pedal = pedalControlContext({ rigBank: 9, rigSlot: 1 });
-  pedal.context.press(3, true);
-  pedal.advance(800);
-  assert.equal(pedal.session.pedalControl.page, 1);
-  assert.equal(pedal.ui.stagePedalPage.textContent, 'SUONO');
-  pedal.context.press(3, false);
-  assert.deepEqual(pedal.sent, []);
+  assert.equal(pedal.session.pedalControl.page, 0);
   pedal.context.press(0, true); // Rig − dal Rig 1 della Bank 9 → Bank 8 Rig 5
   pedal.context.press(0, false);
   assert.deepEqual(pedal.sent, ['Rig 8/5']);
@@ -770,17 +768,43 @@ test('Pedale: D tenuto 0,8 s cambia pagina senza UNDO; pagina SUONO = Rig −/+,
   pedal.advance(200);
   pedal.context.press(3, false);
   assert.deepEqual(pedal.sent, ['Rig 8/5', 'FREEZE', 'MORPH']);
+  pedal.sent.length = 0;
+  const pages = [];
+  for (let i = 0; i < 3; i += 1) {
+    pedal.context.press(3, true);
+    pedal.advance(800);
+    pages.push(pedal.ui.stagePedalPage.textContent);
+    pedal.context.press(3, false);
+  }
+  assert.deepEqual(pages, ['EFFETTI', 'LOOPER', 'SUONO']);
+  assert.deepEqual(pedal.sent, []); // tenere D non fa MORPH
   assert.deepEqual(Array.from(pedal.session.pedalControl.actions, (action) => `${action.pedal} ${action.action}`),
-    ['D PAGINA SUONO', 'A RIG −', 'B RIG +', 'C FREEZE', 'D MORPH']);
+    ['A RIG −', 'B RIG +', 'C FREEZE', 'D MORPH', 'D PAGINA EFFETTI', 'D PAGINA LOOPER', 'D PAGINA SUONO']);
+});
+
+test('Pedale pagina EFFETTI: B, D e MOD alla pressione, DLY al tocco di D; niente doppio comando in attesa', () => {
+  const pedal = pedalControlContext();
+  pedal.session.pedalControl.page = 1;
+  for (const pedalIndex of [0, 1, 2]) {
+    pedal.context.press(pedalIndex, true);
+    pedal.context.press(pedalIndex, false);
+  }
+  pedal.context.press(3, true);
+  pedal.advance(200);
+  pedal.context.press(3, false);
+  assert.deepEqual(pedal.sent, ['effetto B', 'effetto D', 'effetto MOD', 'effetto DLY']);
+  pedal.context.press(0, true); // B ancora in attesa di conferma dal Player
+  assert.deepEqual(pedal.sent, ['effetto B', 'effetto D', 'effetto MOD', 'effetto DLY']);
 });
 
 test('Pedale scollegato con REC tenuto: REC viene rilasciato; Rig non letto: nessun comando', () => {
   const pedal = pedalControlContext();
+  pedal.session.pedalControl.page = 2;
   pedal.context.press(0, true);
   pedal.context.releaseAll();
   assert.deepEqual(pedal.sent, ['record premuto', 'record rilasciato']);
   const unknown = pedalControlContext({ rigBank: null, rigSlot: null });
-  unknown.session.pedalControl.page = 1;
+  unknown.session.pedalControl.page = 0;
   unknown.context.press(1, true);
   assert.deepEqual(unknown.sent, []);
   assert.deepEqual(unknown.toasts, ['Pedale: Rig in uso non ancora letto']);
