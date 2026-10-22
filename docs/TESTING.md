@@ -1,4 +1,12 @@
-# Verifiche hardware, test locali e problemi aperti — v1.79
+# Verifiche hardware, test locali e problemi aperti — v1.80
+
+## Da provare con la v1.80 (circa 3 minuti, con il pedale)
+
+- [ ] In ALTRO compare **v1.80**; nella sezione Pedale ci sono **SUONO · EFFETTI · LOOPER** (tutte accese).
+- [ ] Spegni **LOOPER** (diventa barrata). In PALCO, D tenuto: SUONO → EFFETTI → SUONO (LOOPER non compare più).
+- [ ] Chiudi e riapri l'app: LOOPER è ancora spenta?
+- [ ] Lascia accesa una sola pagina: D tenuto non cambia pagina e fa la sua funzione (MORPH, DLY o UNDO). Provando a spegnere anche quella, l'app avvisa e la lascia accesa.
+- [ ] Riaccendi le pagine che usi.
 
 ## Da provare con la v1.79 (circa 5 minuti, Player e pedale collegati)
 

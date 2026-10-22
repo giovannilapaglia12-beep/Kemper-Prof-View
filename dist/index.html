@@ -20,7 +20,7 @@
   <body data-view="live">
     <header class="topbar">
       <div>
-        <p class="eyebrow">KEMPER DIRECT · v1.79</p>
+        <p class="eyebrow">KEMPER DIRECT · v1.80</p>
         <h1>Kemper Profiler View</h1>
       </div>
       <div class="status-pill" id="connection-pill" data-status="idle">
@@ -282,6 +282,12 @@
         <p class="section-kicker">PEDALIERA BLUETOOTH</p>
         <h2 id="pedal-heading">Pedale (M-Vave Chocolate Plus)</h2>
         <p>Pagina 1 SUONO: A Rig − · B Rig + · C FREEZE · D MORPH. Pagina 2 EFFETTI: A effetto B · B effetto D · C MOD · D DLY. Pagina 3 LOOPER: A REC/PLAY · B STOP · C TRIGGER · D UNDO. Tieni premuto D per un secondo per passare alla pagina seguente; la pagina in uso si vede in PALCO. Impostazione del pedale (CubeSuite): “Press down - release”, CC 20…23, 127 premuto e 0 rilasciato. Qui sotto vedi cosa manda ogni pedale.</p>
+        <p class="section-kicker tools-subhead">PAGINE ATTIVE · D TENUTO PASSA SOLO FRA QUESTE</p>
+        <div class="theme-options pedal-pages" role="group" aria-label="Pagine attive del pedale">
+          <button type="button" data-pedal-page-toggle="0" aria-pressed="true">SUONO</button>
+          <button type="button" data-pedal-page-toggle="1" aria-pressed="true">EFFETTI</button>
+          <button type="button" data-pedal-page-toggle="2" aria-pressed="true">LOOPER</button>
+        </div>
         <p class="pedal-ports" id="pedal-ports">Nessun pedale fra le porte MIDI.</p>
         <div class="action-row">
           <button class="secondary-button" id="pedal-bluetooth-button" type="button" aria-pressed="false">Collega pedale Bluetooth</button>

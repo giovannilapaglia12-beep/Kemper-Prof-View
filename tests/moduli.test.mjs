@@ -698,18 +698,23 @@ test('Pedale: CC 20…23 sono i pedali A…D; Rig vicino oltre il Rig 5; solo il
   assert.deepEqual(switches, [[0, true]]);
 });
 
-function pedalControlContext({ rigBank = 9, rigSlot = 1 } = {}) {
+function pedalControlContext({ rigBank = 9, rigSlot = 1, savedPages = null } = {}) {
+  const storage = new Map(savedPages === null ? [] : [['pagine-pedale', JSON.stringify(savedPages)]]);
   const clock = { now: 0 };
   const timers = [];
   const sent = [];
   const toasts = [];
   const cell = () => ({ dataset: {}, querySelector: () => ({ textContent: '' }) });
-  const ui = { stagePedalPage: node(), stagePedalCells: [cell(), cell(), cell(), cell()], copy: node() };
+  const toggle = () => { const attributes = {}; return { attributes, setAttribute: (name, value) => { attributes[name] = value; } }; };
+  const ui = { stagePedalPage: node(), stagePedalCells: [cell(), cell(), cell(), cell()], copy: node(),
+    pedalPageToggles: [toggle(), toggle(), toggle()] };
   const session = { rigSelectPending: null, rigSelectedBank: rigBank, rigSelectedSlot: rigSlot, maxBanks: 125,
     rigTargetBank: rigBank, freezeRevPending: null, morphPendingLevel: null, effectPending: new Map() };
   const looperSwitchReleases = new Set();
   const context = {
-    session, ui, Map, Set, Date, Math, looperSwitchReleases, neighborRig: midi.neighborRig,
+    session, ui, Map, Set, Date, Math, JSON, Array, looperSwitchReleases, neighborRig: midi.neighborRig,
+    PEDAL_PAGES_KEY: 'pagine-pedale',
+    localStorage: { getItem: (key) => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
     looper: { state: 'playing', pendingClose: false }, handleQuantizedRecord: () => false, looperSendKey: (key) => key,
     sendLooperSwitch: (key, pressed) => { sent.push(`${key} ${pressed ? 'premuto' : 'rilasciato'}`); return true; },
     selectRigSlot: (slot) => { sent.push(`Rig ${session.rigTargetBank}/${slot}`); session.rigSelectPending = { slot }; },
@@ -723,12 +728,12 @@ function pedalControlContext({ rigBank = 9, rigSlot = 1 } = {}) {
     },
   };
   vm.runInNewContext(`${snippet('js/pedal-control.js', 'const PEDAL_LETTERS')}
-this.press = handlePedalSwitch; this.releaseAll = releaseAllPedals;`, context);
+this.press = handlePedalSwitch; this.releaseAll = releaseAllPedals; this.setPage = setPedalPageEnabled;`, context);
   const advance = (ms) => {
     clock.now += ms;
     for (const timer of timers) if (timer.fn && timer.at <= clock.now) { const fn = timer.fn; timer.fn = null; fn(); }
   };
-  return { context, session, ui, sent, toasts, advance };
+  return { context, session, ui, sent, toasts, advance, storage };
 }
 
 test('Pedale pagina LOOPER: REC, STOP e TRIGGER alla pressione e al rilascio; D toccato = UNDO', () => {
@@ -808,4 +813,42 @@ test('Pedale scollegato con REC tenuto: REC viene rilasciato; Rig non letto: nes
   unknown.context.press(1, true);
   assert.deepEqual(unknown.sent, []);
   assert.deepEqual(unknown.toasts, ['Pedale: Rig in uso non ancora letto']);
+});
+
+// ── v1.80: pagine del pedale attivabili in ALTRO ──
+test('Pedale: LOOPER spenta → D tenuto passa solo SUONO ↔ EFFETTI; la scelta resta nel telefono', () => {
+  const pedal = pedalControlContext();
+  pedal.context.setPage(2, false);
+  assert.equal(pedal.storage.get('pagine-pedale'), '["SUONO","EFFETTI"]');
+  assert.equal(pedal.ui.pedalPageToggles[2].attributes['aria-pressed'], 'false');
+  const pages = [];
+  for (let i = 0; i < 3; i += 1) {
+    pedal.context.press(3, true);
+    pedal.advance(800);
+    pedal.context.press(3, false);
+    pages.push(pedal.ui.stagePedalPage.textContent);
+  }
+  assert.deepEqual(pages, ['EFFETTI', 'SUONO', 'EFFETTI']);
+  // riaprendo l'app la scelta è ancora quella
+  const again = pedalControlContext({ savedPages: ['SUONO', 'EFFETTI'] });
+  assert.deepEqual(Array.from(again.session.pedalControl.enabled), [true, true, false]);
+});
+
+test('Pedale: una sola pagina attiva → D tenuto non cambia pagina e fa la sua funzione; l\'ultima non si spegne', () => {
+  const pedal = pedalControlContext({ savedPages: ['LOOPER'] });
+  assert.equal(pedal.session.pedalControl.page, 2); // si parte dalla prima pagina attiva
+  pedal.context.press(3, true);
+  pedal.advance(1200);
+  pedal.context.press(3, false);
+  pedal.advance(100);
+  assert.equal(pedal.session.pedalControl.page, 2);
+  assert.deepEqual(pedal.sent, ['undo premuto', 'undo rilasciato']);
+  pedal.context.setPage(2, false);
+  assert.equal(pedal.session.pedalControl.enabled[2], true);
+  assert.deepEqual(pedal.toasts, ['Almeno una pagina del pedale deve restare attiva']);
+  // spegnendo la pagina in uso si passa alla prima attiva
+  pedal.context.setPage(1, true);
+  pedal.context.setPage(2, false);
+  assert.equal(pedal.session.pedalControl.page, 1);
+  assert.equal(pedal.ui.stagePedalPage.textContent, 'EFFETTI');
 });
