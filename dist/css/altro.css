@@ -169,6 +169,10 @@ body:not([data-view="full"]) .tools-panel { display: none; }
 
 /* v1.76 · Prova pedale (pedaliera Bluetooth) */
 .pedal-panel .pedal-ports { color: var(--text); font-weight: 700; }
+/* v1.80 · pagine attive del pedale (stessi pulsanti del tema) */
+.pedal-panel .pedal-pages { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 8px; }
+.pedal-panel .pedal-pages button { min-height: 46px; font-size: 0.82rem; letter-spacing: 0.04em; }
+.pedal-panel .pedal-pages button[aria-pressed="false"] { color: var(--muted); border-style: dashed; text-decoration: line-through; }
 .tools-panel > .pedal-last { margin: 14px 0 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 13px; background: #050a07; color: var(--green); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: clamp(1.05rem, 4.6vw, 1.35rem); font-weight: 800; overflow-wrap: anywhere; }
 .pedal-log { margin: 10px 0 0; padding: 0; list-style: none; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; }
 .pedal-log li { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 8px; padding: 6px 2px; border-top: 1px solid var(--line); }

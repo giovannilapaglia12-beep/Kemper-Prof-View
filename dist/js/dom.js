@@ -66,6 +66,7 @@ export const ui = {
   stagePedalConnect: $("#stage-pedal-connect"),
   stagePedalPage: $("#stage-pedal-page"),
   stagePedalCells: [...document.querySelectorAll("[data-pedal-cell]")],
+  pedalPageToggles: [...document.querySelectorAll("[data-pedal-page-toggle]")],
   locationButtons: [...document.querySelectorAll("[data-looper-location]")],
   locationNote: $("#looper-location-note"),
   forgetNames: $("#forget-names-button"),

@@ -6,8 +6,11 @@
 // tenuto 0,8 s = cambio pagina (un tocco normale dura 0,2–0,3 s: prova del 15/10/2026).
 // Il pedale è un tocco dell'utente: ogni comando passa dalle stesse funzioni dello schermo e aspetta la conferma
 // del Player. Lo stato del Looper resta una stima dell'app, aggiornata come per i tocchi.
+// v1.80 (22/10/2026, richiesta di Giovanni): in ALTRO si sceglie quali pagine usare (es. LOOPER solo quando serve);
+// D tenuto passa solo fra le pagine attive. Almeno una resta attiva; la scelta resta memorizzata nel telefono.
 
 import { EFFECT_MODULES, neighborRig } from "../kemper-midi.js";
+import { PEDAL_PAGES_KEY } from "./config.js";
 import { toast, ui } from "./dom.js";
 import { session } from "./state.js";
 import { handleQuantizedRecord, looper, looperSendKey, looperSwitchReleases, sendLooperSwitch } from "./looper.js";
@@ -42,7 +45,32 @@ export const PEDAL_LONG_PRESS_MS = 800;
 const TAP_RELEASE_MS = 90;
 const MAX_ACTIONS = 30;
 
-session.pedalControl = { page: 0, held: new Map(), actions: [] };
+// Pagina seguente fra quelle attive (in giro); se non ce n'è un'altra resta quella attuale.
+export function nextEnabledPage(current, enabled) {
+  for (let step = 1; step <= enabled.length; step += 1) {
+    const page = (current + step) % enabled.length;
+    if (enabled[page]) return page;
+  }
+  return current;
+}
+
+function readEnabledPages() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PEDAL_PAGES_KEY) ?? "null");
+    if (Array.isArray(saved)) {
+      const enabled = PEDAL_PAGES.map((page) => saved.includes(page.name));
+      if (enabled.some(Boolean)) return enabled;
+    }
+  } catch { /* facoltativo */ }
+  return PEDAL_PAGES.map(() => true);
+}
+
+const startEnabled = readEnabledPages();
+session.pedalControl = { page: startEnabled.indexOf(true), enabled: startEnabled, held: new Map(), actions: [] };
+
+function enabledCount() {
+  return session.pedalControl.enabled.filter(Boolean).length;
+}
 
 function noteAction(pedal, page, action, sent) {
   const control = session.pedalControl;
@@ -125,7 +153,9 @@ function tapAction(pedal, page) {
 
 function switchPage() {
   const control = session.pedalControl;
-  control.page = (control.page + 1) % PEDAL_PAGES.length;
+  const next = nextEnabledPage(control.page, control.enabled);
+  if (next === control.page) return;
+  control.page = next;
   noteAction(PAGE_PEDAL, control.page, `PAGINA ${PEDAL_PAGES[control.page].name}`, false);
   navigator.vibrate?.(40);
   toast(`Pedale · pagina ${PEDAL_PAGES[control.page].name}`);
@@ -140,7 +170,8 @@ export function handlePedalSwitch(pedal, pressed) {
     const hold = { page: control.page, release: null, timer: null, long: false };
     control.held.set(pedal, hold);
     if (pedal === PAGE_PEDAL) {
-      hold.timer = window.setTimeout(() => { hold.long = true; switchPage(); }, PEDAL_LONG_PRESS_MS);
+      // Con una sola pagina attiva D non cambia pagina: fa sempre la sua funzione, anche tenuto.
+      if (enabledCount() > 1) hold.timer = window.setTimeout(() => { hold.long = true; switchPage(); }, PEDAL_LONG_PRESS_MS);
     } else {
       hold.release = pressAction(pedal, control.page);
     }
@@ -174,6 +205,22 @@ export function nextPedalPage() {
   switchPage();
 }
 
+// Interruttore di una pagina in ALTRO. L'ultima pagina attiva non si spegne.
+export function setPedalPageEnabled(index, on) {
+  const control = session.pedalControl;
+  if (!PEDAL_PAGES[index] || control.enabled[index] === on) return;
+  if (!on && enabledCount() === 1) {
+    toast("Almeno una pagina del pedale deve restare attiva");
+    return;
+  }
+  control.enabled[index] = on;
+  try {
+    localStorage.setItem(PEDAL_PAGES_KEY, JSON.stringify(PEDAL_PAGES.filter((_, page) => control.enabled[page]).map((page) => page.name)));
+  } catch { /* facoltativo */ }
+  if (!control.enabled[control.page]) control.page = control.enabled.indexOf(true);
+  paintPedalPage();
+}
+
 // Riga del pedale in PALCO: pagina in uso e funzione di ogni pedale; il pedale premuto si illumina.
 export function paintPedalPage() {
   const control = session.pedalControl;
@@ -184,6 +231,9 @@ export function paintPedalPage() {
     cell.querySelector("span").textContent = page.pedals[pedal].label;
     cell.dataset.pressed = String(control.held.has(pedal));
   });
+  ui.pedalPageToggles.forEach((button, index) => {
+    button.setAttribute("aria-pressed", String(control.enabled[index]));
+  });
 }
 
 export function pedalControlDiagnostics() {
@@ -191,6 +241,7 @@ export function pedalControlDiagnostics() {
   return {
     mapping: "CC 20…23 = pedali A…D (127 premuto, 0 rilasciato); D tenuto 0,8 s = cambio pagina",
     page: PEDAL_PAGES[control.page].name,
+    enabledPages: PEDAL_PAGES.filter((_, page) => control.enabled[page]).map((page) => page.name),
     held: [...control.held.keys()].map((pedal) => PEDAL_LETTERS[pedal]),
     actions: control.actions,
   };

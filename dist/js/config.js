@@ -4,7 +4,7 @@
 // "kemper-stage-view-bank-names" e "kemper-stage-view-names-reset-v135" (rig-names.js).
 
 export const APP_NAME = "Kemper Profiler View";
-export const APP_VERSION = "1.79";
+export const APP_VERSION = "1.80";
 export const MAX_BANKS_KEY = "kemper-stage-view-max-bank";
 export const AUTO_SYNC_INTERVAL = 1500;
 export const FIXED_FX_SYNC_INTERVAL = 4500;
@@ -21,3 +21,4 @@ export const QUANTIZE_KEY = "kemper-stage-view-looper-quantize";
 export const PLAYER_SEEN_KEY = "kemper-stage-view-player-seen";
 export const THEME_KEY = "kemper-stage-view-theme";
 export const PEDAL_KEY = "kemper-stage-view-pedal"; // v1.78: pedale Bluetooth già usato su questo telefono
+export const PEDAL_PAGES_KEY = "kemper-stage-view-pedal-pages"; // v1.80: pagine del pedale attive

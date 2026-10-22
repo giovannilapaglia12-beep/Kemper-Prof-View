@@ -1,6 +1,12 @@
-# Kemper Profiler View v1.79
+# Kemper Profiler View v1.80
 
 Web app/PWA in italiano per **Kemper Profiler Player MK2, Level III**, con Web MIDI e SysEx. Fino alla v1.36 si chiamava *Kemper Stage View*.
+
+## Novità v1.80 — Pagine del pedale attivabili
+
+- Richiesta di Giovanni (22/10/2026): in **ALTRO → Pedale → Pagine attive** si sceglie quali pagine usare (SUONO, EFFETTI, LOOPER). Per esempio si spegne LOOPER quando non serve e la si riaccende quando serve.
+- Tenendo premuto **D** si passa solo fra le pagine attive. Con una sola pagina attiva D non cambia pagina e fa sempre la sua funzione.
+- Almeno una pagina resta attiva. La scelta resta memorizzata nel telefono; se si spegne la pagina in uso, l'app passa alla prima attiva.
 
 ## Novità v1.79 — Terza pagina del pedale: EFFETTI
 
